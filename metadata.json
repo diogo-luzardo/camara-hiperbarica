@@ -1,0 +1,6 @@
+{
+  "name": "Clínica OHB - Medicina Hiperbárica",
+  "description": "Sistema de gestão clínica para oxigenoterapia hiperbárica, prontuário eletrônico completo, agendamento com alerta para agenda do celular, validação de CPF e CEP, e acervo de prontuários digitalizados por Registro OHB.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

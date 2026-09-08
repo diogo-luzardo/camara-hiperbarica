@@ -1,0 +1,466 @@
+import React, { useState, useEffect } from 'react';
+import { X, HeartPulse, ShieldCheck, Stethoscope, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { HyperbaricSession, Patient } from '../types';
+
+interface SessionFormModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (session: HyperbaricSession) => void;
+  patient: Patient;
+  nextSessionNumber: number;
+  initialSession?: HyperbaricSession | null;
+}
+
+export const SessionFormModal: React.FC<SessionFormModalProps> = ({
+  isOpen,
+  onClose,
+  onSave,
+  patient,
+  nextSessionNumber,
+  initialSession,
+}) => {
+  const [formData, setFormData] = useState<Partial<HyperbaricSession>>({
+    patientId: patient.id,
+    registroOHB: patient.registroOHB,
+    sessionNumber: nextSessionNumber,
+    data: new Date().toISOString().split('T')[0],
+    hora: new Date().toTimeString().slice(0, 5),
+    ata: 2.4,
+    pa: '120/80',
+    glicemia: '120',
+    temperatura: '36.4',
+    duracaoMinutos: 90,
+    tratamentoMedicacao: 'Protocolo de O2 a 100% sob pressão hiperbárica.',
+    intercorrencias: 'Paciente tolerou bem a compressão e descompressão, sem queixas de barotrauma de ouvido.',
+    medicoResponsavel: 'Dr. Carlos Henrique Esteves (CRM 62.139)',
+    enfermeiroResponsavel: 'Enf. Renan Matos (COREN-SP 214.901)',
+    tecnicoResponsavel: 'Téc. Lucas Silva',
+    // Checagens de Segurança da Câmara
+    conferenciaNome: true,
+    roupaAlgodao: true,
+    pulseiraEstatica: true,
+    removerMetaisEletronicos: true,
+    retirarProteses: true,
+    sondaVesicalAberta: false,
+    avpAvcPicc: false,
+    velocidadeCompressao: '0.15 ATA/min lenta e gradual',
+    velocidadeDescompressao: '0.10 ATA/min lenta',
+    covidFebreTosse: false,
+    // Diagnósticos de Enfermagem
+    diagDor: 'ME',
+    diagQueda: 'PR',
+    diagDeambulacao: 'PR',
+    diagGlicemia: 'ME',
+    diagPele: 'ME',
+    diagContaminacao: 'PR',
+    diagAnsiedade: 'A',
+    evolucaoEnfermagem: 'Sinais vitais estáveis. Curativo oclusivo íntegro mantido. Paciente orientado sobre manobras de compensação auditiva.',
+    status: 'concluida',
+  });
+
+  useEffect(() => {
+    if (initialSession) {
+      setFormData(initialSession);
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        patientId: patient.id,
+        registroOHB: patient.registroOHB,
+        sessionNumber: nextSessionNumber,
+        data: new Date().toISOString().split('T')[0],
+        hora: new Date().toTimeString().slice(0, 5),
+      }));
+    }
+  }, [initialSession, patient, nextSessionNumber, isOpen]);
+
+  if (!isOpen) return null;
+
+  const glicemiaNum = Number(formData.glicemia);
+  const isGlicemiaAlert = !isNaN(glicemiaNum) && (glicemiaNum < 100 || glicemiaNum > 250);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData as HyperbaricSession);
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]">
+        {/* Header */}
+        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold">
+              <HeartPulse className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold font-['Outfit']">
+                  {initialSession ? 'Editar Sessão OHB' : 'Registrar Sessão de Oxigenoterapia Hiperbárica'}
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500 text-slate-950">
+                  Sessão #{formData.sessionNumber}
+                </span>
+              </div>
+              <p className="text-xs text-slate-300">
+                {patient.nome} • <span className="font-mono text-cyan-300 font-bold">{patient.registroOHB}</span> • {patient.diagnostico}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content Form */}
+        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
+          {/* Section 1: Dados da Sessão e Parâmetros Hiperbáricos */}
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-cyan-600" />
+              1. Parâmetros de Câmara e Horário
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Nº da Sessão</label>
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  value={formData.sessionNumber || 1}
+                  onChange={(e) => setFormData({ ...formData, sessionNumber: parseInt(e.target.value, 10) || 1 })}
+                  className="w-full text-xs font-bold text-cyan-900 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-cyan-50/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Data</label>
+                <input
+                  type="date"
+                  required
+                  value={formData.data || ''}
+                  onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Hora de Início</label>
+                <input
+                  type="time"
+                  required
+                  value={formData.hora || ''}
+                  onChange={(e) => setFormData({ ...formData, hora: e.target.value })}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Pressão (ATA)</label>
+                <select
+                  value={formData.ata || 2.4}
+                  onChange={(e) => setFormData({ ...formData, ata: parseFloat(e.target.value) })}
+                  className="w-full text-xs font-bold text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                >
+                  <option value={1.8}>1.8 ATA</option>
+                  <option value={2.0}>2.0 ATA</option>
+                  <option value={2.4}>2.4 ATA (Padrão Feridas)</option>
+                  <option value={2.5}>2.5 ATA</option>
+                  <option value={2.8}>2.8 ATA (Embolia/Gangrena)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 2: Sinais Vitais Médicos */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
+              <Stethoscope className="w-4 h-4 text-cyan-600" />
+              2. Sinais Vitais Pré / Pós Sessão
+            </h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">P.A. (mmHg)</label>
+                <input
+                  type="text"
+                  value={formData.pa || ''}
+                  onChange={(e) => setFormData({ ...formData, pa: e.target.value })}
+                  className="w-full text-xs font-semibold px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                  placeholder="120/80"
+                />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700">Glicemia (mg/dL)</label>
+                  {isGlicemiaAlert && (
+                    <span className="text-[10px] font-bold text-amber-600 flex items-center gap-0.5">
+                      <AlertTriangle className="w-3 h-3" /> Atenção
+                    </span>
+                  )}
+                </div>
+                <input
+                  type="text"
+                  value={formData.glicemia || ''}
+                  onChange={(e) => setFormData({ ...formData, glicemia: e.target.value })}
+                  className={`w-full text-xs font-bold px-3 py-2 rounded-lg border transition-colors bg-white ${
+                    isGlicemiaAlert ? 'border-amber-500 text-amber-700 bg-amber-50/30' : 'border-slate-300'
+                  }`}
+                  placeholder="110"
+                />
+                <p className="text-[10px] text-slate-500 mt-0.5">Ideal pré-câmara: 100 - 200 mg/dL</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Temperatura (°C)</label>
+                <input
+                  type="text"
+                  value={formData.temperatura || ''}
+                  onChange={(e) => setFormData({ ...formData, temperatura: e.target.value })}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                  placeholder="36.4"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Duração (minutos)</label>
+                <input
+                  type="number"
+                  value={formData.duracaoMinutos || 90}
+                  onChange={(e) => setFormData({ ...formData, duracaoMinutos: parseInt(e.target.value, 10) || 90 })}
+                  className="w-full text-xs font-semibold px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Section 3: Checagens de Segurança da Câmara Hiperbárica (Enfermagem) */}
+          <div className="border border-cyan-200 bg-cyan-50/40 rounded-xl p-4 space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-950 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-cyan-700" />
+              3. Sistematização de Enfermagem: Controles Obrigatórios de Segurança
+            </h3>
+            <p className="text-xs text-cyan-800">
+              Protocolo da câmara para prevenção de acidentes estáticos e barotrauma:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <label className="flex items-center gap-2 p-2 rounded-lg bg-white border border-cyan-200 hover:border-cyan-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.roupaAlgodao || false}
+                  onChange={(e) => setFormData({ ...formData, roupaAlgodao: e.target.checked })}
+                  className="rounded text-cyan-600 accent-cyan-600"
+                />
+                <span className="font-medium text-slate-800">Roupa 100% Algodão (Sem sintéticos)</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2 rounded-lg bg-white border border-cyan-200 hover:border-cyan-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.removerMetaisEletronicos || false}
+                  onChange={(e) => setFormData({ ...formData, removerMetaisEletronicos: e.target.checked })}
+                  className="rounded text-cyan-600 accent-cyan-600"
+                />
+                <span className="font-medium text-slate-800">Sem Metais / Celular / Isqueiros / Pilhas</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2 rounded-lg bg-white border border-cyan-200 hover:border-cyan-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.pulseiraEstatica || false}
+                  onChange={(e) => setFormData({ ...formData, pulseiraEstatica: e.target.checked })}
+                  className="rounded text-cyan-600 accent-cyan-600"
+                />
+                <span className="font-medium text-slate-800">Pulseira Estática Conectada</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2 rounded-lg bg-white border border-cyan-200 hover:border-cyan-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.retirarProteses || false}
+                  onChange={(e) => setFormData({ ...formData, retirarProteses: e.target.checked })}
+                  className="rounded text-cyan-600 accent-cyan-600"
+                />
+                <span className="font-medium text-slate-800">Retirada de Próteses Dentárias / Lentes</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2 rounded-lg bg-white border border-cyan-200 hover:border-cyan-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.conferenciaNome || false}
+                  onChange={(e) => setFormData({ ...formData, conferenciaNome: e.target.checked })}
+                  className="rounded text-cyan-600 accent-cyan-600"
+                />
+                <span className="font-medium text-slate-800">Conferência de Identidade e Pulseira</span>
+              </label>
+
+              <label className="flex items-center gap-2 p-2 rounded-lg bg-white border border-cyan-200 hover:border-cyan-400 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formData.sondaVesicalAberta || false}
+                  onChange={(e) => setFormData({ ...formData, sondaVesicalAberta: e.target.checked })}
+                  className="rounded text-cyan-600 accent-cyan-600"
+                />
+                <span className="font-medium text-slate-800">Sondas e Drenos Descomprimidos</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Section 4: Diagnósticos de Enfermagem (PR / ME / PI / A / R) */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                4. Avaliação Diagnóstica de Enfermagem
+              </h3>
+              <span className="text-[10px] text-slate-500 font-mono">
+                PR=Presente | ME=Melhorado | PI=Piorado | A=Ausente | R=Resolvido
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+              <div>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Dor Aguda/Crônica</label>
+                <select
+                  value={formData.diagDor || 'ME'}
+                  onChange={(e) => setFormData({ ...formData, diagDor: e.target.value as any })}
+                  className="w-full text-xs px-2 py-1.5 rounded border border-slate-300 bg-white"
+                >
+                  <option value="PR">PR - Presente</option>
+                  <option value="ME">ME - Melhorado</option>
+                  <option value="PI">PI - Piorado</option>
+                  <option value="A">A - Ausente</option>
+                  <option value="R">R - Resolvido</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Integ. Pele Prejudicada</label>
+                <select
+                  value={formData.diagPele || 'ME'}
+                  onChange={(e) => setFormData({ ...formData, diagPele: e.target.value as any })}
+                  className="w-full text-xs px-2 py-1.5 rounded border border-slate-300 bg-white"
+                >
+                  <option value="PR">PR - Presente</option>
+                  <option value="ME">ME - Melhorado</option>
+                  <option value="PI">PI - Piorado</option>
+                  <option value="A">A - Ausente</option>
+                  <option value="R">R - Resolvido</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Contaminação / Infecção</label>
+                <select
+                  value={formData.diagContaminacao || 'PR'}
+                  onChange={(e) => setFormData({ ...formData, diagContaminacao: e.target.value as any })}
+                  className="w-full text-xs px-2 py-1.5 rounded border border-slate-300 bg-white"
+                >
+                  <option value="PR">PR - Presente</option>
+                  <option value="ME">ME - Melhorado</option>
+                  <option value="PI">PI - Piorado</option>
+                  <option value="A">A - Ausente</option>
+                  <option value="R">R - Resolvido</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-medium text-slate-600 mb-1">Ansiedade / Medo</label>
+                <select
+                  value={formData.diagAnsiedade || 'A'}
+                  onChange={(e) => setFormData({ ...formData, diagAnsiedade: e.target.value as any })}
+                  className="w-full text-xs px-2 py-1.5 rounded border border-slate-300 bg-white"
+                >
+                  <option value="PR">PR - Presente</option>
+                  <option value="ME">ME - Melhorado</option>
+                  <option value="PI">PI - Piorado</option>
+                  <option value="A">A - Ausente</option>
+                  <option value="R">R - Resolvido</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Section 5: Observações, Intercorrências e Responsáveis */}
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Intercorrências e Observações Médicas
+              </label>
+              <textarea
+                rows={2}
+                value={formData.intercorrencias || ''}
+                onChange={(e) => setFormData({ ...formData, intercorrencias: e.target.value })}
+                className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                placeholder="Ex: Tolerou bem a sessão; queixas de ouvido; náuseas..."
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Evolução e Anotação de Enfermagem
+              </label>
+              <textarea
+                rows={2}
+                value={formData.evolucaoEnfermagem || ''}
+                onChange={(e) => setFormData({ ...formData, evolucaoEnfermagem: e.target.value })}
+                className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                placeholder="Curativo mantido, pele ao redor hidratada, manobra de Valsalva sem dor..."
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Médico Responsável</label>
+                <input
+                  type="text"
+                  value={formData.medicoResponsavel || ''}
+                  onChange={(e) => setFormData({ ...formData, medicoResponsavel: e.target.value })}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Enfermeiro(a) Responsável</label>
+                <input
+                  type="text"
+                  value={formData.enfermeiroResponsavel || ''}
+                  onChange={(e) => setFormData({ ...formData, enfermeiroResponsavel: e.target.value })}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Técnico Operador</label>
+                <input
+                  type="text"
+                  value={formData.tecnicoResponsavel || ''}
+                  onChange={(e) => setFormData({ ...formData, tecnicoResponsavel: e.target.value })}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer Actions */}
+          <div className="border-t border-slate-200 pt-4 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2 text-xs font-bold text-slate-950 bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 rounded-lg shadow-md transition-all shadow-cyan-900/20 flex items-center gap-1.5"
+            >
+              <CheckCircle className="w-4 h-4" />
+              <span>{initialSession ? 'Salvar Sessão' : 'Concluir Registro da Sessão'}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
