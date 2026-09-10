@@ -1,0 +1,649 @@
+{
+	"info": {
+		"_postman_id": "9b12a83e-4f67-4e92-bc10-1a2b3c4d5e6f",
+		"name": "Clínica Câmara Hiperbárica (OHB) - API Quarkus",
+		"description": "Coleção completa para testes dos endpoints REST da Clínica de Medicina Hiperbárica.\nInclui dados pré-preenchidos reais para cadastro de pacientes, protocolo de segurança de enfermagem em câmara hiperbárica, agendamentos, cofre digital (AWS S3) e controle de exclusão lógica (Soft Delete com `deleted_at`).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "patientId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "sessionId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "appointmentId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "documentId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"item": [
+		{
+			"name": "1. Pacientes",
+			"item": [
+				{
+					"name": "Criar Paciente Completo (POST)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.id) {",
+									"        pm.collectionVariables.set(\"patientId\", jsonData.id);",
+									"        console.log(\"patientId salvo:\", jsonData.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"registroOHB\": \"OHB-2026-001\",\n  \"registroHospitalar\": \"HOSP-99882\",\n  \"unidade\": \"Unidade Central - Leito 12B\",\n  \"nome\": \"Maria Silva Santos\",\n  \"convenio\": \"Unimed Premium\",\n  \"plano\": \"Especial Ouro\",\n  \"matriculaConvenio\": \"002938475610-0\",\n  \"validadeConvenio\": \"12/2028\",\n  \"dataNascimento\": \"1980-05-15\",\n  \"idade\": 46,\n  \"sexo\": \"F\",\n  \"estadoCivil\": \"Casada\",\n  \"rg\": \"12.345.678-9\",\n  \"cpf\": \"123.456.789-00\",\n  \"profissao\": \"Engenheira\",\n  \"nomeMae\": \"Ana Rosa Silva\",\n  \"cep\": \"01310-100\",\n  \"endereco\": \"Av. Paulista\",\n  \"numero\": \"1000\",\n  \"complemento\": \"Apto 42\",\n  \"bairro\": \"Bela Vista\",\n  \"municipio\": \"São Paulo\",\n  \"uf\": \"SP\",\n  \"telefonesFixos\": \"(11) 3251-0000\",\n  \"celular\": \"(11) 98765-4321\",\n  \"email\": \"maria.silva@email.com\",\n  \"procedencia\": \"Encaminhado por Ortopedista\",\n  \"remocao\": \"Ambulância Própria\",\n  \"medicoIndicou\": \"Dr. Carlos Eduardo (CRM 145890-SP)\",\n  \"acompanhante\": \"João Santos (Esposo)\",\n  \"historiaClinica\": \"Paciente diabética tipo 2 há 15 anos com histórico de lesão ulcerada em região plantar direita de difícil cicatrização há 4 meses.\",\n  \"exameFisicoResumido\": \"Lesão ulcerada exsudativa em pé direito, bordas irregulares, sem sinais de osteomielite aguda.\",\n  \"localCurativos\": \"Região plantar do pé direito\",\n  \"avaliacaoDor\": 4,\n  \"grauEntendimento\": \"Excelente\",\n  \"tempoExistenciaPatologia\": \"4 meses\",\n  \"descricaoLesao\": \"Úlcera neuropática de 3x2 cm com leito granulado e exsudato seroso moderado.\",\n  \"diagnostico\": \"Pé Diabético / Úlcera Neuropática\",\n  \"cid10\": \"E11.5\",\n  \"numeroTratamentosPrevisto\": 20,\n  \"medicamentosEmUso\": \"Metformina 850mg, Insulina NPH 20 UI, Losartana 50mg\",\n  \"alergias\": \"Dipirona\",\n  \"vicios\": \"Nega tabagismo e etilismo\",\n  \"otoscopia\": \"Membrana timpânica íntegra e translúcida bilateralmente\",\n  \"proteses\": \"Não possui\",\n  \"ventilacao\": \"Espontânea em ar ambiente\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/patients",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patients"
+							]
+						}
+					}
+				},
+				{
+					"name": "Listar Todos os Pacientes (GET)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/patients",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patients"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Paciente por Termo (GET search)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/patients?search=Maria",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patients"
+							],
+							"query": [
+								{
+									"key": "search",
+									"value": "Maria"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Paciente por Registro OHB (GET /ohb/{registroOHB})",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/patients/ohb/OHB-2026-001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patients",
+								"ohb",
+								"OHB-2026-001"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Paciente por ID (GET /{id})",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/patients/{{patientId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patients",
+								"{{patientId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Paciente (PUT /{id})",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"registroOHB\": \"OHB-2026-001\",\n  \"nome\": \"Maria Silva Santos\",\n  \"cpf\": \"123.456.789-00\",\n  \"convenio\": \"Unimed Premium\",\n  \"avaliacaoDor\": 2,\n  \"diagnostico\": \"Pé Diabético / Úlcera Neuropática em fase de cicatrização\",\n  \"numeroTratamentosPrevisto\": 25\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/patients/{{patientId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patients",
+								"{{patientId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Deletar Paciente - Soft Delete (DELETE /{id})",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"description": "Exclusão Lógica (Soft Delete): Preenche o campo deleted_at com a data/hora atual sem apagar o registro fisicamente do banco de dados.",
+						"url": {
+							"raw": "{{baseUrl}}/api/patients/{{patientId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"patients",
+								"{{patientId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Sessões Hiperbáricas (Enfermagem & Segurança)",
+			"item": [
+				{
+					"name": "Registrar Nova Sessão Hiperbárica (POST)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.id) {",
+									"        pm.collectionVariables.set(\"sessionId\", jsonData.id);",
+									"        console.log(\"sessionId salvo:\", jsonData.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"patient\": {\n    \"id\": \"{{patientId}}\"\n  },\n  \"registroOHB\": \"OHB-2026-001\",\n  \"sessionNumber\": 1,\n  \"data\": \"2026-09-10\",\n  \"hora\": \"14:30\",\n  \"ata\": 2.40,\n  \"pa\": \"120/80\",\n  \"glicemia\": \"115\",\n  \"temperatura\": \"36.5\",\n  \"duracaoMinutos\": 90,\n  \"tratamentoMedicacao\": \"Realizado curativo estéril pré-sessão\",\n  \"intercorrencias\": \"Sessão decorreu sem intercorrências. Boa tolerância à compressão e descompressão.\",\n  \"medicoResponsavel\": \"Dr. Fernando Maia (CRM 98765-SP)\",\n  \"enfermeiroResponsavel\": \"Enfª. Juliana Costa (COREN 43210-SP)\",\n  \"tecnicoResponsavel\": \"Téc. Roberto Lima\",\n  \"conferenciaNome\": true,\n  \"roupaAlgodao\": true,\n  \"pulseiraEstatica\": true,\n  \"removerMetaisEletronicos\": true,\n  \"retirarProteses\": true,\n  \"sondaVesicalAberta\": false,\n  \"avpAvcPicc\": true,\n  \"velocidadeCompressao\": \"Normal (10 min)\",\n  \"velocidadeDescompressao\": \"Lenta (10 min)\",\n  \"covidFebreTosse\": false,\n  \"diagDor\": \"ME\",\n  \"diagQueda\": \"A\",\n  \"diagDeambulacao\": \"PR\",\n  \"diagGlicemia\": \"A\",\n  \"diagPele\": \"PR\",\n  \"diagContaminacao\": \"A\",\n  \"diagAnsiedade\": \"R\",\n  \"evolucaoEnfermagem\": \"Paciente posicionada confortavelmente na câmara monopaciente. Realizado a equalização de pressão sem queixas de dor otológica. Curativo mantido limpo e seco ao término.\",\n  \"status\": \"concluida\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/sessions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sessions"
+							]
+						}
+					}
+				},
+				{
+					"name": "Listar Todas as Sessões (GET)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sessions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sessions"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Sessões por Paciente ID (GET ?patientId)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sessions?patientId={{patientId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sessions"
+							],
+							"query": [
+								{
+									"key": "patientId",
+									"value": "{{patientId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Sessões por Registro OHB (GET ?registroOHB)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sessions?registroOHB=OHB-2026-001",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sessions"
+							],
+							"query": [
+								{
+									"key": "registroOHB",
+									"value": "OHB-2026-001"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Sessão por ID (GET /{id})",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sessions/{{sessionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sessions",
+								"{{sessionId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Sessão Hiperbárica (PUT /{id})",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"ata\": 2.40,\n  \"pa\": \"118/78\",\n  \"glicemia\": \"108\",\n  \"temperatura\": \"36.4\",\n  \"duracaoMinutos\": 90,\n  \"evolucaoEnfermagem\": \"Sessão concluída com sucesso. Paciente refere alívio da dor e boa acomodação durante o tratamento.\",\n  \"status\": \"concluida\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/sessions/{{sessionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sessions",
+								"{{sessionId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Deletar Sessão (DELETE /{id})",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/sessions/{{sessionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"sessions",
+								"{{sessionId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Agendamentos",
+			"item": [
+				{
+					"name": "Criar Agendamento (POST)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.id) {",
+									"        pm.collectionVariables.set(\"appointmentId\", jsonData.id);",
+									"        console.log(\"appointmentId salvo:\", jsonData.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"patient\": {\n    \"id\": \"{{patientId}}\"\n  },\n  \"data\": \"2026-09-10\",\n  \"horario\": \"09:00\",\n  \"diaSemana\": \"Quinta-feira\",\n  \"sessaoNumero\": 1,\n  \"pressaoATA\": 2.40,\n  \"status\": \"confirmado\",\n  \"observacoes\": \"Primeira sessão de oxigenoterapia hiperbárica. Orientada a utilizar vestuário 100% algodão.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/appointments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"appointments"
+							]
+						}
+					}
+				},
+				{
+					"name": "Listar Todos os Agendamentos (GET)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/appointments",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"appointments"
+							]
+						}
+					}
+				},
+				{
+					"name": "Filtrar Agendamentos por Data (GET ?data)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/appointments?data=2026-09-10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"appointments"
+							],
+							"query": [
+								{
+									"key": "data",
+									"value": "2026-09-10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Agendamento por ID (GET /{id})",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"appointments",
+								"{{appointmentId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Atualizar Agendamento (PUT /{id})",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"data\": \"2026-09-10\",\n  \"horario\": \"09:00\",\n  \"diaSemana\": \"Quinta-feira\",\n  \"sessaoNumero\": 1,\n  \"pressaoATA\": 2.40,\n  \"status\": \"realizado\",\n  \"observacoes\": \"Sessão realizada com sucesso.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"appointments",
+								"{{appointmentId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Deletar Agendamento (DELETE /{id})",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"appointments",
+								"{{appointmentId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Cofre Digital (Documentos & S3)",
+			"item": [
+				{
+					"name": "Gerar URL Pré-assinada de Upload S3 (POST)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"filename\": \"foto_lesao_pe_direito_sessao1.jpg\",\n  \"contentType\": \"image/jpeg\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/presigned-upload-url",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"presigned-upload-url"
+							]
+						}
+					}
+				},
+				{
+					"name": "Registrar Documento no Banco (POST)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.id) {",
+									"        pm.collectionVariables.set(\"documentId\", jsonData.id);",
+									"        console.log(\"documentId salvo:\", jsonData.id);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"patient\": {\n    \"id\": \"{{patientId}}\"\n  },\n  \"titulo\": \"Fotografia da Lesão Plantar - Sessão 1\",\n  \"tipo\": \"foto_lesao\",\n  \"dataDocumento\": \"2026-09-10\",\n  \"observacoes\": \"Lesão ulcerada apresentando bom tecido de granulação central.\",\n  \"s3Key\": \"OHB-2026-001/1725999000_foto_lesao_pe_direito_sessao1.jpg\",\n  \"imageUrl\": \"https://clinica-ohb-prontuarios.s3.us-east-1.amazonaws.com/OHB-2026-001/foto_lesao_pe_direito_sessao1.jpg\",\n  \"tamanhoKb\": 2450\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/documents",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents"
+							]
+						}
+					}
+				},
+				{
+					"name": "Listar Documentos do Paciente (GET ?patientId)",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents?patientId={{patientId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents"
+							],
+							"query": [
+								{
+									"key": "patientId",
+									"value": "{{patientId}}"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Deletar Documento (DELETE /{id})",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/documents/{{documentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"documents",
+								"{{documentId}}"
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+}

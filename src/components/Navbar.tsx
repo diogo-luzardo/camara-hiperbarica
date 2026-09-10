@@ -2,25 +2,27 @@ import React from 'react';
 import { Activity, Users, Calendar, FolderArchive, Server, Plus, Download, ShieldCheck } from 'lucide-react';
 
 interface NavbarProps {
-  currentTab: 'patients' | 'appointments' | 'sessions' | 'digitalVault' | 'architecture';
-  setCurrentTab: (tab: 'patients' | 'appointments' | 'sessions' | 'digitalVault' | 'architecture') => void;
+  activeView: 'pacientes' | 'agendamentos' | 'acervo' | 'arquitetura';
+  onNavigate: (view: 'pacientes' | 'agendamentos' | 'acervo' | 'arquitetura') => void;
   onNewPatient: () => void;
   onNewAppointment: () => void;
-  onOpenBackup: () => void;
+  onOpenBackup?: () => void;
   patientCount: number;
-  upcomingCount: number;
-  docCount: number;
+  sessionCount: number;
+  appointmentCount: number;
+  documentCount: number;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  currentTab,
-  setCurrentTab,
+  activeView,
+  onNavigate,
   onNewPatient,
   onNewAppointment,
   onOpenBackup,
   patientCount,
-  upcomingCount,
-  docCount,
+  sessionCount,
+  appointmentCount,
+  documentCount,
 }) => {
   return (
     <header className="bg-slate-900 border-b border-slate-800 text-white sticky top-0 z-30 shadow-md">
@@ -38,14 +40,16 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
         <div className="flex items-center gap-4 text-slate-400">
           <span className="hidden md:inline">Rua das Pitombeiras, 175 - Jabaquara, SP</span>
-          <button
-            onClick={onOpenBackup}
-            className="flex items-center gap-1 hover:text-cyan-300 transition-colors text-xs text-slate-300"
-            title="Exportar/Importar Backup JSON"
-          >
-            <Download className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Backup / Dados</span>
-          </button>
+          {onOpenBackup && (
+            <button
+              onClick={onOpenBackup}
+              className="flex items-center gap-1 hover:text-cyan-300 transition-colors text-xs text-slate-300"
+              title="Exportar/Importar Backup JSON"
+            >
+              <Download className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Backup / Dados</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -53,7 +57,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Brand */}
-          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setCurrentTab('patients')}>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('pacientes')}>
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-cyan-900/30">
               <Activity className="w-6 h-6" />
             </div>
@@ -73,9 +77,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Navigation tabs */}
           <nav className="hidden lg:flex items-center gap-1 bg-slate-800/60 p-1 rounded-xl border border-slate-700/60">
             <button
-              onClick={() => setCurrentTab('patients')}
+              onClick={() => onNavigate('pacientes')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'patients'
+                activeView === 'pacientes'
                   ? 'bg-cyan-500 text-slate-950 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
               }`}
@@ -85,52 +89,48 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
 
             <button
-              onClick={() => setCurrentTab('appointments')}
+              onClick={() => onNavigate('agendamentos')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'appointments'
+                activeView === 'agendamentos'
                   ? 'bg-cyan-500 text-slate-950 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
               }`}
             >
               <Calendar className="w-4 h-4" />
               <span>Agendamentos</span>
-              {upcomingCount > 0 && (
+              {appointmentCount > 0 && (
                 <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-bold ${
-                  currentTab === 'appointments' ? 'bg-slate-950 text-cyan-300' : 'bg-cyan-400/20 text-cyan-300'
+                  activeView === 'agendamentos' ? 'bg-slate-950 text-cyan-300' : 'bg-cyan-400/20 text-cyan-300'
                 }`}>
-                  {upcomingCount}
+                  {appointmentCount}
                 </span>
               )}
             </button>
 
             <button
-              onClick={() => setCurrentTab('sessions')}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'sessions'
-                  ? 'bg-cyan-500 text-slate-950 shadow-sm'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
-              }`}
+              onClick={() => onNavigate('pacientes')}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all"
             >
               <ShieldCheck className="w-4 h-4" />
-              <span>Sessões & Enfermagem</span>
+              <span>Sessões & Enfermagem ({sessionCount})</span>
             </button>
 
             <button
-              onClick={() => setCurrentTab('digitalVault')}
+              onClick={() => onNavigate('acervo')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'digitalVault'
+                activeView === 'acervo'
                   ? 'bg-cyan-500 text-slate-950 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
               }`}
             >
               <FolderArchive className="w-4 h-4" />
-              <span>Prontuários Antigos ({docCount})</span>
+              <span>Prontuários Antigos ({documentCount})</span>
             </button>
 
             <button
-              onClick={() => setCurrentTab('architecture')}
+              onClick={() => onNavigate('arquitetura')}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                currentTab === 'architecture'
+                activeView === 'arquitetura'
                   ? 'bg-cyan-500 text-slate-950 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
               }`}
@@ -144,15 +144,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onNewAppointment}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-cyan-950 hover:bg-cyan-900 text-cyan-300 text-xs font-bold border border-cyan-700/80 transition-colors shadow-sm cursor-pointer"
             >
-              <Calendar className="w-3.5 h-3.5 text-cyan-400" />
+              <Calendar className="w-4 h-4 text-cyan-400" />
               <span>+ Agendar</span>
             </button>
 
             <button
               onClick={onNewPatient}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-md shadow-cyan-950/40 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-md shadow-cyan-950/40 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>Novo Paciente</span>
@@ -163,41 +163,33 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* Mobile Navigation tab bar */}
         <div className="flex lg:hidden overflow-x-auto py-2 gap-1.5 border-t border-slate-800 no-scrollbar">
           <button
-            onClick={() => setCurrentTab('patients')}
+            onClick={() => onNavigate('pacientes')}
             className={`px-3 py-1 rounded-md text-xs whitespace-nowrap font-medium ${
-              currentTab === 'patients' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 bg-slate-800/80'
+              activeView === 'pacientes' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 bg-slate-800/80'
             }`}
           >
             Pacientes ({patientCount})
           </button>
           <button
-            onClick={() => setCurrentTab('appointments')}
+            onClick={() => onNavigate('agendamentos')}
             className={`px-3 py-1 rounded-md text-xs whitespace-nowrap font-medium ${
-              currentTab === 'appointments' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 bg-slate-800/80'
+              activeView === 'agendamentos' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 bg-slate-800/80'
             }`}
           >
-            Agendamentos ({upcomingCount})
+            Agendamentos ({appointmentCount})
           </button>
           <button
-            onClick={() => setCurrentTab('sessions')}
+            onClick={() => onNavigate('acervo')}
             className={`px-3 py-1 rounded-md text-xs whitespace-nowrap font-medium ${
-              currentTab === 'sessions' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 bg-slate-800/80'
-            }`}
-          >
-            Sessões OHB
-          </button>
-          <button
-            onClick={() => setCurrentTab('digitalVault')}
-            className={`px-3 py-1 rounded-md text-xs whitespace-nowrap font-medium ${
-              currentTab === 'digitalVault' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 bg-slate-800/80'
+              activeView === 'acervo' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 bg-slate-800/80'
             }`}
           >
             Prontuários Digitalizados
           </button>
           <button
-            onClick={() => setCurrentTab('architecture')}
+            onClick={() => onNavigate('arquitetura')}
             className={`px-3 py-1 rounded-md text-xs whitespace-nowrap font-medium ${
-              currentTab === 'architecture' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 bg-slate-800/80'
+              activeView === 'arquitetura' ? 'bg-cyan-500 text-slate-950' : 'text-slate-400 bg-slate-800/80'
             }`}
           >
             AWS / Java

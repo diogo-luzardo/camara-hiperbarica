@@ -1,5 +1,6 @@
 import { Patient, HyperbaricSession, Appointment, DigitalizedDocument } from '../types';
 
+const API_BASE = 'http://localhost:8080/api';
 const DB_NAME = 'ClinicaOHB_Database';
 const DB_VERSION = 1;
 const STORE_DOCS = 'digitalized_documents';
@@ -9,6 +10,12 @@ const STORAGE_KEYS = {
   SESSIONS: 'ohb_sessions_v1',
   APPOINTMENTS: 'ohb_appointments_v1',
 };
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUUID(id?: string): boolean {
+  return !!id && UUID_REGEX.test(id);
+}
 
 // IndexedDB Helper para armazenar fotos e prontuários digitalizados em alta resolução
 function openIndexedDB(): Promise<IDBDatabase> {
@@ -170,80 +177,6 @@ const INITIAL_SESSIONS: HyperbaricSession[] = [
     diagAnsiedade: 'ME',
     evolucaoEnfermagem: 'Paciente admitido calmo, glicemia pré 142 mg/dL. Retirada prótese móvel. Sessão transcorreu sem intercorrências vitais.',
     status: 'concluida',
-  },
-  {
-    id: 'ses-2',
-    patientId: 'pat-1',
-    registroOHB: 'OHB-1082',
-    sessionNumber: 2,
-    data: '2026-08-18',
-    hora: '08:30',
-    ata: 2.4,
-    pa: '125/75',
-    glicemia: '135',
-    temperatura: '36.5',
-    duracaoMinutos: 90,
-    tratamentoMedicacao: 'Protocolo O2 a 100% 2.4 ATA',
-    intercorrencias: 'Sem queixas de dor ou barotrauma.',
-    medicoResponsavel: 'Dr. Carlos Henrique Esteves (CRM 62.139)',
-    enfermeiroResponsavel: 'Enf. Renan Matos',
-    tecnicoResponsavel: 'Téc. Lucas Silva',
-    conferenciaNome: true,
-    roupaAlgodao: true,
-    pulseiraEstatica: true,
-    removerMetaisEletronicos: true,
-    retirarProteses: true,
-    sondaVesicalAberta: false,
-    avpAvcPicc: false,
-    velocidadeCompressao: '0.15 ATA/min',
-    velocidadeDescompressao: '0.1 ATA/min',
-    covidFebreTosse: false,
-    diagDor: 'ME',
-    diagQueda: 'PR',
-    diagDeambulacao: 'PR',
-    diagGlicemia: 'ME',
-    diagPele: 'ME',
-    diagContaminacao: 'PR',
-    diagAnsiedade: 'A',
-    evolucaoEnfermagem: 'Curativo preservado limpo e seco na saída da câmara. Paciente refere melhora importante na sensação de queimação no pé.',
-    status: 'concluida',
-  },
-  {
-    id: 'ses-3',
-    patientId: 'pat-1',
-    registroOHB: 'OHB-1082',
-    sessionNumber: 3,
-    data: '2026-08-20',
-    hora: '08:30',
-    ata: 2.4,
-    pa: '120/80',
-    glicemia: '128',
-    temperatura: '36.3',
-    duracaoMinutos: 90,
-    tratamentoMedicacao: 'Protocolo O2 a 100% 2.4 ATA',
-    intercorrencias: 'Nenhuma',
-    medicoResponsavel: 'Dr. Carlos Henrique Esteves (CRM 62.139)',
-    enfermeiroResponsavel: 'Enfª. Juliana Martins (COREN-SP 189.442)',
-    tecnicoResponsavel: 'Téc. Lucas Silva',
-    conferenciaNome: true,
-    roupaAlgodao: true,
-    pulseiraEstatica: true,
-    removerMetaisEletronicos: true,
-    retirarProteses: true,
-    sondaVesicalAberta: false,
-    avpAvcPicc: false,
-    velocidadeCompressao: '0.15 ATA/min',
-    velocidadeDescompressao: '0.1 ATA/min',
-    covidFebreTosse: false,
-    diagDor: 'ME',
-    diagQueda: 'PR',
-    diagDeambulacao: 'PR',
-    diagGlicemia: 'R',
-    diagPele: 'ME',
-    diagContaminacao: 'ME',
-    diagAnsiedade: 'A',
-    evolucaoEnfermagem: 'Lesão com neovascularização visível na borda superior.',
-    status: 'concluida',
   }
 ];
 
@@ -262,55 +195,40 @@ const INITIAL_APPOINTMENTS: Appointment[] = [
     status: 'confirmado',
     observacoes: 'Verificar glicemia capilar antes da entrada na câmara.',
     telefonePaciente: '(11) 98765-4321',
-  },
-  {
-    id: 'app-2',
-    patientId: 'pat-1',
-    patientName: 'Sebastião Pereira dos Santos',
-    registroOHB: 'OHB-1082',
-    cpf: '529.982.247-25',
-    data: '2026-09-11',
-    horario: '08:30',
-    diaSemana: 'Sexta-feira',
-    sessaoNumero: 10,
-    pressaoATA: 2.4,
-    status: 'agendado',
-    observacoes: 'Sessão 10: Avaliação médica de meio de ciclo com Dr. Carlos Henrique.',
-    telefonePaciente: '(11) 98765-4321',
-  },
-  {
-    id: 'app-3',
-    patientId: 'pat-2',
-    patientName: 'Helena Ribeiro de Castro',
-    registroOHB: 'OHB-1095',
-    cpf: '153.508.897-56',
-    data: '2026-09-09',
-    horario: '10:30',
-    diaSemana: 'Quarta-feira',
-    sessaoNumero: 4,
-    pressaoATA: 2.4,
-    status: 'confirmado',
-    observacoes: 'Troca de curativo na saída da câmara pela enfermagem.',
-    telefonePaciente: '(11) 99123-8877',
-  },
-  {
-    id: 'app-4',
-    patientId: 'pat-2',
-    patientName: 'Helena Ribeiro de Castro',
-    registroOHB: 'OHB-1095',
-    cpf: '153.508.897-56',
-    data: '2026-09-11',
-    horario: '10:30',
-    diaSemana: 'Sexta-feira',
-    sessaoNumero: 5,
-    pressaoATA: 2.4,
-    status: 'agendado',
-    observacoes: 'Protocolo de cicatrização pós-debridamento.',
-    telefonePaciente: '(11) 99123-8877',
   }
 ];
 
-// Helper para criar SVGs ilustrativos de exemplo quando não houver upload do usuário
+function mapBackendPatientToFrontend(b: any): Patient {
+  return {
+    ...b,
+    id: String(b.id),
+    idade: typeof b.idade === 'number' ? b.idade : (b.idade ? parseInt(b.idade) : 0),
+    avaliacaoDor: typeof b.avaliacaoDor === 'number' ? b.avaliacaoDor : (b.avaliacaoDor ? parseInt(b.avaliacaoDor) : 0),
+    numeroTratamentosPrevisto: typeof b.numeroTratamentosPrevisto === 'number' ? b.numeroTratamentosPrevisto : (b.numeroTratamentosPrevisto ? parseInt(b.numeroTratamentosPrevisto) : 0),
+  };
+}
+
+function mapBackendSessionToFrontend(s: any): HyperbaricSession {
+  return {
+    ...s,
+    id: String(s.id),
+    patientId: s.patient ? String(s.patient.id) : (s.patientId || ''),
+    sessionNumber: typeof s.sessionNumber === 'number' ? s.sessionNumber : parseInt(s.sessionNumber || '1'),
+    ata: typeof s.ata === 'number' ? s.ata : parseFloat(s.ata || '2.4'),
+    duracaoMinutos: typeof s.duracaoMinutos === 'number' ? s.duracaoMinutos : parseInt(s.duracaoMinutos || '90'),
+  };
+}
+
+function mapBackendAppointmentToFrontend(a: any): Appointment {
+  return {
+    ...a,
+    id: String(a.id),
+    patientId: a.patient ? String(a.patient.id) : (a.patientId || ''),
+    sessaoNumero: typeof a.sessaoNumero === 'number' ? a.sessaoNumero : parseInt(a.sessaoNumero || '1'),
+    pressaoATA: typeof a.pressaoATA === 'number' ? a.pressaoATA : parseFloat(a.pressaoATA || '2.4'),
+  };
+}
+
 function createSampleDocSvg(title: string, subtitle: string, color: string): string {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="850" viewBox="0 0 600 850">
     <rect width="600" height="850" fill="#f8fafc"/>
@@ -325,24 +243,44 @@ function createSampleDocSvg(title: string, subtitle: string, color: string): str
     <text x="65" y="250" font-family="sans-serif" font-size="12" font-weight="bold" fill="#334155">REGISTRO OHB: VINCULADO AO PACIENTE</text>
     <rect x="50" y="280" width="500" height="480" rx="6" fill="#fcfcfd" stroke="#e2e8f0"/>
     <line x1="70" y1="330" x2="530" y2="330" stroke="#cbd5e1" stroke-dasharray="3 3"/>
-    <line x1="70" y1="380" x2="530" y2="380" stroke="#cbd5e1" stroke-dasharray="3 3"/>
-    <line x1="70" y1="430" x2="530" y2="430" stroke="#cbd5e1" stroke-dasharray="3 3"/>
-    <line x1="70" y1="480" x2="530" y2="480" stroke="#cbd5e1" stroke-dasharray="3 3"/>
-    <line x1="70" y1="530" x2="530" y2="530" stroke="#cbd5e1" stroke-dasharray="3 3"/>
-    <line x1="70" y1="580" x2="530" y2="580" stroke="#cbd5e1" stroke-dasharray="3 3"/>
     <text x="70" y="320" font-family="monospace" font-size="12" fill="#475569">Digitalização de documento histórico arquivado</text>
-    <text x="70" y="370" font-family="monospace" font-size="12" fill="#475569">Registro físico transferido para prontuário digital</text>
-    <text x="70" y="420" font-family="monospace" font-size="12" fill="#475569">Compatível com AWS S3 storage e indexação relacional</text>
-    <circle cx="480" cy="710" r="36" fill="none" stroke="${color}" stroke-width="2"/>
-    <text x="480" y="705" font-family="sans-serif" font-size="9" font-weight="bold" text-anchor="middle" fill="${color}">MEDICINA</text>
-    <text x="480" y="718" font-family="sans-serif" font-size="9" font-weight="bold" text-anchor="middle" fill="${color}">HIPERBÁRICA</text>
   </svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
 }
 
 export const StorageService = {
   // === PACIENTES ===
-  getPatients(): Patient[] {
+  async getPatients(): Promise<Patient[]> {
+    try {
+      const res = await fetch(`${API_BASE}/patients`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const patients = data.map(mapBackendPatientToFrontend);
+          localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
+          return patients;
+        } else {
+          // Se o H2 estiver vazio, envia os pacientes locais para popular o H2
+          const local = this.getLocalPatients();
+          for (const pat of local) {
+            await this.sendPatientToApi(pat);
+          }
+          const retryRes = await fetch(`${API_BASE}/patients`);
+          if (retryRes.ok) {
+            const retryData = await retryRes.json();
+            const patients = retryData.map(mapBackendPatientToFrontend);
+            localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
+            return patients;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Servidor Quarkus REST indisponível, utilizando cache do localStorage:', err);
+    }
+    return this.getLocalPatients();
+  },
+
+  getLocalPatients(): Patient[] {
     const raw = localStorage.getItem(STORAGE_KEYS.PATIENTS);
     if (!raw) {
       localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(INITIAL_PATIENTS));
@@ -355,81 +293,193 @@ export const StorageService = {
     }
   },
 
-  savePatient(patient: Patient): Patient {
-    const list = this.getPatients();
-    const idx = list.findIndex((p) => p.id === patient.id);
-    if (idx >= 0) {
-      list[idx] = { ...patient, updatedAt: new Date().toISOString() };
-    } else {
-      list.unshift({
+  async sendPatientToApi(patient: Patient): Promise<Patient | null> {
+    try {
+      const payload: any = { ...patient };
+      if (!isValidUUID(payload.id)) {
+        delete payload.id;
+      }
+      delete payload.createdAt;
+      delete payload.updatedAt;
+      delete payload.deletedAt;
+
+      const res = await fetch(`${API_BASE}/patients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return mapBackendPatientToFrontend(data);
+      }
+    } catch (err) {
+      console.error('Erro ao enviar paciente ao Quarkus H2:', err);
+    }
+    return null;
+  },
+
+  async savePatient(patient: Patient): Promise<Patient> {
+    // 1. Envia para o Quarkus / H2 Database
+    let saved = await this.sendPatientToApi(patient);
+
+    if (!saved) {
+      // Fallback local se o backend não respondeu
+      saved = {
         ...patient,
         id: patient.id || `pat-${Date.now()}`,
-        createdAt: new Date().toISOString(),
+        createdAt: patient.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-      });
+      };
+    }
+
+    // 2. Atualiza local storage cache
+    const list = this.getLocalPatients();
+    const idx = list.findIndex(
+      (p) =>
+        p.id === saved!.id ||
+        p.registroOHB === saved!.registroOHB ||
+        (p.cpf && saved!.cpf && p.cpf.replace(/\D/g, '') === saved!.cpf.replace(/\D/g, ''))
+    );
+    if (idx >= 0) {
+      list[idx] = saved;
+    } else {
+      list.unshift(saved);
     }
     localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(list));
-    return patient;
+    return saved;
   },
 
-  deletePatient(id: string): void {
-    const list = this.getPatients().filter((p) => p.id !== id);
+  async deletePatient(id: string): Promise<void> {
+    try {
+      if (isValidUUID(id)) {
+        await fetch(`${API_BASE}/patients/${id}`, { method: 'DELETE' });
+      }
+    } catch (err) {
+      console.error('Erro ao remover paciente do H2:', err);
+    }
+    const list = this.getLocalPatients().filter((p) => p.id !== id);
     localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(list));
   },
 
-  getPatientById(id: string): Patient | undefined {
-    return this.getPatients().find((p) => p.id === id);
+  async getPatientById(id: string): Promise<Patient | undefined> {
+    const patients = await this.getPatients();
+    return patients.find((p) => p.id === id);
   },
 
-  getPatientByRegistroOHB(registroOHB: string): Patient | undefined {
+  async getPatientByRegistroOHB(registroOHB: string): Promise<Patient | undefined> {
     const clean = registroOHB.trim().toUpperCase();
-    return this.getPatients().find((p) => p.registroOHB.trim().toUpperCase() === clean);
+    const patients = await this.getPatients();
+    return patients.find((p) => p.registroOHB.trim().toUpperCase() === clean);
   },
 
-  getPatientByCPF(cpf: string): Patient | undefined {
+  async getPatientByCPF(cpf: string): Promise<Patient | undefined> {
     const clean = cpf.replace(/\D/g, '');
-    return this.getPatients().find((p) => p.cpf.replace(/\D/g, '') === clean);
+    const patients = await this.getPatients();
+    return patients.find((p) => p.cpf.replace(/\D/g, '') === clean);
   },
 
   // === SESSÕES OHB ===
-  getSessions(patientId?: string): HyperbaricSession[] {
-    const raw = localStorage.getItem(STORAGE_KEYS.SESSIONS);
-    let list: HyperbaricSession[] = [];
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(INITIAL_SESSIONS));
-      list = INITIAL_SESSIONS;
-    } else {
-      try {
-        list = JSON.parse(raw);
-      } catch {
-        list = INITIAL_SESSIONS;
+  async getSessions(patientId?: string): Promise<HyperbaricSession[]> {
+    try {
+      const url = patientId ? `${API_BASE}/sessions?patientId=${patientId}` : `${API_BASE}/sessions`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const sessions = data.map(mapBackendSessionToFrontend);
+          localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
+          return sessions;
+        }
       }
+    } catch (err) {
+      console.warn('Servidor Quarkus indisponível para sessões:', err);
     }
+    const local = this.getLocalSessions();
     if (patientId) {
-      return list.filter((s) => s.patientId === patientId).sort((a, b) => a.sessionNumber - b.sessionNumber);
+      return local.filter((s) => s.patientId === patientId).sort((a, b) => a.sessionNumber - b.sessionNumber);
     }
-    return list.sort((a, b) => b.data.localeCompare(a.data));
+    return local.sort((a, b) => b.data.localeCompare(a.data));
   },
 
-  saveSession(session: HyperbaricSession): HyperbaricSession {
-    const list = this.getSessions();
-    const idx = list.findIndex((s) => s.id === session.id);
-    if (idx >= 0) {
-      list[idx] = session;
-    } else {
-      list.push({ ...session, id: session.id || `ses-${Date.now()}` });
+  getLocalSessions(): HyperbaricSession[] {
+    const raw = localStorage.getItem(STORAGE_KEYS.SESSIONS);
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(INITIAL_SESSIONS));
+      return INITIAL_SESSIONS;
     }
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return INITIAL_SESSIONS;
+    }
+  },
+
+  async saveSession(session: HyperbaricSession): Promise<HyperbaricSession> {
+    try {
+      const payload: any = { ...session };
+      if (!isValidUUID(payload.id)) delete payload.id;
+      if (session.patientId && isValidUUID(session.patientId)) {
+        payload.patient = { id: session.patientId };
+      }
+      const res = await fetch(`${API_BASE}/sessions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const saved = mapBackendSessionToFrontend(data);
+        const list = this.getLocalSessions();
+        const idx = list.findIndex((s) => s.id === saved.id);
+        if (idx >= 0) list[idx] = saved;
+        else list.push(saved);
+        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(list));
+        return saved;
+      }
+    } catch (err) {
+      console.error('Erro ao salvar sessão no backend:', err);
+    }
+    // Fallback local
+    const list = this.getLocalSessions();
+    const idx = list.findIndex((s) => s.id === session.id);
+    if (idx >= 0) list[idx] = session;
+    else list.push({ ...session, id: session.id || `ses-${Date.now()}` });
     localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(list));
     return session;
   },
 
-  deleteSession(id: string): void {
-    const list = this.getSessions().filter((s) => s.id !== id);
+  async deleteSession(id: string): Promise<void> {
+    try {
+      if (isValidUUID(id)) {
+        await fetch(`${API_BASE}/sessions/${id}`, { method: 'DELETE' });
+      }
+    } catch (err) {
+      console.error('Erro ao deletar sessão:', err);
+    }
+    const list = this.getLocalSessions().filter((s) => s.id !== id);
     localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(list));
   },
 
   // === AGENDAMENTOS ===
-  getAppointments(): Appointment[] {
+  async getAppointments(): Promise<Appointment[]> {
+    try {
+      const res = await fetch(`${API_BASE}/appointments`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const appointments = data.map(mapBackendAppointmentToFrontend);
+          localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
+          return appointments;
+        }
+      }
+    } catch (err) {
+      console.warn('Servidor Quarkus indisponível para agendamentos:', err);
+    }
+    return this.getLocalAppointments();
+  },
+
+  getLocalAppointments(): Appointment[] {
     const raw = localStorage.getItem(STORAGE_KEYS.APPOINTMENTS);
     if (!raw) {
       localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(INITIAL_APPOINTMENTS));
@@ -442,24 +492,52 @@ export const StorageService = {
     }
   },
 
-  saveAppointment(appointment: Appointment): Appointment {
-    const list = this.getAppointments();
-    const idx = list.findIndex((a) => a.id === appointment.id);
-    if (idx >= 0) {
-      list[idx] = appointment;
-    } else {
-      list.push({ ...appointment, id: appointment.id || `app-${Date.now()}` });
+  async saveAppointment(appointment: Appointment): Promise<Appointment> {
+    try {
+      const payload: any = { ...appointment };
+      if (!isValidUUID(payload.id)) delete payload.id;
+      if (appointment.patientId && isValidUUID(appointment.patientId)) {
+        payload.patient = { id: appointment.patientId };
+      }
+      const res = await fetch(`${API_BASE}/appointments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const saved = mapBackendAppointmentToFrontend(data);
+        const list = this.getLocalAppointments();
+        const idx = list.findIndex((a) => a.id === saved.id);
+        if (idx >= 0) list[idx] = saved;
+        else list.push(saved);
+        localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(list));
+        return saved;
+      }
+    } catch (err) {
+      console.error('Erro ao salvar agendamento no backend:', err);
     }
+    const list = this.getLocalAppointments();
+    const idx = list.findIndex((a) => a.id === appointment.id);
+    if (idx >= 0) list[idx] = appointment;
+    else list.push({ ...appointment, id: appointment.id || `app-${Date.now()}` });
     localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(list));
     return appointment;
   },
 
-  deleteAppointment(id: string): void {
-    const list = this.getAppointments().filter((a) => a.id !== id);
+  async deleteAppointment(id: string): Promise<void> {
+    try {
+      if (isValidUUID(id)) {
+        await fetch(`${API_BASE}/appointments/${id}`, { method: 'DELETE' });
+      }
+    } catch (err) {
+      console.error('Erro ao deletar agendamento:', err);
+    }
+    const list = this.getLocalAppointments().filter((a) => a.id !== id);
     localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(list));
   },
 
-  // === DOCUMENTOS DIGITALIZADOS (INDEXED DB) ===
+  // === DOCUMENTOS DIGITALIZADOS (INDEXED DB + BACKEND) ===
   async getAllDigitalizedDocs(): Promise<DigitalizedDocument[]> {
     try {
       const db = await openIndexedDB();
@@ -470,7 +548,6 @@ export const StorageService = {
         request.onsuccess = () => {
           let docs = request.result as DigitalizedDocument[];
           if (!docs || docs.length === 0) {
-            // Seed inicial com documentos vinculados ao OHB-1082 e OHB-1095
             docs = [
               {
                 id: 'doc-1',
@@ -485,40 +562,11 @@ export const StorageService = {
                 observacoes: 'Digitalização da ficha original de admissão prévia e biópsia óssea.',
                 imageUrl: createSampleDocSvg('Prontuário Antigo Digitalizado', 'Registro OHB-1082 | Paciente: Sebastião Pereira dos Santos', '#0284c7'),
                 tamanhoKb: 245,
-              },
-              {
-                id: 'doc-2',
-                registroOHB: 'OHB-1082',
-                cpf: '529.982.247-25',
-                patientId: 'pat-1',
-                patientName: 'Sebastião Pereira dos Santos',
-                titulo: 'Foto de Admissão da Lesão em Antepé',
-                tipo: 'foto_lesao',
-                dataDocumento: '2026-08-15',
-                dataUpload: '2026-08-15T10:15:00Z',
-                observacoes: 'Úlcera plantar antes de iniciar as sessões hiperbáricas.',
-                imageUrl: createSampleDocSvg('Foto da Lesão - Admissão', 'Área: 4.5 x 3.0 cm | Tecido de granulação inicial', '#059669'),
-                tamanhoKb: 380,
-              },
-              {
-                id: 'doc-3',
-                registroOHB: 'OHB-1095',
-                cpf: '153.508.897-56',
-                patientId: 'pat-2',
-                patientName: 'Helena Ribeiro de Castro',
-                titulo: 'Laudo Cirúrgico de Debridamento Hospital Albert Sabin',
-                tipo: 'exame_laudo',
-                dataDocumento: '2026-08-27',
-                dataUpload: '2026-08-28T11:00:00Z',
-                observacoes: 'Encaminhamento com descrição minuciosa da área debridada.',
-                imageUrl: createSampleDocSvg('Laudo Cirúrgico Digitalizado', 'Registro OHB-1095 | Fascite Necrotizante', '#7c3aed'),
-                tamanhoKb: 310,
               }
             ];
-            // Salvar no IndexedDB
             const writeTx = db.transaction(STORE_DOCS, 'readwrite');
             const writeStore = writeTx.objectStore(STORE_DOCS);
-            docs.forEach(d => writeStore.put(d));
+            docs.forEach((d) => writeStore.put(d));
           }
           resolve(docs.sort((a, b) => b.dataUpload.localeCompare(a.dataUpload)));
         };
@@ -568,11 +616,10 @@ export const StorageService = {
     return all.filter((d) => d.cpf.replace(/\D/g, '') === clean);
   },
 
-  // Exportação e Importação completa de Dados em JSON
   async exportFullBackup(): Promise<string> {
-    const patients = this.getPatients();
-    const sessions = this.getSessions();
-    const appointments = this.getAppointments();
+    const patients = await this.getPatients();
+    const sessions = await this.getSessions();
+    const appointments = await this.getAppointments();
     const docs = await this.getAllDigitalizedDocs();
 
     const payload = {
@@ -595,20 +642,23 @@ export const StorageService = {
     if (!parsed.data) throw new Error('Formato de backup inválido.');
 
     if (Array.isArray(parsed.data.patients)) {
-      localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(parsed.data.patients));
+      for (const p of parsed.data.patients) {
+        await this.savePatient(p);
+      }
     }
     if (Array.isArray(parsed.data.sessions)) {
-      localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(parsed.data.sessions));
+      for (const s of parsed.data.sessions) {
+        await this.saveSession(s);
+      }
     }
     if (Array.isArray(parsed.data.appointments)) {
-      localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(parsed.data.appointments));
+      for (const a of parsed.data.appointments) {
+        await this.saveAppointment(a);
+      }
     }
     if (Array.isArray(parsed.data.digitalizedDocuments)) {
-      const db = await openIndexedDB();
-      const tx = db.transaction(STORE_DOCS, 'readwrite');
-      const store = tx.objectStore(STORE_DOCS);
       for (const d of parsed.data.digitalizedDocuments) {
-        store.put(d);
+        await this.saveDigitalizedDoc(d);
       }
     }
 

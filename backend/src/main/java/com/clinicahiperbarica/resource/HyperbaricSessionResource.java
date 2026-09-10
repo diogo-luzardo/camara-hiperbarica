@@ -29,16 +29,16 @@ public class HyperbaricSessionResource {
         }
         if (dataStr != null && !dataStr.trim().isEmpty()) {
             LocalDate date = LocalDate.parse(dataStr.trim());
-            return HyperbaricSession.list("data = ?1 order by hora asc", date);
+            return HyperbaricSession.list("data = ?1 and deletedAt is null order by hora asc", date);
         }
-        return HyperbaricSession.list("order by data desc, sessionNumber desc");
+        return HyperbaricSession.list("deletedAt is null order by data desc, sessionNumber desc");
     }
 
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") UUID id) {
         HyperbaricSession session = HyperbaricSession.findById(id);
-        if (session == null) {
+        if (session == null || session.deletedAt != null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.ok(session).build();
@@ -84,7 +84,7 @@ public class HyperbaricSessionResource {
     @Transactional
     public Response update(@PathParam("id") UUID id, HyperbaricSession updatedData) {
         HyperbaricSession session = HyperbaricSession.findById(id);
-        if (session == null) {
+        if (session == null || session.deletedAt != null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
@@ -131,10 +131,11 @@ public class HyperbaricSessionResource {
     @Path("/{id}")
     @Transactional
     public Response delete(@PathParam("id") UUID id) {
-        boolean deleted = HyperbaricSession.deleteById(id);
-        if (!deleted) {
+        HyperbaricSession session = HyperbaricSession.findById(id);
+        if (session == null || session.deletedAt != null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        session.deletedAt = java.time.LocalDateTime.now();
         return Response.noContent().build();
     }
 }

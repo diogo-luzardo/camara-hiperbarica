@@ -130,18 +130,30 @@ public class HyperbaricSession extends PanacheEntityBase {
     @Column(name = "created_at", nullable = false, updatable = false)
     public LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    public LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    public LocalDateTime deletedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public static List<HyperbaricSession> findByPatientId(UUID patientId) {
-        return list("patient.id = ?1 order by sessionNumber desc", patientId);
+        return list("patient.id = ?1 and deletedAt is null order by sessionNumber desc", patientId);
     }
 
     public static List<HyperbaricSession> findByRegistroOHB(String registroOHB) {
-        return list("registroOHB = ?1 order by sessionNumber desc", registroOHB);
+        return list("registroOHB = ?1 and deletedAt is null order by sessionNumber desc", registroOHB);
     }
 }

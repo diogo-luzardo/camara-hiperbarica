@@ -64,6 +64,9 @@ public class DigitalizedDocument extends PanacheEntityBase {
     @Column(name = "tamanho_kb")
     public Integer tamanhoKb;
 
+    @Column(name = "deleted_at")
+    public LocalDateTime deletedAt;
+
     @PrePersist
     public void prePersist() {
         if (dataUpload == null) {
@@ -72,14 +75,14 @@ public class DigitalizedDocument extends PanacheEntityBase {
     }
 
     public static List<DigitalizedDocument> findByPatientId(UUID patientId) {
-        return list("patient.id = ?1 order by dataUpload desc", patientId);
+        return list("patient.id = ?1 and deletedAt is null order by dataUpload desc", patientId);
     }
 
     public static List<DigitalizedDocument> findByRegistroOHB(String registroOHB) {
-        return list("registroOHB = ?1 order by dataUpload desc", registroOHB);
+        return list("registroOHB = ?1 and deletedAt is null order by dataUpload desc", registroOHB);
     }
 
     public static List<DigitalizedDocument> findBySessionId(UUID sessionId) {
-        return list("session.id = ?1 order by dataUpload desc", sessionId);
+        return list("session.id = ?1 and deletedAt is null order by dataUpload desc", sessionId);
     }
 }

@@ -32,6 +32,7 @@ export default function App() {
   const [printPatient, setPrintPatient] = useState<Patient | null>(null);
 
   const [isArchModalOpen, setIsArchModalOpen] = useState(false);
+  const [autoOpenAppointmentModal, setAutoOpenAppointmentModal] = useState(false);
 
   // Vault jump filter
   const [vaultTargetOHB, setVaultTargetOHB] = useState<string | undefined>(undefined);
@@ -42,25 +43,26 @@ export default function App() {
   }, []);
 
   const loadAllData = async () => {
-    const p = StorageService.getPatients();
-    const s = StorageService.getSessions();
-    const a = StorageService.getAppointments();
-    setPatients(p);
-    setSessions(s);
-    setAppointments(a);
-
     try {
+      const p = await StorageService.getPatients();
+      const s = await StorageService.getSessions();
+      const a = await StorageService.getAppointments();
+      setPatients(p);
+      setSessions(s);
+      setAppointments(a);
+
       const docs = await StorageService.getAllDigitalizedDocs();
       setDocuments(docs);
     } catch (e) {
-      console.error('Erro ao carregar documentos do IndexedDB:', e);
+      console.error('Erro ao carregar dados do sistema:', e);
     }
   };
 
   // Patients Actions
-  const handleSavePatient = (patient: Patient) => {
-    StorageService.savePatient(patient);
-    setPatients(StorageService.getPatients());
+  const handleSavePatient = async (patient: Patient) => {
+    await StorageService.savePatient(patient);
+    const updated = await StorageService.getPatients();
+    setPatients(updated);
     setIsPatientModalOpen(false);
     setEditingPatient(null);
   };
@@ -82,31 +84,40 @@ export default function App() {
     setIsSessionModalOpen(true);
   };
 
-  const handleSaveSession = (session: HyperbaricSession) => {
-    StorageService.saveSession(session);
-    setSessions(StorageService.getSessions());
+  const handleSaveSession = async (session: HyperbaricSession) => {
+    await StorageService.saveSession(session);
+    const updated = await StorageService.getSessions();
+    setSessions(updated);
     setIsSessionModalOpen(false);
     setSessionPatient(null);
     setEditingSession(null);
   };
 
-  const handleDeleteSession = (sessionId: string) => {
+  const handleDeleteSession = async (sessionId: string) => {
     if (confirm('Deseja excluir este registro de sessão hiperbárica?')) {
-      StorageService.deleteSession(sessionId);
-      setSessions(StorageService.getSessions());
+      await StorageService.deleteSession(sessionId);
+      const updated = await StorageService.getSessions();
+      setSessions(updated);
     }
   };
 
-  // Appointments Actions
-  const handleSaveAppointment = (appointment: Appointment) => {
-    StorageService.saveAppointment(appointment);
-    setAppointments(StorageService.getAppointments());
+  const handleOpenNewAppointment = () => {
+    setActiveView('agendamentos');
+    setAutoOpenAppointmentModal(true);
   };
 
-  const handleDeleteAppointment = (appointmentId: string) => {
+  // Appointments Actions
+  const handleSaveAppointment = async (appointment: Appointment) => {
+    await StorageService.saveAppointment(appointment);
+    const updated = await StorageService.getAppointments();
+    setAppointments(updated);
+  };
+
+  const handleDeleteAppointment = async (appointmentId: string) => {
     if (confirm('Deseja cancelar e remover este agendamento?')) {
-      StorageService.deleteAppointment(appointmentId);
-      setAppointments(StorageService.getAppointments());
+      await StorageService.deleteAppointment(appointmentId);
+      const updated = await StorageService.getAppointments();
+      setAppointments(updated);
     }
   };
 
@@ -151,12 +162,10 @@ export default function App() {
             setIsArchModalOpen(true);
           } else {
             setActiveView(view);
-            if (view === 'pacientes') {
-              // Maintain or clear patient depending on user action
-            }
           }
         }}
         onNewPatient={handleOpenNewPatient}
+        onNewAppointment={handleOpenNewAppointment}
         patientCount={patients.length}
         sessionCount={sessions.length}
         appointmentCount={appointments.length}
@@ -204,6 +213,8 @@ export default function App() {
             patients={patients}
             onSaveAppointment={handleSaveAppointment}
             onDeleteAppointment={handleDeleteAppointment}
+            autoOpenNewModal={autoOpenAppointmentModal}
+            onCloseAutoOpenModal={() => setAutoOpenAppointmentModal(false)}
             onSelectPatient={(patientId) => {
               setSelectedPatientId(patientId);
               setActiveView('pacientes');

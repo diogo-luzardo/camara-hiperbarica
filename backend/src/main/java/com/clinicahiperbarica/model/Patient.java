@@ -160,6 +160,9 @@ public class Patient extends PanacheEntityBase {
     @Column(name = "updated_at")
     public LocalDateTime updatedAt;
 
+    @Column(name = "deleted_at")
+    public LocalDateTime deletedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {
@@ -174,10 +177,10 @@ public class Patient extends PanacheEntityBase {
     }
 
     public static Patient findByRegistroOHB(String registroOHB) {
-        return find("registroOHB", registroOHB).firstResult();
+        return find("registroOHB = ?1 and deletedAt is null", registroOHB).firstResult();
     }
 
     public static Patient findByCpf(String cpf) {
-        return find("cpf", cpf).firstResult();
+        return find("cpf = ?1 and deletedAt is null", cpf).firstResult();
     }
 }

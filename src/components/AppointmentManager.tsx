@@ -10,6 +10,8 @@ interface AppointmentManagerProps {
   onDeleteAppointment: (id: string) => void;
   onSelectPatient: (patientId: string) => void;
   onPrintAppointmentSheet: (patientName: string, appointments: Appointment[]) => void;
+  autoOpenNewModal?: boolean;
+  onCloseAutoOpenModal?: () => void;
 }
 
 const DIAS_SEMANA = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -21,11 +23,22 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
   onDeleteAppointment,
   onSelectPatient,
   onPrintAppointmentSheet,
+  autoOpenNewModal,
+  onCloseAutoOpenModal,
 }) => {
   const [filterPeriod, setFilterPeriod] = useState<'todos' | 'hoje' | 'semana'>('semana');
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+
+  React.useEffect(() => {
+    if (autoOpenNewModal) {
+      setIsModalOpen(true);
+      if (onCloseAutoOpenModal) {
+        onCloseAutoOpenModal();
+      }
+    }
+  }, [autoOpenNewModal, onCloseAutoOpenModal]);
 
   // Single Appointment Form State
   const [selectedPatientId, setSelectedPatientId] = useState(patients[0]?.id || '');

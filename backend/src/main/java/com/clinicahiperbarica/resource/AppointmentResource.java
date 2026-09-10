@@ -27,14 +27,14 @@ public class AppointmentResource {
         if (patientId != null) {
             return Appointment.findByPatientId(patientId);
         }
-        return Appointment.list("order by data asc, horario asc");
+        return Appointment.list("deletedAt is null order by data asc, horario asc");
     }
 
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") UUID id) {
         Appointment appointment = Appointment.findById(id);
-        if (appointment == null) {
+        if (appointment == null || appointment.deletedAt != null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.ok(appointment).build();
@@ -75,7 +75,7 @@ public class AppointmentResource {
     @Transactional
     public Response update(@PathParam("id") UUID id, Appointment updatedData) {
         Appointment appointment = Appointment.findById(id);
-        if (appointment == null) {
+        if (appointment == null || appointment.deletedAt != null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
 
@@ -94,10 +94,11 @@ public class AppointmentResource {
     @Path("/{id}")
     @Transactional
     public Response delete(@PathParam("id") UUID id) {
-        boolean deleted = Appointment.deleteById(id);
-        if (!deleted) {
+        Appointment appointment = Appointment.findById(id);
+        if (appointment == null || appointment.deletedAt != null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        appointment.deletedAt = java.time.LocalDateTime.now();
         return Response.noContent().build();
     }
 }

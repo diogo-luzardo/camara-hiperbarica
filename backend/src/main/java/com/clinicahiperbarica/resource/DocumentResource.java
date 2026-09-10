@@ -37,14 +37,14 @@ public class DocumentResource {
         if (registroOHB != null && !registroOHB.trim().isEmpty()) {
             return DigitalizedDocument.findByRegistroOHB(registroOHB.trim());
         }
-        return DigitalizedDocument.list("order by dataUpload desc");
+        return DigitalizedDocument.list("deletedAt is null order by dataUpload desc");
     }
 
     @GET
     @Path("/{id}")
     public Response getById(@PathParam("id") UUID id) {
         DigitalizedDocument document = DigitalizedDocument.findById(id);
-        if (document == null) {
+        if (document == null || document.deletedAt != null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
         return Response.ok(document).build();
@@ -109,10 +109,11 @@ public class DocumentResource {
     @Path("/{id}")
     @Transactional
     public Response delete(@PathParam("id") UUID id) {
-        boolean deleted = DigitalizedDocument.deleteById(id);
-        if (!deleted) {
+        DigitalizedDocument document = DigitalizedDocument.findById(id);
+        if (document == null || document.deletedAt != null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
+        document.deletedAt = java.time.LocalDateTime.now();
         return Response.noContent().build();
     }
 }

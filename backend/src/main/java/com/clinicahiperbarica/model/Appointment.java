@@ -62,18 +62,30 @@ public class Appointment extends PanacheEntityBase {
     @Column(name = "created_at", nullable = false, updatable = false)
     public LocalDateTime createdAt;
 
+    @Column(name = "updated_at")
+    public LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    public LocalDateTime deletedAt;
+
     @PrePersist
     public void prePersist() {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
+        updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        updatedAt = LocalDateTime.now();
     }
 
     public static List<Appointment> findByDate(LocalDate date) {
-        return list("data = ?1 order by horario asc", date);
+        return list("data = ?1 and deletedAt is null order by horario asc", date);
     }
 
     public static List<Appointment> findByPatientId(UUID patientId) {
-        return list("patient.id = ?1 order by data desc, horario desc", patientId);
+        return list("patient.id = ?1 and deletedAt is null order by data desc, horario desc", patientId);
     }
 }
