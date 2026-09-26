@@ -184,9 +184,9 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
       </div>
 
       {/* Grid: Upload Box + Search & Gallery */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 min-[2000px]:grid-cols-5 gap-6">
         {/* COL 1: Upload & Digitalization Panel */}
-        <div className="lg:col-span-1 bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4 h-fit">
+        <div className="lg:col-span-1 xl:col-span-1 bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4 h-fit">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Upload className="w-4 h-4 text-cyan-600" />
@@ -356,7 +356,7 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
         </div>
 
         {/* COL 2 & 3: Gallery & Search Filters */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="lg:col-span-2 xl:col-span-3 min-[2000px]:col-span-4 space-y-4">
           {/* Search bar & Type Filter */}
           <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
             <div className="relative flex-1 min-w-[200px]">
@@ -396,7 +396,7 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 min-[2200px]:grid-cols-5 gap-4">
               {filteredDocs.map((doc) => (
                 <div
                   key={doc.id}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
+import { Navbar, LayoutWidthMode } from './components/Navbar';
 import { PatientList } from './components/PatientList';
 import { PatientDetailView } from './components/PatientDetailView';
 import { AppointmentManager } from './components/AppointmentManager';
@@ -13,11 +13,20 @@ import { Patient, HyperbaricSession, Appointment, DigitalizedDocument } from './
 
 export default function App() {
   const [activeView, setActiveView] = useState<'pacientes' | 'agendamentos' | 'acervo' | 'arquitetura'>('pacientes');
+  const [layoutMode, setLayoutMode] = useState<LayoutWidthMode>(() => {
+    const saved = localStorage.getItem('ohb_layout_mode');
+    return (saved === 'ultrawide' || saved === 'full' || saved === 'compact') ? saved : 'ultrawide';
+  });
   const [patients, setPatients] = useState<Patient[]>([]);
   const [sessions, setSessions] = useState<HyperbaricSession[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [documents, setDocuments] = useState<DigitalizedDocument[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+
+  const handleLayoutModeChange = (mode: LayoutWidthMode) => {
+    setLayoutMode(mode);
+    localStorage.setItem('ohb_layout_mode', mode);
+  };
 
   // Modals state
   const [isPatientModalOpen, setIsPatientModalOpen] = useState(false);
@@ -152,6 +161,13 @@ export default function App() {
       (currentPatient && d.registroOHB === currentPatient.registroOHB)
   );
 
+  const containerClass =
+    layoutMode === 'full'
+      ? 'flex-1 w-full px-4 sm:px-6 lg:px-8 2xl:px-12 py-4 sm:py-6'
+      : layoutMode === 'compact'
+      ? 'flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8'
+      : 'flex-1 max-w-[2100px] w-full mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-4 sm:py-6';
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-800">
       {/* Navigation Bar */}
@@ -170,10 +186,12 @@ export default function App() {
         sessionCount={sessions.length}
         appointmentCount={appointments.length}
         documentCount={documents.length}
+        layoutMode={layoutMode}
+        onLayoutModeChange={handleLayoutModeChange}
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+      <main className={containerClass}>
         {/* VIEW 1: PACIENTES */}
         {activeView === 'pacientes' && (
           <>

@@ -203,7 +203,7 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
       {/* Control Bar: Filters & Search */}
       <div className="bg-white rounded-xl p-3 sm:p-4 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-          <div className="relative w-full max-w-md">
+          <div className="relative w-full max-w-md 2xl:max-w-xl">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
@@ -247,7 +247,104 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
 
       {/* Appointments List / Table */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile View: Cards para Celulares (< md) */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredAppointments.length === 0 ? (
+            <div className="py-10 text-center text-slate-400 p-4">
+              <Calendar className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+              <p className="font-medium text-xs">Nenhum agendamento encontrado.</p>
+            </div>
+          ) : (
+            filteredAppointments.map((app) => {
+              const isToday = app.data === todayStr;
+              return (
+                <div key={app.id} className={`p-4 space-y-3 ${isToday ? 'bg-cyan-50/30' : ''}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <button
+                        onClick={() => onSelectPatient(app.patientId)}
+                        className="font-bold text-slate-900 text-sm hover:text-cyan-700 text-left flex items-center gap-1 group"
+                      >
+                        <span>{app.patientName}</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                      </button>
+                      <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono mt-0.5">
+                        <span className="font-bold text-cyan-800 bg-cyan-100/60 px-1.5 py-0.5 rounded">
+                          {app.registroOHB}
+                        </span>
+                        <span>Sessão #{app.sessaoNumero} ({app.pressaoATA} ATA)</span>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleStatusToggle(app)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0 cursor-pointer ${
+                        app.status === 'confirmado'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : app.status === 'realizado'
+                          ? 'bg-slate-200 text-slate-800'
+                          : 'bg-amber-100 text-amber-800'
+                      }`}
+                      title="Toque para alternar status"
+                    >
+                      {app.status === 'confirmado' ? 'Confirmado' : app.status === 'realizado' ? 'Realizado' : 'Agendado'}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                    <div className="flex items-center gap-1.5 font-semibold text-slate-800">
+                      <Calendar className="w-3.5 h-3.5 text-cyan-600" />
+                      <span>{app.data.split('-').reverse().join('/')} ({app.diaSemana})</span>
+                      {isToday && (
+                        <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-300">
+                          HOJE
+                        </span>
+                      )}
+                    </div>
+                    <span className="font-bold font-mono text-slate-900 bg-white px-2 py-0.5 rounded border border-slate-200">
+                      {app.horario}
+                    </span>
+                  </div>
+
+                  {/* Mobile Actions: Touch-friendly */}
+                  <div className="grid grid-cols-3 gap-2 pt-1">
+                    <button
+                      onClick={() => downloadIcsAppointment(app)}
+                      className="py-2 px-2 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 text-[11px] font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform cursor-pointer"
+                      title="Salvar na Agenda do Celular"
+                    >
+                      <Download className="w-3.5 h-3.5 text-cyan-600" />
+                      <span>Celular</span>
+                    </button>
+
+                    <a
+                      href={getWhatsAppReminderUrl(app)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[11px] font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>WhatsApp</span>
+                    </a>
+
+                    <a
+                      href={getGoogleCalendarUrl(app)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="py-2 px-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-[11px] font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Google</span>
+                    </a>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop View: Tabela Completa (>= md) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-600">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
               <tr>

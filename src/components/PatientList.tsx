@@ -42,55 +42,55 @@ export const PatientList: React.FC<PatientListProps> = ({
   return (
     <div className="space-y-6">
       {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center justify-between">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4 2xl:gap-5">
+        <div className="bg-white rounded-xl p-3 sm:p-4 2xl:p-5 border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500">Pacientes Ativos</p>
-            <p className="text-2xl font-bold font-mono text-slate-900 mt-1">{patients.length}</p>
-            <span className="text-[10px] text-emerald-600 font-medium">Em protocolo de OHB</span>
+            <p className="text-[11px] sm:text-xs font-semibold text-slate-500">Pacientes Ativos</p>
+            <p className="text-xl sm:text-2xl 2xl:text-3xl font-bold font-mono text-slate-900 mt-0.5 sm:mt-1">{patients.length}</p>
+            <span className="text-[9px] sm:text-[10px] 2xl:text-xs text-emerald-600 font-medium">Em protocolo de OHB</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center">
-            <Activity className="w-5 h-5" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 2xl:w-12 2xl:h-12 rounded-xl bg-cyan-50 text-cyan-600 flex items-center justify-center shrink-0">
+            <Activity className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-xl p-3 sm:p-4 2xl:p-5 border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500">Sessões Realizadas</p>
-            <p className="text-2xl font-bold font-mono text-slate-900 mt-1">{sessions.length}</p>
-            <span className="text-[10px] text-cyan-600 font-medium">Pressão 2.4 ATA padrão</span>
+            <p className="text-[11px] sm:text-xs font-semibold text-slate-500">Sessões Realizadas</p>
+            <p className="text-xl sm:text-2xl 2xl:text-3xl font-bold font-mono text-slate-900 mt-0.5 sm:mt-1">{sessions.length}</p>
+            <span className="text-[9px] sm:text-[10px] 2xl:text-xs text-cyan-600 font-medium">Pressão 2.4 ATA padrão</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <HeartPulse className="w-5 h-5" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 2xl:w-12 2xl:h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+            <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-xl p-3 sm:p-4 2xl:p-5 border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500">Agendamentos Ativos</p>
-            <p className="text-2xl font-bold font-mono text-slate-900 mt-1">{appointments.length}</p>
-            <span className="text-[10px] text-purple-600 font-medium">Sincronizados com celular</span>
+            <p className="text-[11px] sm:text-xs font-semibold text-slate-500">Agendamentos Ativos</p>
+            <p className="text-xl sm:text-2xl 2xl:text-3xl font-bold font-mono text-slate-900 mt-0.5 sm:mt-1">{appointments.length}</p>
+            <span className="text-[9px] sm:text-[10px] 2xl:text-xs text-purple-600 font-medium">Sincronizados com celular</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-            <Calendar className="w-5 h-5" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 2xl:w-12 2xl:h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6" />
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs flex items-center justify-between">
+        <div className="bg-white rounded-xl p-3 sm:p-4 2xl:p-5 border border-slate-200 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-slate-500">Segurança da Câmara</p>
-            <p className="text-2xl font-bold text-slate-900 mt-1">100%</p>
-            <span className="text-[10px] text-emerald-600 font-medium">Checklist SAE ativo</span>
+            <p className="text-[11px] sm:text-xs font-semibold text-slate-500">Segurança da Câmara</p>
+            <p className="text-xl sm:text-2xl 2xl:text-3xl font-bold text-slate-900 mt-0.5 sm:mt-1">100%</p>
+            <span className="text-[9px] sm:text-[10px] 2xl:text-xs text-emerald-600 font-medium">Checklist SAE ativo</span>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <ShieldCheck className="w-5 h-5" />
+          <div className="w-8 h-8 sm:w-10 sm:h-10 2xl:w-12 2xl:h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6" />
           </div>
         </div>
       </div>
 
       {/* Control Bar: Search & Action */}
       <div className="bg-white rounded-xl p-3 sm:p-4 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="relative flex-1 min-w-[260px] max-w-lg">
+        <div className="relative flex-1 min-w-[260px] max-w-lg 2xl:max-w-2xl">
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -123,7 +123,7 @@ export const PatientList: React.FC<PatientListProps> = ({
 
           <button
             onClick={onNewPatient}
-            className="px-3.5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
           >
             <UserPlus className="w-4 h-4" />
             <span>Cadastrar Paciente</span>
@@ -132,7 +132,7 @@ export const PatientList: React.FC<PatientListProps> = ({
       </div>
 
       {/* Patient Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 min-[2200px]:grid-cols-6 gap-4 2xl:gap-5">
         {filteredPatients.length === 0 ? (
           <div className="col-span-full bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-xs">
             <FileText className="w-12 h-12 text-slate-300 mx-auto mb-2" />

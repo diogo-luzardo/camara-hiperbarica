@@ -21,7 +21,7 @@ public class HyperbaricSession extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.UUID)
     public UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     public Patient patient;

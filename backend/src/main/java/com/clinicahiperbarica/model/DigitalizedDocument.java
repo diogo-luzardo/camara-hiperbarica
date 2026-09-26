@@ -21,12 +21,12 @@ public class DigitalizedDocument extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.UUID)
     public UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "patient_id", nullable = false)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     public Patient patient;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "session_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     public HyperbaricSession session;

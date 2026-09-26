@@ -85,25 +85,25 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl overflow-hidden flex flex-col max-h-[96vh] sm:max-h-[92vh]">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold">
-              <HeartPulse className="w-5 h-5" />
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold shrink-0">
+              <HeartPulse className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold font-['Outfit']">
-                  {initialSession ? 'Editar Sessão OHB' : 'Registrar Sessão de Oxigenoterapia Hiperbárica'}
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h2 className="text-sm sm:text-base font-bold font-['Outfit']">
+                  {initialSession ? 'Editar Sessão OHB' : 'Registrar Sessão OHB'}
                 </h2>
                 <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500 text-slate-950">
                   Sessão #{formData.sessionNumber}
                 </span>
               </div>
-              <p className="text-xs text-slate-300">
-                {patient.nome} • <span className="font-mono text-cyan-300 font-bold">{patient.registroOHB}</span> • {patient.diagnostico}
+              <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-1">
+                {patient.nome} • <span className="font-mono text-cyan-300 font-bold">{patient.registroOHB}</span>
               </p>
             </div>
           </div>
@@ -113,7 +113,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
         </div>
 
         {/* Content Form */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-6">
           {/* Section 1: Dados da Sessão e Parâmetros Hiperbáricos */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">

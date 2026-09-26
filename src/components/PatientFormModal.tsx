@@ -177,23 +177,23 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[96vh] sm:max-h-[92vh]">
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold">
-              <User className="w-5 h-5" />
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold shrink-0">
+              <User className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <h2 className="text-base sm:text-lg font-bold font-['Outfit'] flex items-center gap-2">
-                {initialPatient ? 'Editar Prontuário do Paciente' : 'Novo Cadastro & Ficha de Evolução'}
-                <span className="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/40">
+              <h2 className="text-sm sm:text-lg font-bold font-['Outfit'] flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span>{initialPatient ? 'Editar Prontuário' : 'Novo Cadastro Clínico'}</span>
+                <span className="text-[11px] sm:text-xs px-2 sm:px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 font-mono border border-cyan-500/40">
                   {formData.registroOHB || 'REGISTRO OHB'}
                 </span>
               </h2>
-              <p className="text-xs text-slate-300">
-                Folha de Tratamento, Admissão e Evolução Médica (Conforme modelo físico da clínica)
+              <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-1">
+                Folha de Tratamento, Admissão e Evolução Médica
               </p>
             </div>
           </div>
@@ -206,62 +206,62 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex border-b border-slate-200 bg-slate-50 px-3 sm:px-6 pt-2.5 sm:pt-3 gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setActiveTab('dados')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'dados'
                 ? 'bg-white border-cyan-600 text-cyan-700 shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <User className="w-4 h-4" />
-            <span>1. Dados Pessoais & Convênio</span>
+            <span>1. Dados Pessoais</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('endereco')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'endereco'
                 ? 'bg-white border-cyan-600 text-cyan-700 shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <MapPin className="w-4 h-4" />
-            <span>2. Endereço (ViaCEP) & Contato</span>
+            <span>2. Endereço & Contato</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('clinico')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'clinico'
                 ? 'bg-white border-cyan-600 text-cyan-700 shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <Stethoscope className="w-4 h-4" />
-            <span>3. Avaliação Clínica & Lesão</span>
+            <span>3. Avaliação Clínica</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('ohb')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'ohb'
                 ? 'bg-white border-cyan-600 text-cyan-700 shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <HeartPulse className="w-4 h-4" />
-            <span>4. Protocolo OHB & Segurança</span>
+            <span>4. Protocolo OHB</span>
           </button>
         </div>
 
         {/* Modal Form Content */}
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto flex-1 space-y-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-6">
           {/* TAB 1: DADOS PESSOAIS & CONVÊNIO */}
           {activeTab === 'dados' && (
             <div className="space-y-4">

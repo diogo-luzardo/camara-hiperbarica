@@ -257,7 +257,68 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
             </div>
           ) : (
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
+              {/* Mobile View: Cards de Sessões (< md) */}
+              <div className="md:hidden divide-y divide-slate-100">
+                {sessions.map((ses) => (
+                  <div key={ses.id} className="p-4 space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-xs bg-cyan-500 text-slate-950 px-2 py-0.5 rounded-full">
+                          #{ses.sessionNumber}
+                        </span>
+                        <span className="font-bold text-slate-900 text-xs">
+                          {ses.data.split('-').reverse().join('/')} às {ses.hora}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-bold text-cyan-800 text-xs bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                          {ses.ata} ATA
+                        </span>
+                        <button
+                          onClick={() => onDeleteSession(ses.id)}
+                          className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                          title="Excluir Registro"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Vitals Grid */}
+                    <div className="grid grid-cols-4 gap-2 text-center bg-slate-50 p-2 rounded-xl border border-slate-100 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">P.A.</span>
+                        <span className="font-mono font-bold text-slate-800">{ses.pa}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Glicemia</span>
+                        <span className="font-mono font-bold text-slate-800">{ses.glicemia}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Temp.</span>
+                        <span className="font-mono font-bold text-slate-800">{ses.temperatura ? `${ses.temperatura}°C` : '-'}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block">Duração</span>
+                        <span className="font-mono font-bold text-slate-800">{ses.duracaoMinutos}m</span>
+                      </div>
+                    </div>
+
+                    {ses.intercorrencias && (
+                      <p className="text-xs text-slate-600 italic bg-amber-50/50 p-2 rounded-lg border border-amber-100">
+                        {ses.intercorrencias}
+                      </p>
+                    )}
+
+                    <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                      <span>Médico: {ses.medicoResponsavel || 'Dr. Carlos Henrique'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop View: Full Table (>= md) */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs text-slate-600">
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
                     <tr>
@@ -339,7 +400,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
             </p>
           </div>
 
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
             {sessions.map((ses) => (
               <div key={ses.id} className="bg-white rounded-2xl border border-slate-200 shadow-xs p-5 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -458,7 +519,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {documents.map((doc) => (
                 <div key={doc.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-shadow">
                   <div className="aspect-4/3 bg-slate-100 relative">
@@ -515,7 +576,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
               {appointments.map((app) => (
                 <div key={app.id} className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
                   <div className="flex items-center justify-between">
@@ -571,8 +632,8 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
       {/* TAB CONTENT 5: ANAMNESE & ENDEREÇO COMPLETO */}
       {activeTab === 'dados' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Dados Pessoais & Endereço */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* Card 1: Dados Pessoais & Endereço */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-xs">
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
               <MapPin className="w-4 h-4 text-cyan-600" />
@@ -612,6 +673,10 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                 <span className="text-slate-400 block text-[11px]">E-mail:</span>
                 <span className="font-semibold">{patient.email || 'Não informado'}</span>
               </div>
+              <div className="pt-2 border-t border-slate-100">
+                <span className="text-slate-400 block text-[11px]">Nome da Mãe:</span>
+                <span className="font-semibold">{patient.nomeMae || 'Não informado'}</span>
+              </div>
               <div>
                 <span className="text-slate-400 block text-[11px]">Acompanhante:</span>
                 <span className="font-semibold">{patient.acompanhante || 'Próprio paciente'}</span>
@@ -619,11 +684,11 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
             </div>
           </div>
 
-          {/* Dados Clínicos & Anamnese */}
+          {/* Card 2: História Médica & Descrição da Ferida */}
           <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-xs">
             <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
               <Stethoscope className="w-4 h-4 text-cyan-600" />
-              História Médica & Exame Físico
+              História Médica & Lesão
             </h3>
 
             <div className="text-xs space-y-3 text-slate-700">
@@ -635,13 +700,18 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[11px]">Descrição da Lesão:</span>
+                <span className="text-slate-400 block text-[11px]">Descrição da Ferida / Lesão:</span>
                 <p className="font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-100 mt-0.5">
                   {patient.descricaoLesao || 'Não informada.'}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div>
+                <span className="text-slate-400 block text-[11px]">Local dos Curativos:</span>
+                <p className="font-medium text-slate-800">{patient.localCurativos || 'Ambulatorial / Domiciliar'}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
                 <div>
                   <span className="text-slate-400 block text-[11px]">Avaliação da Dor (EVA):</span>
                   <span className="font-bold text-cyan-800 text-sm">{patient.avaliacaoDor} / 10</span>
@@ -653,13 +723,73 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[11px]">Otoscopia Prévia:</span>
-                <span className="font-semibold">{patient.otoscopia}</span>
+                <span className="text-slate-400 block text-[11px]">Grau de Entendimento do Paciente:</span>
+                <p className="font-medium text-slate-800">{patient.grauEntendimento || 'Adequado'}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Segurança Pré-Câmara & Exame Físico */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4 shadow-xs">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              Segurança Pré-Câmara & Físico
+            </h3>
+
+            <div className="text-xs space-y-3 text-slate-700">
+              <div>
+                <span className="text-slate-400 block text-[11px]">Exame Físico Resumido:</span>
+                <p className="font-medium bg-slate-50 p-2.5 rounded-lg border border-slate-100 mt-0.5">
+                  {patient.exameFisicoResumido || 'BEG, corado, hidratado.'}
+                </p>
               </div>
 
               <div>
-                <span className="text-slate-400 block text-[11px]">Medicamentos em Uso:</span>
-                <span className="font-semibold">{patient.medicamentosEmUso || 'Nenhum'}</span>
+                <span className="text-slate-400 block text-[11px]">Otoscopia Prévia:</span>
+                <p className="font-semibold text-cyan-900 bg-cyan-50/50 p-2 rounded-lg border border-cyan-100">
+                  {patient.otoscopia || 'Membrana timpânica íntegra bilateralmente.'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Próteses:</span>
+                  <span className="font-semibold">{patient.proteses || 'Nega'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Ventilação:</span>
+                  <span className="font-semibold">{patient.ventilacao || 'Espontânea em ar ambiente'}</span>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100">
+                <span className="text-slate-400 block text-[11px]">Alergias Relatadas:</span>
+                <span className={`font-semibold ${patient.alergias && !patient.alergias.toLowerCase().includes('nega') ? 'text-rose-700 font-bold' : 'text-slate-700'}`}>
+                  {patient.alergias || 'Nega alergias conhecidas'}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-slate-400 block text-[11px]">Vícios / Hábitos:</span>
+                <span className="font-semibold">{patient.vicios || 'Nenhum relatado'}</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100">
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Procedência:</span>
+                  <span className="font-semibold">{patient.procedencia || 'Ambulatório'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block text-[11px]">Remoção:</span>
+                  <span className="font-semibold">{patient.remocao || 'Própria'}</span>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-slate-400 block text-[11px]">Medicamentos em Uso Contínuo:</span>
+                <p className="font-medium text-slate-800 bg-slate-50 p-2 rounded-lg border border-slate-100">
+                  {patient.medicamentosEmUso || 'Nenhum'}
+                </p>
               </div>
             </div>
           </div>
