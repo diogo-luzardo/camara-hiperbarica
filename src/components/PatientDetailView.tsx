@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ArrowLeft, User, Phone, MapPin, HeartPulse, ShieldCheck, FolderArchive, Calendar, Plus, Printer, Edit, Trash2, Clock, AlertCircle, FileText, CheckCircle2, ChevronRight, Stethoscope } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, HeartPulse, ShieldCheck, FolderArchive, Calendar, Plus, Printer, Edit, Trash2, Clock, AlertCircle, FileText, CheckCircle2, ChevronRight, Stethoscope, Lock } from 'lucide-react';
 import { Patient, HyperbaricSession, Appointment, DigitalizedDocument } from '../types';
 import { downloadIcsAppointment, getGoogleCalendarUrl, getWhatsAppReminderUrl } from '../utils/calendarExport';
+import { CoverageBadge } from './CoverageBadge';
 
 interface PatientDetailViewProps {
   patient: Patient;
@@ -96,9 +97,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-mono text-slate-600 bg-slate-100 border border-slate-200">
                   {patient.registroHospitalar || 'Sem RH'}
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-200">
-                  {patient.convenio || 'Particular'} - {patient.plano || 'Padrão'}
-                </span>
+                <CoverageBadge convenio={patient.convenio} plano={patient.plano} size="sm" showPlano={true} />
               </div>
 
               <h1 className="text-xl sm:text-2xl font-bold font-['Outfit'] text-slate-900">
@@ -266,6 +265,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                         <span className="font-mono font-bold text-xs bg-cyan-500 text-slate-950 px-2 py-0.5 rounded-full">
                           #{ses.sessionNumber}
                         </span>
+                        <CoverageBadge convenio={ses.convenio || patient.convenio} size="xs" />
                         <span className="font-bold text-slate-900 text-xs">
                           {ses.data.split('-').reverse().join('/')} às {ses.hora}
                         </span>
@@ -300,7 +300,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block">Duração</span>
-                        <span className="font-mono font-bold text-slate-800">{ses.duracaoMinutos}m</span>
+                        <span className="font-mono font-bold text-slate-800">{ses.duracaoMinutos || 150}m</span>
                       </div>
                     </div>
 
@@ -339,7 +339,10 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                     {sessions.map((ses) => (
                       <tr key={ses.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-3 px-3 font-bold font-mono text-cyan-900">
-                          #{ses.sessionNumber}
+                          <div className="flex items-center gap-1.5">
+                            <span>#{ses.sessionNumber}</span>
+                            <CoverageBadge convenio={ses.convenio || patient.convenio} size="xs" />
+                          </div>
                         </td>
                         <td className="py-3 px-3 whitespace-nowrap text-slate-900 font-semibold">
                           {ses.data.split('-').reverse().join('/')}
@@ -359,8 +362,10 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                         <td className="py-3 px-3 text-slate-700">
                           {ses.temperatura ? `${ses.temperatura}°C` : '-'}
                         </td>
-                        <td className="py-3 px-3 text-slate-700">
-                          {ses.duracaoMinutos} min
+                        <td className="py-3 px-3 text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 font-mono font-semibold text-slate-800">
+                            {ses.duracaoMinutos || 150} min
+                          </span>
                         </td>
                         <td className="py-3 px-4 text-slate-700 max-w-xs">
                           <p className="line-clamp-2">{ses.intercorrencias || 'Sem intercorrências.'}</p>
@@ -581,11 +586,14 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                 <div key={app.id} className="bg-white rounded-xl border border-slate-200 p-4 shadow-xs space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-bold text-slate-900 text-sm">
-                        Sessão #{app.sessaoNumero} ({app.pressaoATA} ATA)
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-900 text-sm">
+                          Sessão #{app.sessaoNumero} ({app.pressaoATA} ATA)
+                        </span>
+                        <CoverageBadge convenio={app.convenio || patient.convenio} size="xs" />
+                      </div>
                       <p className="text-xs text-slate-500">
-                        {app.data.split('-').reverse().join('/')} ({app.diaSemana}) às {app.horario}
+                        {app.data.split('-').reverse().join('/')} ({app.diaSemana}) às {app.horario} • 150 min
                       </p>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-cyan-100 text-cyan-800">

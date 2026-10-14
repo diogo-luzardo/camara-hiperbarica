@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, UserPlus, FileText, ChevronRight, Activity, Calendar, ShieldCheck, HeartPulse, Stethoscope, AlertCircle } from 'lucide-react';
 import { Patient, HyperbaricSession, Appointment } from '../types';
+import { CoverageBadge } from './CoverageBadge';
 
 interface PatientListProps {
   patients: Patient[];
@@ -161,9 +162,7 @@ export const PatientList: React.FC<PatientListProps> = ({
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500 text-slate-950">
                       {patient.registroOHB}
                     </span>
-                    <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
-                      {patient.convenio || 'Particular'}
-                    </span>
+                    <CoverageBadge convenio={patient.convenio} plano={patient.plano} size="xs" />
                   </div>
 
                   {/* Patient Name & Details */}

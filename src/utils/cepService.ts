@@ -59,3 +59,52 @@ export async function fetchAddressByCep(cep: string): Promise<ViaCepResult | nul
     throw new Error('Erro inesperado ao consultar CEP.');
   }
 }
+
+export async function searchAddressByStreet(
+  uf: string,
+  cidade: string,
+  logradouro: string
+): Promise<ViaCepResult[]> {
+  const cleanUf = uf.trim().toUpperCase();
+  const cleanCity = cidade.trim();
+  const cleanStreet = logradouro.trim();
+
+  if (cleanUf.length !== 2) {
+    throw new Error('Informe o estado (UF) com 2 letras (ex: SP).');
+  }
+  if (cleanCity.length < 3) {
+    throw new Error('O nome da cidade deve ter pelo menos 3 caracteres.');
+  }
+  if (cleanStreet.length < 3) {
+    throw new Error('O nome do logradouro/rua deve ter pelo menos 3 caracteres.');
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    const url = `https://viacep.com.br/ws/${cleanUf}/${encodeURIComponent(cleanCity)}/${encodeURIComponent(cleanStreet)}/json/`;
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error(`Falha ao buscar logradouro (HTTP ${response.status})`);
+    }
+
+    const data = await response.json();
+    if (!Array.isArray(data)) {
+      return [];
+    }
+
+    return data;
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      if (err.name === 'AbortError') {
+        throw new Error('Tempo limite esgotado ao buscar logradouro.');
+      }
+      throw err;
+    }
+    throw new Error('Erro inesperado ao buscar endereços por nome de rua.');
+  }
+}
+

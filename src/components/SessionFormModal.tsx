@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, HeartPulse, ShieldCheck, Stethoscope, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { X, HeartPulse, ShieldCheck, Stethoscope, AlertTriangle, CheckCircle, Clock, Lock } from 'lucide-react';
 import { HyperbaricSession, Patient } from '../types';
+import { CoverageBadge, isParticular } from './CoverageBadge';
 
 interface SessionFormModalProps {
   isOpen: boolean;
@@ -23,13 +24,15 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     patientId: patient.id,
     registroOHB: patient.registroOHB,
     sessionNumber: nextSessionNumber,
+    convenio: patient.convenio,
+    modalidade: isParticular(patient.convenio) ? 'particular' : 'convenio',
     data: new Date().toISOString().split('T')[0],
     hora: new Date().toTimeString().slice(0, 5),
     ata: 2.4,
     pa: '120/80',
     glicemia: '120',
     temperatura: '36.4',
-    duracaoMinutos: 90,
+    duracaoMinutos: 150, // Fixo no protocolo padrão OHB: 150 minutos
     tratamentoMedicacao: 'Protocolo de O2 a 100% sob pressão hiperbárica.',
     intercorrencias: 'Paciente tolerou bem a compressão e descompressão, sem queixas de barotrauma de ouvido.',
     medicoResponsavel: 'Dr. Carlos Henrique Esteves (CRM 62.139)',
@@ -60,13 +63,21 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
 
   useEffect(() => {
     if (initialSession) {
-      setFormData(initialSession);
+      setFormData({
+        ...initialSession,
+        duracaoMinutos: 150, // Travado em 150 minutos pelo protocolo
+        convenio: initialSession.convenio || patient.convenio,
+        modalidade: initialSession.modalidade || (isParticular(patient.convenio) ? 'particular' : 'convenio'),
+      });
     } else {
       setFormData((prev) => ({
         ...prev,
         patientId: patient.id,
         registroOHB: patient.registroOHB,
+        convenio: patient.convenio,
+        modalidade: isParticular(patient.convenio) ? 'particular' : 'convenio',
         sessionNumber: nextSessionNumber,
+        duracaoMinutos: 150,
         data: new Date().toISOString().split('T')[0],
         hora: new Date().toTimeString().slice(0, 5),
       }));
@@ -80,7 +91,12 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData as HyperbaricSession);
+    onSave({
+      ...(formData as HyperbaricSession),
+      duracaoMinutos: 150, // Garante que a duração fica fixada em 150 min
+      convenio: patient.convenio,
+      modalidade: isParticular(patient.convenio) ? 'particular' : 'convenio',
+    });
     onClose();
   };
 
@@ -101,6 +117,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
                 <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500 text-slate-950">
                   Sessão #{formData.sessionNumber}
                 </span>
+                <CoverageBadge convenio={patient.convenio} plano={patient.plano} size="xs" />
               </div>
               <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-1">
                 {patient.nome} • <span className="font-mono text-cyan-300 font-bold">{patient.registroOHB}</span>
@@ -223,13 +240,23 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Duração (minutos)</label>
-                <input
-                  type="number"
-                  value={formData.duracaoMinutos || 90}
-                  onChange={(e) => setFormData({ ...formData, duracaoMinutos: parseInt(e.target.value, 10) || 90 })}
-                  className="w-full text-xs font-semibold px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-semibold text-slate-700">Duração</label>
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-100/90 border border-amber-200 px-1.5 py-0.5 rounded">
+                    <Lock className="w-2.5 h-2.5" /> Fixo (150m)
+                  </span>
+                </div>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value="150 min (Protocolo Fixo)"
+                    readOnly
+                    disabled
+                    className="w-full text-xs font-bold px-3 py-2 rounded-lg border border-slate-300 bg-slate-100 text-slate-700 cursor-not-allowed select-none pr-8"
+                  />
+                  <Lock className="w-3.5 h-3.5 text-slate-400 absolute right-3 top-2.5 pointer-events-none" />
+                </div>
+                <p className="text-[10px] text-slate-500 mt-0.5">Travado pelo protocolo OHB (150 min).</p>
               </div>
             </div>
           </div>

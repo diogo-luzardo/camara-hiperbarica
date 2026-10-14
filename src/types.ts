@@ -63,7 +63,9 @@ export interface HyperbaricSession {
   pa: string; // Ex: 120/80 mmHg
   glicemia: string; // mg/dL
   temperatura: string; // °C
-  duracaoMinutos: number; // 90 min
+  duracaoMinutos: number; // 150 min (Protocolo padrão OHB)
+  modalidade?: 'particular' | 'convenio';
+  convenio?: string;
   tratamentoMedicacao: string;
   intercorrencias: string;
   medicoResponsavel: string;
@@ -98,6 +100,9 @@ export interface Appointment {
   patientName: string;
   registroOHB: string;
   cpf: string;
+  convenio?: string;
+  modalidade?: 'particular' | 'convenio';
+  duracaoMinutos?: number; // 150 min padrão
   data: string; // YYYY-MM-DD
   horario: string; // HH:mm
   diaSemana: string;
