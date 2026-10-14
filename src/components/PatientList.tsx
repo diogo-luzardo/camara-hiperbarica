@@ -13,9 +13,20 @@ import {
   HeartPulse,
   Stethoscope,
   AlertCircle,
+  X,
 } from 'lucide-react';
 import { Patient, HyperbaricSession, Appointment } from '../types';
 import { CoverageBadge } from './CoverageBadge';
+
+// Normaliza texto removendo acentos e convertendo para minúsculas (ex: "Antônio" -> "antonio")
+function normalizeText(str?: string): string {
+  if (!str) return '';
+  return str
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
 
 interface PatientListProps {
   patients: Patient[];
@@ -51,33 +62,69 @@ export const PatientList: React.FC<PatientListProps> = ({
   }, [patients]);
 
   const filteredPatients = useMemo(() => {
+    const rawSearch = searchTerm.trim();
+    const normalizedTerm = normalizeText(rawSearch);
+    const rawDigits = rawSearch.replace(/\D/g, '');
+
     return patients.filter((patient) => {
-      const cleanSearch = searchTerm.toLowerCase().trim();
-      const matchSearch =
-        !cleanSearch ||
-        patient.nome.toLowerCase().includes(cleanSearch) ||
-        patient.registroOHB.toLowerCase().includes(cleanSearch) ||
-        patient.cpf.replace(/\D/g, '').includes(cleanSearch.replace(/\D/g, '')) ||
-        patient.diagnostico.toLowerCase().includes(cleanSearch) ||
-        patient.cid10.toLowerCase().includes(cleanSearch) ||
-        (patient.endereco && patient.endereco.toLowerCase().includes(cleanSearch)) ||
-        (patient.bairro && patient.bairro.toLowerCase().includes(cleanSearch)) ||
-        (patient.convenio && patient.convenio.toLowerCase().includes(cleanSearch));
-
-      const matchConvenio =
-        selectedConvenio === 'todos' ||
-        (selectedConvenio === 'Particular'
-          ? patient.convenio.toLowerCase().includes('particular')
-          : patient.convenio === selectedConvenio);
-
+      // 1. Filtro da Aba de Status (Todos / Em Tratamento / Alta Clínica)
       const patientSessions = sessions.filter((s) => s.patientId === patient.id);
-      const isCompleted = patientSessions.length >= patient.numeroTratamentosPrevisto;
+      const isCompleted = patientSessions.length >= (patient.numeroTratamentosPrevisto || 20);
 
-      if (!matchSearch || !matchConvenio) return false;
+      if (selectedFilter === 'em_tratamento' && isCompleted) return false;
+      if (selectedFilter === 'alta' && !isCompleted) return false;
 
-      if (selectedFilter === 'em_tratamento') return !isCompleted;
-      if (selectedFilter === 'alta') return isCompleted;
-      return true;
+      // 2. Filtro por Convênio
+      if (selectedConvenio === 'Particular') {
+        if (!patient.convenio.toLowerCase().includes('particular')) return false;
+      } else if (selectedConvenio !== 'todos') {
+        if (patient.convenio !== selectedConvenio) return false;
+      }
+
+      // 3. Se a busca estiver vazia, passa direto
+      if (!rawSearch) return true;
+
+      // 4. Busca por Dígitos de Documentos (CPF, RG, Registro OHB, Registro Hospitalar, Telefone, CEP)
+      let matchDoc = false;
+      if (rawDigits.length > 0) {
+        const rawCpf = (patient.cpf || '').replace(/\D/g, '');
+        const rawRg = (patient.rg || '').replace(/\D/g, '');
+        const rawOhb = (patient.registroOHB || '').replace(/\D/g, '');
+        const rawRh = (patient.registroHospitalar || '').replace(/\D/g, '');
+        const rawTel = (patient.telefonesFixos || '').replace(/\D/g, '');
+        const rawCel = (patient.celular || '').replace(/\D/g, '');
+        const rawCep = (patient.cep || '').replace(/\D/g, '');
+        const rawMatricula = (patient.matriculaConvenio || '').replace(/\D/g, '');
+
+        matchDoc =
+          rawCpf.includes(rawDigits) ||
+          rawRg.includes(rawDigits) ||
+          rawOhb.includes(rawDigits) ||
+          rawRh.includes(rawDigits) ||
+          rawTel.includes(rawDigits) ||
+          rawCel.includes(rawDigits) ||
+          rawCep.includes(rawDigits) ||
+          rawMatricula.includes(rawDigits);
+      }
+
+      // 5. Busca Textual Insensível a Acentos e Maiúsculas (LIKE '%termo%')
+      const matchText =
+        normalizeText(patient.nome).includes(normalizedTerm) ||
+        normalizeText(patient.registroOHB).includes(normalizedTerm) ||
+        normalizeText(patient.registroHospitalar).includes(normalizedTerm) ||
+        normalizeText(patient.cpf).includes(normalizedTerm) ||
+        normalizeText(patient.rg).includes(normalizedTerm) ||
+        normalizeText(patient.diagnostico).includes(normalizedTerm) ||
+        normalizeText(patient.cid10).includes(normalizedTerm) ||
+        normalizeText(patient.convenio).includes(normalizedTerm) ||
+        normalizeText(patient.plano).includes(normalizedTerm) ||
+        normalizeText(patient.endereco).includes(normalizedTerm) ||
+        normalizeText(patient.bairro).includes(normalizedTerm) ||
+        normalizeText(patient.municipio).includes(normalizedTerm) ||
+        normalizeText(patient.medicoIndicou).includes(normalizedTerm) ||
+        normalizeText(patient.profissao).includes(normalizedTerm);
+
+      return matchDoc || matchText;
     });
   }, [patients, sessions, searchTerm, selectedConvenio, selectedFilter]);
 
@@ -194,14 +241,23 @@ export const PatientList: React.FC<PatientListProps> = ({
       {/* Control Bar: Search & Action */}
       <div className="bg-white rounded-xl p-3 sm:p-4 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
         <div className="relative flex-1 min-w-[260px] max-w-lg 2xl:max-w-2xl">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Pesquisar por Registro OHB, CPF, Nome, CID-10, Rua ou Bairro..."
-            className="w-full text-xs pl-9 pr-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+            placeholder="Pesquisar por Registro OHB, Nome (ex: Antonio), CPF, CID-10, Rua..."
+            className="w-full text-xs pl-9 pr-9 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all"
           />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Limpar busca"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
