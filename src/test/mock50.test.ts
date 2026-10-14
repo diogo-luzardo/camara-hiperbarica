@@ -78,4 +78,20 @@ describe('Dataset de 50 Pacientes Mock e Integridade dos Filtros', () => {
     const ruaPitombeiras = patients.filter((p) => p.endereco.toLowerCase().includes('pitombeiras'));
     expect(ruaPitombeiras.length).toBeGreaterThan(0);
   });
+
+  it('deve fatiar corretamente 50 pacientes em páginas de 12 itens', () => {
+    const patients = StorageService.getLocalPatients();
+    const pageSize = 12;
+    const totalPages = Math.ceil(patients.length / pageSize);
+    expect(totalPages).toBe(5); // 50 / 12 = 4.16 -> 5 páginas
+
+    // Página 1 (12 itens)
+    const page1 = patients.slice(0, 12);
+    expect(page1.length).toBe(12);
+    expect(page1[0].registroOHB).toBe('OHB-1082');
+
+    // Página 5 (última página, 2 itens restantes: 50 - 48 = 2)
+    const page5 = patients.slice(48, 60);
+    expect(page5.length).toBe(2);
+  });
 });
