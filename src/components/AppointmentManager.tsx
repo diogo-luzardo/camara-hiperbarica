@@ -226,27 +226,33 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-medium">
+          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold gap-1">
             <button
               onClick={() => setFilterPeriod('hoje')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                filterPeriod === 'hoje' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600'
+              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+                filterPeriod === 'hoje'
+                  ? 'bg-white text-cyan-950 shadow-xs font-extrabold ring-1 ring-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
               Hoje
             </button>
             <button
               onClick={() => setFilterPeriod('semana')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                filterPeriod === 'semana' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600'
+              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+                filterPeriod === 'semana'
+                  ? 'bg-white text-cyan-950 shadow-xs font-extrabold ring-1 ring-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
               Próximos 7 dias
             </button>
             <button
               onClick={() => setFilterPeriod('todos')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                filterPeriod === 'todos' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600'
+              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+                filterPeriod === 'todos'
+                  ? 'bg-white text-cyan-950 shadow-xs font-extrabold ring-1 ring-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
               Todos ({appointments.length})
@@ -274,10 +280,11 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => onSelectPatient(app.patientId)}
-                          className="font-bold text-slate-900 text-sm hover:text-cyan-700 text-left flex items-center gap-1 group"
+                          className="font-bold text-slate-900 text-sm hover:text-cyan-800 hover:bg-cyan-100/70 px-2 py-0.5 -mx-2 rounded-lg text-left flex items-center gap-1 group transition-all cursor-pointer"
+                          title={`Abrir prontuário completo de ${app.patientName}`}
                         >
-                          <span>{app.patientName}</span>
-                          <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="group-hover:underline decoration-cyan-400 decoration-2 underline-offset-2">{app.patientName}</span>
+                          <ChevronRight className="w-3.5 h-3.5 text-cyan-600 transition-transform group-hover:translate-x-0.5" />
                         </button>
                         <CoverageBadge convenio={app.convenio || patients.find(p => p.id === app.patientId)?.convenio} size="xs" />
                       </div>
@@ -396,10 +403,11 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => onSelectPatient(app.patientId)}
-                            className="font-bold text-slate-900 hover:text-cyan-700 text-xs flex items-center gap-1 group text-left"
+                            className="font-bold text-slate-900 hover:text-cyan-800 hover:bg-cyan-100/70 px-2 py-1 -mx-2 rounded-lg text-xs flex items-center gap-1 group text-left transition-all border border-transparent hover:border-cyan-300 shadow-2xs hover:shadow-xs cursor-pointer"
+                            title={`Abrir prontuário de ${app.patientName}`}
                           >
-                            <span>{app.patientName}</span>
-                            <ChevronRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <span className="group-hover:underline decoration-cyan-400 decoration-2 underline-offset-2">{app.patientName}</span>
+                            <ChevronRight className="w-3.5 h-3.5 text-cyan-600 transition-transform group-hover:translate-x-0.5" />
                           </button>
                           <CoverageBadge convenio={app.convenio || patients.find(p => p.id === app.patientId)?.convenio} size="xs" />
                         </div>

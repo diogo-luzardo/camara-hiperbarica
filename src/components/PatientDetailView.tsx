@@ -45,7 +45,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-2xs transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-cyan-800 bg-white hover:bg-cyan-50/50 px-3.5 py-2 rounded-xl border-2 border-slate-200 hover:border-cyan-400 shadow-2xs hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Voltar para Lista de Pacientes</span>
@@ -54,7 +54,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => onPrintSheet('tratamento', patient)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-2xs transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-slate-900 bg-white hover:bg-slate-50 px-3.5 py-2 rounded-xl border-2 border-slate-200 hover:border-slate-300 shadow-2xs hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
             title="Imprimir Folha de Tratamento Física"
           >
             <Printer className="w-3.5 h-3.5 text-slate-600" />
@@ -63,7 +63,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
           <button
             onClick={() => onEditPatient(patient)}
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-2xs transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-cyan-800 bg-white hover:bg-cyan-50/50 px-3.5 py-2 rounded-xl border-2 border-slate-200 hover:border-cyan-400 shadow-2xs hover:shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
           >
             <Edit className="w-3.5 h-3.5 text-slate-600" />
             <span>Editar Cadastro</span>
@@ -71,7 +71,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
           <button
             onClick={() => onNewSession(patient)}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 px-4 py-2 rounded-lg shadow-sm transition-all"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 px-4 py-2 rounded-xl shadow-sm hover:shadow-md hover:shadow-cyan-500/25 hover:scale-[1.03] active:scale-[0.97] transition-all cursor-pointer"
           >
             <HeartPulse className="w-4 h-4" />
             <span>+ Registrar Sessão OHB</span>
@@ -161,64 +161,64 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
       </div>
 
       {/* Tabs Navigation */}
-      <div className="border-b border-slate-200 flex gap-2 overflow-x-auto no-scrollbar">
+      <div className="border-b border-slate-200 flex gap-1.5 overflow-x-auto no-scrollbar pt-1">
         <button
           onClick={() => setActiveTab('sessoes')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'sessoes'
-              ? 'border-cyan-600 text-cyan-700 bg-white shadow-xs rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-cyan-600 text-cyan-800 bg-white shadow-xs rounded-t-xl -mb-px'
+              : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 hover:border-slate-300 rounded-t-xl'
           }`}
         >
-          <HeartPulse className="w-4 h-4" />
+          <HeartPulse className="w-4 h-4 text-cyan-600" />
           <span>Folha de Tratamento ({completedCount})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('enfermagem')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'enfermagem'
-              ? 'border-cyan-600 text-cyan-700 bg-white shadow-xs rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-cyan-600 text-cyan-800 bg-white shadow-xs rounded-t-xl -mb-px'
+              : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 hover:border-slate-300 rounded-t-xl'
           }`}
         >
-          <ShieldCheck className="w-4 h-4" />
+          <ShieldCheck className="w-4 h-4 text-cyan-600" />
           <span>Sistematização de Enfermagem</span>
         </button>
 
         <button
           onClick={() => setActiveTab('documentos')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'documentos'
-              ? 'border-cyan-600 text-cyan-700 bg-white shadow-xs rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-cyan-600 text-cyan-800 bg-white shadow-xs rounded-t-xl -mb-px'
+              : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 hover:border-slate-300 rounded-t-xl'
           }`}
         >
-          <FolderArchive className="w-4 h-4" />
+          <FolderArchive className="w-4 h-4 text-cyan-600" />
           <span>Prontuários & Imagens ({documents.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('agendamentos')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'agendamentos'
-              ? 'border-cyan-600 text-cyan-700 bg-white shadow-xs rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-cyan-600 text-cyan-800 bg-white shadow-xs rounded-t-xl -mb-px'
+              : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 hover:border-slate-300 rounded-t-xl'
           }`}
         >
-          <Calendar className="w-4 h-4" />
+          <Calendar className="w-4 h-4 text-cyan-600" />
           <span>Agendamentos Futuros ({appointments.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('dados')}
-          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap ${
+          className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'dados'
-              ? 'border-cyan-600 text-cyan-700 bg-white shadow-xs rounded-t-lg'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
+              ? 'border-cyan-600 text-cyan-800 bg-white shadow-xs rounded-t-xl -mb-px'
+              : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/80 hover:border-slate-300 rounded-t-xl'
           }`}
         >
-          <User className="w-4 h-4" />
+          <User className="w-4 h-4 text-cyan-600" />
           <span>Anamnese & Endereço Completo</span>
         </button>
       </div>

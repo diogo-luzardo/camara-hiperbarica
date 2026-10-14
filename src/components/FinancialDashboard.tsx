@@ -17,6 +17,7 @@ import {
   Clock,
   ShieldAlert,
   Sparkles,
+  ChevronRight,
 } from 'lucide-react';
 
 interface FinancialDashboardProps {
@@ -382,8 +383,20 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
                 filteredItems.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-4">
-                      <div className="font-bold text-slate-900">{item.patientName}</div>
-                      <div className="text-[11px] font-mono text-cyan-700">{item.registroOHB}</div>
+                      {onSelectPatient ? (
+                        <button
+                          type="button"
+                          onClick={() => onSelectPatient(item.patientId)}
+                          className="font-bold text-slate-900 hover:text-cyan-800 hover:bg-cyan-100/70 px-2 py-0.5 -mx-2 rounded-lg text-left flex items-center gap-1 group transition-all cursor-pointer"
+                          title={`Abrir prontuário completo de ${item.patientName}`}
+                        >
+                          <span className="group-hover:underline decoration-cyan-400 decoration-2 underline-offset-2">{item.patientName}</span>
+                          <ChevronRight className="w-3.5 h-3.5 text-cyan-600 transition-transform group-hover:translate-x-0.5" />
+                        </button>
+                      ) : (
+                        <div className="font-bold text-slate-900">{item.patientName}</div>
+                      )}
+                      <div className="text-[11px] font-mono text-cyan-700 font-bold">{item.registroOHB}</div>
                     </td>
                     <td className="py-3 px-3">
                       <div className="font-semibold text-slate-800">{item.convenio}</div>
@@ -413,9 +426,10 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
                         <button
                           type="button"
                           onClick={() => onSelectPatient(item.patientId)}
-                          className="text-[11px] text-cyan-600 hover:text-cyan-800 font-bold hover:underline cursor-pointer"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 hover:border-cyan-400 text-cyan-800 text-[11px] font-bold shadow-2xs hover:shadow-xs hover:scale-105 active:scale-95 transition-all cursor-pointer mt-1"
                         >
-                          Ver Prontuário →
+                          <span>Ver Prontuário</span>
+                          <ChevronRight className="w-3 h-3" />
                         </button>
                       )}
                     </td>

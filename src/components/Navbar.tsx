@@ -331,15 +331,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Abas de Navegação (Desktop): Linha única limpa, sem quebra de texto */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-800/70 p-1 rounded-xl border border-slate-700/60 shrink-0">
+          <nav className="hidden lg:flex items-center gap-1.5 bg-slate-800/80 p-1.5 rounded-2xl border border-slate-700/80 shrink-0">
             {/* 1. Pacientes */}
             <button
               type="button"
               onClick={() => onNavigate('pacientes')}
-              className={`flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 activeView === 'pacientes'
-                  ? 'bg-cyan-500 text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                  ? 'bg-cyan-500 text-slate-950 shadow-sm border border-cyan-400 scale-[1.02]'
+                  : 'text-slate-300 hover:text-cyan-300 hover:bg-slate-800 border border-transparent hover:border-slate-700/80 hover:scale-105 active:scale-95'
               }`}
             >
               <Users className="w-3.5 h-3.5 shrink-0" />
@@ -359,10 +359,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('agendamentos')}
-              className={`flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 activeView === 'agendamentos'
-                  ? 'bg-cyan-500 text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                  ? 'bg-cyan-500 text-slate-950 shadow-sm border border-cyan-400 scale-[1.02]'
+                  : 'text-slate-300 hover:text-cyan-300 hover:bg-slate-800 border border-transparent hover:border-slate-700/80 hover:scale-105 active:scale-95'
               }`}
             >
               <Calendar className="w-3.5 h-3.5 shrink-0" />
@@ -384,7 +384,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('pacientes')}
-              className="flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all whitespace-nowrap cursor-pointer"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-cyan-300 hover:bg-slate-800 border border-transparent hover:border-slate-700/80 hover:scale-105 active:scale-95 transition-all whitespace-nowrap cursor-pointer"
               title="Atendimentos clínicos e fichas SAE do paciente"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
@@ -398,10 +398,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('acervo')}
-              className={`flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 activeView === 'acervo'
-                  ? 'bg-cyan-500 text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                  ? 'bg-cyan-500 text-slate-950 shadow-sm border border-cyan-400 scale-[1.02]'
+                  : 'text-slate-300 hover:text-cyan-300 hover:bg-slate-800 border border-transparent hover:border-slate-700/80 hover:scale-105 active:scale-95'
               }`}
             >
               <FolderArchive className="w-3.5 h-3.5 shrink-0" />
@@ -421,10 +421,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('financeiro')}
-              className={`flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 activeView === 'financeiro'
-                  ? 'bg-emerald-500 text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                  ? 'bg-emerald-500 text-slate-950 shadow-sm border border-emerald-400 scale-[1.02]'
+                  : 'text-slate-300 hover:text-emerald-300 hover:bg-slate-800 border border-transparent hover:border-slate-700/80 hover:scale-105 active:scale-95'
               }`}
             >
               <DollarSign
@@ -439,10 +439,10 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               type="button"
               onClick={() => onNavigate('arquitetura')}
-              className={`flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                 activeView === 'arquitetura'
-                  ? 'bg-cyan-500 text-slate-950 shadow-xs font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-700/50'
+                  ? 'bg-cyan-500 text-slate-950 shadow-sm border border-cyan-400 scale-[1.02]'
+                  : 'text-slate-300 hover:text-cyan-300 hover:bg-slate-800 border border-transparent hover:border-slate-700/80 hover:scale-105 active:scale-95'
               }`}
             >
               <Server className="w-3.5 h-3.5 text-emerald-400 shrink-0" />

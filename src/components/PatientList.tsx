@@ -253,12 +253,12 @@ export const PatientList: React.FC<PatientListProps> = ({
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Pesquisar por Registro OHB, Nome (ex: Antonio), CPF, CID-10, Rua..."
-            className="w-full text-xs pl-9 pr-9 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 transition-all"
+            className="w-full text-xs pl-9 pr-9 py-2.5 rounded-xl border-2 border-slate-200 hover:border-slate-300 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 transition-all shadow-2xs outline-none"
           />
           {searchTerm && (
             <button
               onClick={() => setSearchTerm('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-200/80 transition-colors cursor-pointer"
               title="Limpar busca"
             >
               <X className="w-3.5 h-3.5" />
@@ -271,7 +271,7 @@ export const PatientList: React.FC<PatientListProps> = ({
           <select
             value={selectedConvenio}
             onChange={(e) => setSelectedConvenio(e.target.value)}
-            className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 cursor-pointer"
+            className="text-xs px-3 py-2 rounded-xl border-2 border-slate-200 hover:border-cyan-400 focus:border-cyan-500 bg-white text-slate-800 font-bold focus:ring-4 focus:ring-cyan-500/10 cursor-pointer shadow-2xs transition-all outline-none"
           >
             <option value="todos">Todos os Convênios</option>
             <option value="Particular">Particular (Sessões / Consultas)</option>
@@ -371,14 +371,19 @@ export const PatientList: React.FC<PatientListProps> = ({
                     <CoverageBadge convenio={patient.convenio} plano={patient.plano} size="xs" />
                   </div>
 
-                  {/* Patient Name & Details */}
-                  <h3
+                  {/* Patient Name & Details with High-Visibility Interactive Hover */}
+                  <div
                     onClick={() => onSelectPatient(patient.id)}
-                    className="font-bold text-slate-900 text-base group-hover:text-cyan-700 transition-colors cursor-pointer flex items-center justify-between"
+                    className="group/name -mx-2 px-2.5 py-1.5 rounded-xl hover:bg-cyan-50 border border-transparent hover:border-cyan-200 transition-all duration-150 cursor-pointer flex items-center justify-between shadow-none hover:shadow-xs mt-1"
+                    title={`Abrir prontuário completo de ${patient.nome}`}
                   >
-                    <span>{patient.nome}</span>
-                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-cyan-600 transition-colors" />
-                  </h3>
+                    <h3 className="font-bold text-slate-900 text-base group-hover/name:text-cyan-800 transition-colors flex items-center gap-1.5">
+                      <span>{patient.nome}</span>
+                    </h3>
+                    <span className="w-6 h-6 rounded-lg bg-slate-100 group-hover/name:bg-cyan-500 group-hover/name:text-white flex items-center justify-center text-slate-400 transition-all shrink-0 shadow-2xs group-hover/name:scale-110">
+                      <ChevronRight className="w-4 h-4 transition-transform group-hover/name:translate-x-0.5" />
+                    </span>
+                  </div>
 
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1">
                     <span>{patient.idade} anos</span>
@@ -432,7 +437,7 @@ export const PatientList: React.FC<PatientListProps> = ({
                     {canCreateSession && (
                       <button
                         onClick={() => onNewSession(patient)}
-                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs flex items-center gap-1 transition-colors"
+                        className="px-2.5 py-1.5 rounded-xl border border-slate-200 hover:border-cyan-400 bg-slate-100 hover:bg-cyan-50 text-slate-700 hover:text-cyan-800 font-bold text-xs flex items-center gap-1 shadow-2xs hover:shadow-sm hover:scale-105 active:scale-95 transition-all cursor-pointer"
                         title="Registrar Sessão OHB"
                       >
                         <HeartPulse className="w-3.5 h-3.5 text-cyan-600" />
@@ -441,9 +446,10 @@ export const PatientList: React.FC<PatientListProps> = ({
                     )}
                     <button
                       onClick={() => onSelectPatient(patient.id)}
-                      className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition-colors"
+                      className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-2xs hover:shadow-md hover:shadow-cyan-500/25 hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1"
                     >
-                      Prontuário
+                      <span>Prontuário</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -484,11 +490,11 @@ export const PatientList: React.FC<PatientListProps> = ({
 
           {/* Botões de Navegação Numerados */}
           {totalPages > 1 && (
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => handlePageChange(1)}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-xl border-2 border-slate-200 hover:border-cyan-400 hover:bg-cyan-50/60 hover:text-cyan-800 text-slate-600 disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
                 title="Primeira página"
               >
                 <ChevronsLeft className="w-4 h-4" />
@@ -496,7 +502,7 @@ export const PatientList: React.FC<PatientListProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-xl border-2 border-slate-200 hover:border-cyan-400 hover:bg-cyan-50/60 hover:text-cyan-800 text-slate-600 disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
                 title="Página anterior"
               >
                 <ChevronLeft className="w-4 h-4" />
@@ -508,10 +514,10 @@ export const PatientList: React.FC<PatientListProps> = ({
                     <button
                       key={idx}
                       onClick={() => handlePageChange(p)}
-                      className={`min-w-[34px] h-8 px-2 rounded-lg font-mono font-bold text-xs transition-all ${
+                      className={`min-w-[34px] h-8 px-2 rounded-xl font-mono font-bold text-xs transition-all cursor-pointer ${
                         currentPage === p
-                          ? 'bg-cyan-500 text-slate-950 shadow-xs'
-                          : 'border border-slate-200 hover:bg-slate-50 text-slate-700'
+                          ? 'bg-cyan-500 text-slate-950 shadow-sm shadow-cyan-500/25 font-black scale-105 border-2 border-cyan-400'
+                          : 'border-2 border-slate-200 hover:border-cyan-400 hover:bg-cyan-50/60 text-slate-700 hover:scale-105 shadow-2xs'
                       }`}
                     >
                       {p}
@@ -527,7 +533,7 @@ export const PatientList: React.FC<PatientListProps> = ({
               <button
                 onClick={() => handlePageChange(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-xl border-2 border-slate-200 hover:border-cyan-400 hover:bg-cyan-50/60 hover:text-cyan-800 text-slate-600 disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
                 title="Próxima página"
               >
                 <ChevronRight className="w-4 h-4" />
@@ -535,7 +541,7 @@ export const PatientList: React.FC<PatientListProps> = ({
               <button
                 onClick={() => handlePageChange(totalPages)}
                 disabled={currentPage === totalPages}
-                className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="p-2 rounded-xl border-2 border-slate-200 hover:border-cyan-400 hover:bg-cyan-50/60 hover:text-cyan-800 text-slate-600 disabled:opacity-30 disabled:hover:border-slate-200 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
                 title="Última página"
               >
                 <ChevronsRight className="w-4 h-4" />

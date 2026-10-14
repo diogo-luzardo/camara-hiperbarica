@@ -400,7 +400,7 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
               {filteredDocs.map((doc) => (
                 <div
                   key={doc.id}
-                  className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden hover:shadow-md transition-all flex flex-col group"
+                  className="bg-white rounded-2xl border-2 border-slate-200/80 hover:border-cyan-400 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 overflow-hidden flex flex-col group"
                 >
                   {/* Image Thumbnail with Overlay */}
                   <div
