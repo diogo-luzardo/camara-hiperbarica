@@ -240,21 +240,58 @@ Todas as tabelas do sistema contam com controle de auditoria de temporalidade e 
 
 ---
 
+---
+
+### 3.6 Módulo de Autenticação, Perfis de Acesso (RBAC) & Financeiro
+
+Implementado seguindo as melhores práticas de governança de dados em saúde (LGPD e CFM 2.299/2021), com separação de responsabilidades e controle de acesso baseado em funções (Role-Based Access Control).
+
+#### Perfis Disponíveis (4 Funções Estruturadas):
+1. **Administrador (`administrador`)**:
+   - **Usuário Padrão**: Dr. Carlos Henrique Esteves (CRM-SP 62.139 - Diretor Clínico & Geral).
+   - **Email / Senha**: `admin@ohb.med.br` / `admin123`
+   - **Atribuições**: Acesso irrestrito a prontuários, sessões, agendamentos, acervo, auditoria financeira e arquitetura técnica.
+2. **Operacional (`operacional`)**:
+   - **Usuária Padrão**: Enfª. Juliana Ramos (COREN-SP 182.492 - Enfermagem & Câmara Hiperbárica).
+   - **Email / Senha**: `operacional@ohb.med.br` / `op123`
+   - **Atribuições**: Registro de sessões a 2.4 ATA, Sistematização da Assistência de Enfermagem (SAE), sinais vitais, intercorrências e acervo.
+3. **Administrativo (`administrativo`)**:
+   - **Usuário Padrão**: Roberto Mendes (Coordenação de Recepção & Prontuários).
+   - **Email / Senha**: `administrativo@ohb.med.br` / `adm123`
+   - **Atribuições**: Cadastro de pacientes, validação de dados de convênios/CPF, controle da grade de agendamentos e envio de lembretes.
+4. **Financeiro (`financeiro`)**:
+   - **Usuária Padrão**: Marina Albuquerque (Analista de Faturamento Médico & Convênios).
+   - **Email / Senha**: `financeiro@ohb.med.br` / `fin123`
+   - **Atribuições**: Faturamento de sessões OHB sob código TUSS 20101202, auditoria de guias TISS, conferência de lotes e controle de glosas.
+
+#### Modo de Acesso Permissivo vs Estrito:
+- **Modo Aberto (Permissivo - Padrão de Testes)**: Conforme solicitado para a fase inicial de validação clínica, o acesso a todas as telas está liberado para todos os perfis, mantendo a identificação do operador nos registros.
+- **Modo Estrito (Produção / Rigoroso)**: Pode ser alternado a qualquer momento com um único clique no botão de status da **Matriz de Permissões** no topo da barra de navegação, restringindo as telas exatamente à política de cada perfil.
+- **Acesso Rápido de 1 Clique**: Na tela de login e no menu suspenso do usuário na Navbar, existem botões diretos para alternar entre os 4 perfis instantaneamente para demonstração e testes rápidos.
+
+---
+
 ## 5. End-to-End Test Workflow (Exemplo Prático)
 
 Para validar o fluxo completo da clínica:
 
-1. **Cadastrar Paciente**: Cadastre o paciente "João Ferreira", Registro OHB "OHB-100".
-2. **Agendar Consulta**: Crie um agendamento para a data de hoje às 09:00 para o João Ferreira com status `confirmado`.
-3. **Iniciar Atendimento na Câmara**:
-   - Entre no prontuário do João Ferreira.
-   - Abra a modal de **Nova Sessão Hiperbárica**.
-   - Preencha os sinais vitais (PA 130/80, Glicemia 105 mg/dL) e selecione 2.0 ATA por 90 minutos.
-   - Marque todas as checagens de segurança da câmara.
-   - Salve a sessão.
-4. **Verificar Persistência**:
-   - Atualize a página do frontend ou faça query no H2 Console (`SELECT * FROM hyperbaric_sessions`).
-   - Verifique que a sessão #1 foi registrada com sucesso vinculada ao paciente João Ferreira.
+1. **Login na Plataforma**:
+   - Acesse a plataforma e visualize a tela de login.
+   - Clique em qualquer um dos 4 cartões de **Acesso Rápido por Perfil** (ex: *Administrador*, *Operacional*, *Administrativo* ou *Financeiro*).
+2. **Alternar Perfis em Tempo Real**:
+   - Clique no menu do usuário na barra superior (canto superior direito) e selecione outro perfil (ex: *Financeiro*).
+   - Note que o badge colorido e o cargo mudam imediatamente.
+3. **Explorar o Módulo Financeiro & Guias TISS**:
+   - Clique na aba **Financeiro & Convênios**.
+   - Visualize os KPIs de faturamento, total liquidado, guias pendentes e ticket médio por sessão a 2.4 ATA.
+   - Teste a exportação de lotes em formato CSV/TISS.
+4. **Consultar Matriz de Permissões (RBAC)**:
+   - Clique no botão **Perfis & Acessos** na barra superior para visualizar a matriz completa de quem vê o quê.
+   - Teste alternar para o **Modo Estrito** e observe a proteção automática das rotas.
+5. **Cadastrar Paciente & Sessão**:
+   - Cadastre o paciente "Sebastião Pereira", Registro OHB "OHB-1082".
+   - Agende uma sessão e registre o atendimento hiperbárico com sinais vitais e SAE.
 
 ---
-*Documentação gerada para a aplicação Clínica Câmara Hiperbárica.*
+*Documentação oficial da aplicação Clínica Câmara Hiperbárica.*
+

@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar, LayoutWidthMode } from './components/Navbar';
+import { Navbar, LayoutWidthMode, AppNavView } from './components/Navbar';
 import { PatientList } from './components/PatientList';
 import { PatientDetailView } from './components/PatientDetailView';
 import { AppointmentManager } from './components/AppointmentManager';
 import { DigitalVault } from './components/DigitalVault';
+import { FinancialDashboard } from './components/FinancialDashboard';
 import { PatientFormModal } from './components/PatientFormModal';
 import { SessionFormModal } from './components/SessionFormModal';
 import { PrintSheetModal } from './components/PrintSheetModal';
 import { ArchitectureModal } from './components/ArchitectureModal';
+import { PermissionsModal } from './components/PermissionsModal';
+import { LoginPage } from './components/LoginPage';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { StorageService } from './services/storage';
 import { Patient, HyperbaricSession, Appointment, DigitalizedDocument } from './types';
+import { Lock, ShieldCheck, ArrowRight } from 'lucide-react';
 
-export default function App() {
-  const [activeView, setActiveView] = useState<'pacientes' | 'agendamentos' | 'acervo' | 'arquitetura'>('pacientes');
+function MainClinicApp() {
+  const { isAuthenticated, canAccessView, role, switchRole } = useAuth();
+  const [activeView, setActiveView] = useState<AppNavView>('pacientes');
   const [layoutMode, setLayoutMode] = useState<LayoutWidthMode>(() => {
     const saved = localStorage.getItem('ohb_layout_mode');
     return (saved === 'ultrawide' || saved === 'full' || saved === 'compact') ? saved : 'ultrawide';
@@ -41,6 +47,7 @@ export default function App() {
   const [printPatient, setPrintPatient] = useState<Patient | null>(null);
 
   const [isArchModalOpen, setIsArchModalOpen] = useState(false);
+  const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
   const [autoOpenAppointmentModal, setAutoOpenAppointmentModal] = useState(false);
 
   // Vault jump filter
@@ -48,8 +55,10 @@ export default function App() {
 
   // Initial Load from StorageService
   useEffect(() => {
-    loadAllData();
-  }, []);
+    if (isAuthenticated) {
+      loadAllData();
+    }
+  }, [isAuthenticated]);
 
   const loadAllData = async () => {
     try {
@@ -151,6 +160,11 @@ export default function App() {
     setIsPrintModalOpen(true);
   };
 
+  // If user is not logged in, show LoginPage
+  if (!isAuthenticated) {
+    return <LoginPage />;
+  }
+
   // Selected Patient Details
   const currentPatient = patients.find((p) => p.id === selectedPatientId);
   const currentPatientSessions = sessions.filter((s) => s.patientId === selectedPatientId);
@@ -168,6 +182,8 @@ export default function App() {
       ? 'flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8'
       : 'flex-1 max-w-[2100px] w-full mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-4 sm:py-6';
 
+  const isViewAllowed = canAccessView(activeView);
+
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col font-sans text-slate-800">
       {/* Navigation Bar */}
@@ -182,6 +198,7 @@ export default function App() {
         }}
         onNewPatient={handleOpenNewPatient}
         onNewAppointment={handleOpenNewAppointment}
+        onOpenPermissions={() => setIsPermissionsModalOpen(true)}
         patientCount={patients.length}
         sessionCount={sessions.length}
         appointmentCount={appointments.length}
@@ -192,68 +209,115 @@ export default function App() {
 
       {/* Main Container */}
       <main className={containerClass}>
-        {/* VIEW 1: PACIENTES */}
-        {activeView === 'pacientes' && (
+        {/* Guard for strict mode restrictions */}
+        {!isViewAllowed ? (
+          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 text-center max-w-xl mx-auto my-12 shadow-lg space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 flex items-center justify-center mx-auto shadow-inner">
+              <Lock className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-bold font-['Outfit'] text-slate-900">
+              Acesso Restrito ao Módulo
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600">
+              O seu perfil atual (<strong>{role}</strong>) não tem permissão para acessar esta visão
+              enquanto a política de segurança estiver em <strong>Modo Estrito (Produção)</strong>.
+            </p>
+            <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setIsPermissionsModalOpen(true)}
+                className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+              >
+                Ver Matriz de Permissões
+              </button>
+              <button
+                type="button"
+                onClick={() => switchRole('administrador')}
+                className="px-4 py-2 rounded-xl bg-purple-100 hover:bg-purple-200 text-purple-800 border border-purple-300 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                <span>Alternar para Administrador</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : (
           <>
-            {selectedPatientId && currentPatient ? (
-              <PatientDetailView
-                patient={currentPatient}
-                sessions={currentPatientSessions}
-                appointments={currentPatientAppointments}
-                documents={currentPatientDocs}
-                onBack={() => setSelectedPatientId(null)}
-                onEditPatient={handleOpenEditPatient}
-                onNewSession={handleOpenNewSession}
-                onNewAppointment={(p) => {
-                  setActiveView('agendamentos');
+            {/* VIEW 1: PACIENTES */}
+            {activeView === 'pacientes' && (
+              <>
+                {selectedPatientId && currentPatient ? (
+                  <PatientDetailView
+                    patient={currentPatient}
+                    sessions={currentPatientSessions}
+                    appointments={currentPatientAppointments}
+                    documents={currentPatientDocs}
+                    onBack={() => setSelectedPatientId(null)}
+                    onEditPatient={handleOpenEditPatient}
+                    onNewSession={handleOpenNewSession}
+                    onNewAppointment={() => {
+                      setActiveView('agendamentos');
+                    }}
+                    onUploadDocForPatient={handleUploadDocForPatient}
+                    onDeleteSession={handleDeleteSession}
+                    onPrintSheet={handleOpenPrintSheet}
+                  />
+                ) : (
+                  <PatientList
+                    patients={patients}
+                    sessions={sessions}
+                    appointments={appointments}
+                    onSelectPatient={(id) => setSelectedPatientId(id)}
+                    onNewPatient={handleOpenNewPatient}
+                    onNewSession={handleOpenNewSession}
+                  />
+                )}
+              </>
+            )}
+
+            {/* VIEW 2: AGENDAMENTOS */}
+            {activeView === 'agendamentos' && (
+              <AppointmentManager
+                appointments={appointments}
+                patients={patients}
+                onSaveAppointment={handleSaveAppointment}
+                onDeleteAppointment={handleDeleteAppointment}
+                autoOpenNewModal={autoOpenAppointmentModal}
+                onCloseAutoOpenModal={() => setAutoOpenAppointmentModal(false)}
+                onSelectPatient={(patientId) => {
+                  setSelectedPatientId(patientId);
+                  setActiveView('pacientes');
                 }}
-                onUploadDocForPatient={handleUploadDocForPatient}
-                onDeleteSession={handleDeleteSession}
-                onPrintSheet={handleOpenPrintSheet}
+                onPrintAppointmentSheet={(patientName) => {
+                  const pat = patients.find((p) => p.nome === patientName) || patients[0];
+                  if (pat) {
+                    handleOpenPrintSheet('agendamento', pat);
+                  }
+                }}
               />
-            ) : (
-              <PatientList
+            )}
+
+            {/* VIEW 3: ACERVO DIGITAL (PRONTUÁRIOS ANTIGOS ESCANEADOS) */}
+            {activeView === 'acervo' && (
+              <DigitalVault
+                documents={documents}
+                patients={patients}
+                onRefreshDocs={handleRefreshDocs}
+                selectedPatientOHB={vaultTargetOHB}
+              />
+            )}
+
+            {/* VIEW 4: FINANCEIRO & CONVÊNIOS (NOVO MÓDULO) */}
+            {activeView === 'financeiro' && (
+              <FinancialDashboard
                 patients={patients}
                 sessions={sessions}
-                appointments={appointments}
-                onSelectPatient={(id) => setSelectedPatientId(id)}
-                onNewPatient={handleOpenNewPatient}
-                onNewSession={handleOpenNewSession}
+                onSelectPatient={(patientId) => {
+                  setSelectedPatientId(patientId);
+                  setActiveView('pacientes');
+                }}
               />
             )}
           </>
-        )}
-
-        {/* VIEW 2: AGENDAMENTOS */}
-        {activeView === 'agendamentos' && (
-          <AppointmentManager
-            appointments={appointments}
-            patients={patients}
-            onSaveAppointment={handleSaveAppointment}
-            onDeleteAppointment={handleDeleteAppointment}
-            autoOpenNewModal={autoOpenAppointmentModal}
-            onCloseAutoOpenModal={() => setAutoOpenAppointmentModal(false)}
-            onSelectPatient={(patientId) => {
-              setSelectedPatientId(patientId);
-              setActiveView('pacientes');
-            }}
-            onPrintAppointmentSheet={(patientName, appList) => {
-              const pat = patients.find((p) => p.nome === patientName) || patients[0];
-              if (pat) {
-                handleOpenPrintSheet('agendamento', pat);
-              }
-            }}
-          />
-        )}
-
-        {/* VIEW 3: ACERVO DIGITAL (PRONTUÁRIOS ANTIGOS ESCANEADOS) */}
-        {activeView === 'acervo' && (
-          <DigitalVault
-            documents={documents}
-            patients={patients}
-            onRefreshDocs={handleRefreshDocs}
-            selectedPatientOHB={vaultTargetOHB}
-          />
         )}
       </main>
 
@@ -307,6 +371,20 @@ export default function App() {
         isOpen={isArchModalOpen}
         onClose={() => setIsArchModalOpen(false)}
       />
+
+      {/* MODAL: MATRIZ DE PERMISSÕES & GOVERNANÇA RBAC */}
+      <PermissionsModal
+        isOpen={isPermissionsModalOpen}
+        onClose={() => setIsPermissionsModalOpen(false)}
+      />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <MainClinicApp />
+    </AuthProvider>
   );
 }

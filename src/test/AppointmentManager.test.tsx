@@ -66,7 +66,7 @@ describe('AppointmentManager Component', () => {
       patientName: 'Sebastião Pereira dos Santos',
       registroOHB: 'OHB-1082',
       cpf: '529.982.247-25',
-      data: '2026-09-30',
+      data: new Date().toISOString().split('T')[0],
       horario: '08:30',
       diaSemana: 'Quarta-feira',
       sessaoNumero: 10,

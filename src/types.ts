@@ -1,3 +1,5 @@
+export * from './types/auth';
+
 export interface Patient {
   id: string;
   registroOHB: string; // Número de registro que acompanha a clínica (ex: OHB-2024-001)
