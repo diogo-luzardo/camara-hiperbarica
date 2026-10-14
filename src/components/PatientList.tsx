@@ -285,27 +285,33 @@ export const PatientList: React.FC<PatientListProps> = ({
           </select>
 
           {/* Abas de Status */}
-          <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-medium">
+          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold gap-1">
             <button
               onClick={() => setSelectedFilter('todos')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                selectedFilter === 'todos' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+                selectedFilter === 'todos'
+                  ? 'bg-white text-cyan-950 shadow-xs font-extrabold ring-1 ring-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
               Todos ({patients.length})
             </button>
             <button
               onClick={() => setSelectedFilter('em_tratamento')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                selectedFilter === 'em_tratamento' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+                selectedFilter === 'em_tratamento'
+                  ? 'bg-white text-cyan-950 shadow-xs font-extrabold ring-1 ring-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
               Em Tratamento ({emTratamentoCount})
             </button>
             <button
               onClick={() => setSelectedFilter('alta')}
-              className={`px-3 py-1.5 rounded-md transition-all ${
-                selectedFilter === 'alta' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+                selectedFilter === 'alta'
+                  ? 'bg-white text-cyan-950 shadow-xs font-extrabold ring-1 ring-slate-200/80'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
               Alta Clínica ({altaCount})
@@ -354,7 +360,7 @@ export const PatientList: React.FC<PatientListProps> = ({
             return (
               <div
                 key={patient.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition-all p-5 flex flex-col justify-between group"
+                className="bg-white rounded-2xl border-2 border-slate-200/80 hover:border-cyan-400 shadow-xs hover:shadow-lg hover:-translate-y-0.5 transition-all duration-150 p-5 flex flex-col justify-between group"
               >
                 <div>
                   {/* Top Bar: Registro OHB and Convenio */}

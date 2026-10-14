@@ -168,7 +168,7 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
             Simular Visão de Usuário Ativo (Clique para Alternar):
           </span>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             {rolesList.map((r) => {
               const cfg = ROLE_CONFIGS[r];
               const user = MOCK_USERS.find((u) => u.role === r);
@@ -179,23 +179,32 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
                   key={r}
                   type="button"
                   onClick={() => switchRole(r)}
-                  className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-center gap-2.5 ${
+                  className={`p-3 rounded-2xl border-2 text-left transition-all duration-150 cursor-pointer flex items-center justify-between gap-2 relative ${
                     isActive
-                      ? `${cfg.badgeBg} ${cfg.borderColor} shadow-xs ring-2 ring-cyan-500`
-                      : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
+                      ? 'bg-gradient-to-br from-white to-cyan-50/90 border-cyan-500 shadow-md ring-4 ring-cyan-500/20 -translate-y-0.5'
+                      : 'bg-white border-slate-200 hover:border-cyan-400 hover:bg-cyan-50/50 hover:shadow-md hover:-translate-y-0.5 text-slate-700'
                   }`}
                 >
-                  <div
-                    className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                      isActive ? 'bg-white/80' : 'bg-slate-100'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" style={{ color: cfg.colorHex }} />
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors ${
+                        isActive ? 'bg-cyan-500/20 ring-2 ring-cyan-400/50' : 'bg-slate-100'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" style={{ color: cfg.colorHex }} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-xs font-bold truncate leading-tight ${isActive ? 'text-slate-950 font-extrabold' : 'text-slate-800'}`}>
+                        {cfg.label.split('&')[0]}
+                      </p>
+                      <p className="text-[10px] text-slate-500 truncate">{user?.name.split(' ')[0]}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold truncate leading-tight">{cfg.label.split('&')[0]}</p>
-                    <p className="text-[10px] text-slate-500 truncate">{user?.name.split(' ')[0]}</p>
-                  </div>
+                  {isActive && (
+                    <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-600 text-white shadow-2xs shrink-0">
+                      Ativo
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -214,8 +223,8 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
               return (
                 <div
                   key={r}
-                  className={`p-3.5 rounded-2xl border ${cfg.badgeBg} ${cfg.borderColor} flex flex-col justify-between transition-all ${
-                    isActive ? 'ring-2 ring-cyan-500 shadow-xs' : ''
+                  className={`p-3.5 rounded-2xl border-2 ${cfg.badgeBg} ${cfg.borderColor} flex flex-col justify-between transition-all ${
+                    isActive ? 'border-cyan-500 ring-2 ring-cyan-500/30 shadow-sm' : ''
                   }`}
                 >
                   <div>
@@ -257,26 +266,48 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
             <table className="w-full text-left text-xs">
               <thead className="bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wider">
                 <tr>
-                  <th className="py-3 px-4 w-1/3">Capacidade / Ação Clínica & Administrativa</th>
-                  <th className="py-3 px-2 text-center text-purple-300">Administrador</th>
-                  <th className="py-3 px-2 text-center text-cyan-300">Operacional</th>
-                  <th className="py-3 px-2 text-center text-amber-300">Administrativo</th>
-                  <th className="py-3 px-2 text-center text-emerald-300">Financeiro</th>
+                  <th className="py-3.5 px-4 w-1/3">Capacidade / Ação Clínica & Administrativa</th>
+                  {rolesList.map((r) => {
+                    const isSimulated = currentRole === r;
+                    const cfg = ROLE_CONFIGS[r];
+                    return (
+                      <th
+                        key={r}
+                        className={`py-3 px-2 text-center transition-all ${
+                          isSimulated
+                            ? 'bg-slate-800 text-white font-extrabold ring-2 ring-inset ring-cyan-400'
+                            : ''
+                        }`}
+                      >
+                        <div className="flex flex-col items-center justify-center gap-0.5">
+                          <span style={{ color: cfg.colorHex }}>{cfg.label.split('&')[0]}</span>
+                          {isSimulated && (
+                            <span className="text-[9px] uppercase tracking-normal px-1.5 py-0.2 rounded-full bg-cyan-500 text-slate-950 font-black shadow-2xs">
+                              Seu Perfil
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {PERMISSION_CATEGORIES.map((cat, catIdx) => (
                   <React.Fragment key={catIdx}>
                     <tr className="bg-slate-100/90 font-bold text-slate-800 text-[11px]">
-                      <td colSpan={5} className="py-2 px-4 uppercase tracking-wider text-slate-700">
+                      <td colSpan={5} className="py-2.5 px-4 uppercase tracking-wider text-slate-700 bg-slate-100">
                         {cat.category}
                       </td>
                     </tr>
                     {cat.permissions.map((perm) => {
                       return (
-                        <tr key={perm.key} className="hover:bg-slate-50 transition-colors">
+                        <tr
+                          key={perm.key}
+                          className="hover:bg-cyan-50/60 transition-colors duration-150 border-l-4 border-l-transparent hover:border-l-cyan-500 group"
+                        >
                           <td className="py-2.5 px-4">
-                            <p className="font-semibold text-slate-900">{perm.label}</p>
+                            <p className="font-semibold text-slate-900 group-hover:text-cyan-950">{perm.label}</p>
                             <p className="text-[11px] text-slate-500">{perm.description}</p>
                           </td>
                           {rolesList.map((r) => {
@@ -285,27 +316,33 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
                             const has = currentList.includes(perm.key);
                             const isDefault = cfg.defaultPermissions.includes(perm.key);
                             const isCustomized = has !== isDefault;
+                            const isSimulated = currentRole === r;
 
                             return (
-                              <td key={r} className="py-2 px-2 text-center">
+                              <td
+                                key={r}
+                                className={`py-2 px-2 text-center transition-colors ${
+                                  isSimulated ? 'bg-cyan-50/30' : ''
+                                }`}
+                              >
                                 <button
                                   type="button"
                                   onClick={() => toggleRolePermission(r, perm.key)}
                                   title={`${has ? 'Revogar' : 'Liberar'} "${perm.label}" para ${cfg.label} (Clique para alterar)`}
-                                  className={`group relative inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-400 select-none ${
+                                  className={`group/btn relative inline-flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-400 select-none ${
                                     has
-                                      ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-700 shadow-2xs hover:scale-110 active:scale-95'
-                                      : 'bg-slate-100 hover:bg-slate-200 text-slate-300 hover:text-slate-600 hover:scale-110 active:scale-95'
-                                  } ${isCustomized ? 'ring-2 ring-cyan-500 shadow-xs' : ''}`}
+                                      ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm shadow-emerald-500/30 hover:scale-115 active:scale-95 border-2 border-emerald-600 hover:ring-2 hover:ring-emerald-400/50'
+                                      : 'bg-slate-100 hover:bg-emerald-50 text-slate-400 hover:text-emerald-700 border-2 border-slate-200 hover:border-emerald-400 hover:shadow-md hover:scale-115 active:scale-95'
+                                  } ${isCustomized ? 'ring-2 ring-cyan-500 ring-offset-1' : ''}`}
                                 >
                                   {has ? (
-                                    <Check className="w-4 h-4 stroke-[3]" />
+                                    <Check className="w-4 h-4 sm:w-5 sm:h-5 stroke-[3] transition-transform group-hover/btn:scale-110" />
                                   ) : (
-                                    <Ban className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+                                    <Ban className="w-4 h-4 stroke-[2] opacity-50 group-hover/btn:opacity-90 group-hover/btn:text-emerald-600 transition-all" />
                                   )}
                                   {isCustomized && (
                                     <span
-                                      className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-500 border-2 border-white shadow-2xs"
+                                      className="absolute -top-1.5 -right-1.5 w-3 h-3 rounded-full bg-cyan-500 border-2 border-white shadow-sm ring-1 ring-cyan-400"
                                       title="Permissão personalizada em relação ao padrão original"
                                     />
                                   )}
