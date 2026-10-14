@@ -15,6 +15,8 @@ import {
   ToggleRight,
   Info,
   Sparkles,
+  RotateCcw,
+  MousePointerClick,
 } from 'lucide-react';
 
 interface PermissionsModalProps {
@@ -23,7 +25,15 @@ interface PermissionsModalProps {
 }
 
 export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onClose }) => {
-  const { role: currentRole, switchRole, isStrictMode, setStrictMode } = useAuth();
+  const {
+    role: currentRole,
+    switchRole,
+    isStrictMode,
+    setStrictMode,
+    rolePermissions,
+    toggleRolePermission,
+    resetRolePermissions,
+  } = useAuth();
 
   if (!isOpen) return null;
 
@@ -42,6 +52,15 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
     }
   };
 
+  // Contagem de modificações em relação às permissões padrão
+  const customCount = rolesList.reduce((acc, r) => {
+    const cfg = ROLE_CONFIGS[r];
+    const current = rolePermissions[r] || cfg.defaultPermissions;
+    const added = current.filter((p) => !cfg.defaultPermissions.includes(p)).length;
+    const removed = cfg.defaultPermissions.filter((p) => !current.includes(p)).length;
+    return acc + added + removed;
+  }, 0);
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
@@ -57,11 +76,11 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
                   Matriz de Acessos & Separação por Perfil (RBAC)
                 </h2>
                 <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
-                  Melhores Práticas
+                  Totalmente Editável
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Governança de acessos entre Financeiro, Operacional, Administrativo e Administrador
+                Clique diretamente em qualquer célula para conceder ou revogar liberações específicas por perfil
               </p>
             </div>
           </div>
@@ -83,8 +102,8 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
               </p>
               <p className="text-slate-600">
                 {isStrictMode
-                  ? 'Cada perfil só consegue acessar estritamente suas abas autorizadas.'
-                  : 'Acesso liberado a todas as abas para todos os perfis durante o período de avaliação, mantendo as responsabilidades identificadas.'}
+                  ? 'Cada perfil obedece rigorosamente às permissões marcadas na matriz abaixo.'
+                  : 'Acesso liberado a todas as abas durante o período de avaliação, mantendo as responsabilidades auditadas.'}
               </p>
             </div>
           </div>
@@ -110,6 +129,36 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
                   <span>Modo Permissivo: Liberado</span>
                 </>
               )}
+            </button>
+          </div>
+        </div>
+
+        {/* Interactive Matrix Instructions & Reset Bar */}
+        <div className="bg-cyan-950/10 border-b border-cyan-800/20 px-4 sm:px-6 py-2.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+          <div className="flex items-center gap-2 text-xs text-slate-700">
+            <MousePointerClick className="w-4 h-4 text-cyan-600 shrink-0" />
+            <span>
+              <strong>Matriz 100% Interativa:</strong> Clique em qualquer ícone da tabela para{' '}
+              <span className="text-emerald-700 font-bold">liberar (verde)</span> ou{' '}
+              <span className="text-slate-500 font-bold">revogar (cinza)</span>. Ícones com{' '}
+              <span className="text-cyan-600 font-bold">ponto azul</span> indicam permissões personalizadas.
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {customCount > 0 && (
+              <span className="text-[11px] font-bold text-cyan-700 bg-cyan-100 border border-cyan-300 px-2 py-0.5 rounded-lg">
+                {customCount} {customCount === 1 ? 'personalização' : 'personalizações'}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={resetRolePermissions}
+              className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold transition-all cursor-pointer shadow-2xs hover:text-slate-900"
+              title="Restaurar todas as permissões para a matriz padrão do sistema"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+              <span>Restaurar Padrões</span>
             </button>
           </div>
         </div>
@@ -160,17 +209,26 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
             {rolesList.map((r) => {
               const cfg = ROLE_CONFIGS[r];
               const Icon = getRoleIcon(r);
+              const currentList = rolePermissions[r] || cfg.defaultPermissions;
+              const isActive = currentRole === r;
               return (
                 <div
                   key={r}
-                  className={`p-3.5 rounded-2xl border ${cfg.badgeBg} ${cfg.borderColor} flex flex-col justify-between`}
+                  className={`p-3.5 rounded-2xl border ${cfg.badgeBg} ${cfg.borderColor} flex flex-col justify-between transition-all ${
+                    isActive ? 'ring-2 ring-cyan-500 shadow-xs' : ''
+                  }`}
                 >
                   <div>
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-6 h-6 rounded-md bg-white/80 flex items-center justify-center">
-                        <Icon className="w-3.5 h-3.5" style={{ color: cfg.colorHex }} />
+                    <div className="flex items-center justify-between gap-1 mb-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-6 h-6 rounded-md bg-white/80 flex items-center justify-center shrink-0">
+                          <Icon className="w-3.5 h-3.5" style={{ color: cfg.colorHex }} />
+                        </div>
+                        <h3 className="text-xs font-bold text-slate-900 truncate">{cfg.label}</h3>
                       </div>
-                      <h3 className="text-xs font-bold text-slate-900">{cfg.label}</h3>
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-white/90 text-slate-700 border border-slate-200 shrink-0">
+                        {currentList.length} ativas
+                      </span>
                     </div>
                     <p className="text-[11px] text-slate-700 leading-snug">{cfg.description}</p>
                   </div>
@@ -222,18 +280,36 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
                             <p className="text-[11px] text-slate-500">{perm.description}</p>
                           </td>
                           {rolesList.map((r) => {
-                            const has = ROLE_CONFIGS[r].defaultPermissions.includes(perm.key);
+                            const cfg = ROLE_CONFIGS[r];
+                            const currentList = rolePermissions[r] || cfg.defaultPermissions;
+                            const has = currentList.includes(perm.key);
+                            const isDefault = cfg.defaultPermissions.includes(perm.key);
+                            const isCustomized = has !== isDefault;
+
                             return (
                               <td key={r} className="py-2 px-2 text-center">
-                                {has ? (
-                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-700">
-                                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-100 text-slate-300">
-                                    <Ban className="w-3 h-3" />
-                                  </span>
-                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleRolePermission(r, perm.key)}
+                                  title={`${has ? 'Revogar' : 'Liberar'} "${perm.label}" para ${cfg.label} (Clique para alterar)`}
+                                  className={`group relative inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-cyan-400 select-none ${
+                                    has
+                                      ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-700 shadow-2xs hover:scale-110 active:scale-95'
+                                      : 'bg-slate-100 hover:bg-slate-200 text-slate-300 hover:text-slate-600 hover:scale-110 active:scale-95'
+                                  } ${isCustomized ? 'ring-2 ring-cyan-500 shadow-xs' : ''}`}
+                                >
+                                  {has ? (
+                                    <Check className="w-4 h-4 stroke-[3]" />
+                                  ) : (
+                                    <Ban className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+                                  )}
+                                  {isCustomized && (
+                                    <span
+                                      className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-cyan-500 border-2 border-white shadow-2xs"
+                                      title="Permissão personalizada em relação ao padrão original"
+                                    />
+                                  )}
+                                </button>
                               </td>
                             );
                           })}
@@ -251,7 +327,7 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
         <div className="bg-slate-50 border-t border-slate-200 px-6 py-3.5 flex items-center justify-between text-xs text-slate-600">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-cyan-600" />
-            <span>Arquitetura de Segurança preparada para auditoria LGPD e CFM.</span>
+            <span>Permissões persistidas no armazenamento seguro local. Arquitetura em conformidade com LGPD e CFM.</span>
           </div>
           <button
             type="button"
@@ -265,3 +341,4 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
     </div>
   );
 };
+

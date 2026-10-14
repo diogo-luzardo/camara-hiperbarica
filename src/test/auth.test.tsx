@@ -211,6 +211,10 @@ describe('FinancialDashboard Component', () => {
 });
 
 describe('PermissionsModal Component', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it('deve renderizar a matriz de governança RBAC e permitir alternar modo estrito', () => {
     render(
       <AuthProvider>
@@ -221,5 +225,55 @@ describe('PermissionsModal Component', () => {
     expect(screen.getByText('Matriz de Acessos & Separação por Perfil (RBAC)')).toBeInTheDocument();
     expect(screen.getByText(/Status da Política de Acesso/)).toBeInTheDocument();
     expect(screen.getByText('Capacidade / Ação Clínica & Administrativa')).toBeInTheDocument();
+    expect(screen.getByText('Totalmente Editável')).toBeInTheDocument();
+  });
+
+  it('deve permitir editar permissão de Cadastrar Paciente para o Operacional ao clicar na célula', async () => {
+    const TestMatrixConsumer = () => {
+      const { user, hasPermission, setStrictMode, isStrictMode } = useAuth();
+      return (
+        <div>
+          <PermissionsModal isOpen={true} onClose={vi.fn()} />
+          <div data-testid="strict-mode">{String(isStrictMode)}</div>
+          <div data-testid="can-create-patient">{String(hasPermission('patients:create'))}</div>
+        </div>
+      );
+    };
+
+    render(
+      <AuthProvider>
+        <TestMatrixConsumer />
+      </AuthProvider>
+    );
+
+    // 1. Simular troca para perfil Operacional
+    const opButton = screen.getByText('Enfª.');
+    fireEvent.click(opButton);
+
+    // 2. Ativar modo estrito
+    const strictToggle = screen.getByText(/Modo Permissivo: Liberado/i);
+    fireEvent.click(strictToggle);
+
+    // No padrão inicial do modo estrito, operacional não tem permissão para cadastrar paciente
+    expect(screen.getByTestId('can-create-patient')).toHaveTextContent('false');
+
+    // 3. Clicar no botão da célula "Cadastrar Paciente" para Operacional
+    const cellBtn = screen.getByTitle(/Liberar "Cadastrar Paciente" para Operacional & Enfermagem/i);
+    expect(cellBtn).toBeInTheDocument();
+    fireEvent.click(cellBtn);
+
+    // 4. Agora o operacional deve ter permissão concedida em tempo real
+    await waitFor(() => {
+      expect(screen.getByTestId('can-create-patient')).toHaveTextContent('true');
+    });
+
+    // 5. Clicar em Restaurar Padrões restaura a configuração inicial
+    const resetBtn = screen.getByText('Restaurar Padrões');
+    fireEvent.click(resetBtn);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('can-create-patient')).toHaveTextContent('false');
+    });
   });
 });
+

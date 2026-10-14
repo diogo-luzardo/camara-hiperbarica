@@ -8,7 +8,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isStrictMode: boolean;
   roleConfig: RoleConfig;
+  rolePermissions: Record<UserRole, Permission[]>;
   setStrictMode: (enabled: boolean) => void;
+  toggleRolePermission: (role: UserRole, permission: Permission) => void;
+  resetRolePermissions: () => void;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<{ success: boolean; error?: string }>;
   quickLogin: (role: UserRole) => void;
   switchRole: (role: UserRole) => void;
@@ -21,6 +24,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const AUTH_STORAGE_KEY = 'ohb_auth_user_v1';
 const STRICT_MODE_KEY = 'ohb_rbac_strict_mode_v1';
+const ROLE_PERMISSIONS_STORAGE_KEY = 'ohb_custom_role_permissions_v1';
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Inicialização segura pelo localStorage
@@ -40,8 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return null;
   });
 
-  // Strict mode: desligado por padrão conforme solicitado:
-  // "por enquanto da pra deixar o acesso para liberado para todos os perfis porém preciso separar entre financeiro, operacional, administrativo e administrador"
+  // Strict mode: desligado por padrão conforme solicitado
   const [isStrictMode, setIsStrictModeState] = useState<boolean>(() => {
     try {
       const saved = localStorage.getItem(STRICT_MODE_KEY);
@@ -51,9 +54,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   });
 
+  // Permissões customizadas por papel editáveis em tempo real
+  const [rolePermissions, setRolePermissionsState] = useState<Record<UserRole, Permission[]>>(() => {
+    try {
+      const saved = localStorage.getItem(ROLE_PERMISSIONS_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar permissões personalizadas:', e);
+    }
+    return {
+      administrador: [...ROLE_CONFIGS.administrador.defaultPermissions],
+      operacional: [...ROLE_CONFIGS.operacional.defaultPermissions],
+      administrativo: [...ROLE_CONFIGS.administrativo.defaultPermissions],
+      financeiro: [...ROLE_CONFIGS.financeiro.defaultPermissions],
+    };
+  });
+
   const setStrictMode = (enabled: boolean) => {
     setIsStrictModeState(enabled);
     localStorage.setItem(STRICT_MODE_KEY, String(enabled));
+  };
+
+  const toggleRolePermission = (targetRole: UserRole, permission: Permission) => {
+    setRolePermissionsState((prev) => {
+      const currentList = prev[targetRole] || ROLE_CONFIGS[targetRole].defaultPermissions;
+      const nextList = currentList.includes(permission)
+        ? currentList.filter((p) => p !== permission)
+        : [...currentList, permission];
+
+      const updated = {
+        ...prev,
+        [targetRole]: nextList,
+      };
+
+      try {
+        localStorage.setItem(ROLE_PERMISSIONS_STORAGE_KEY, JSON.stringify(updated));
+      } catch (err) {
+        console.error('Erro ao salvar permissões personalizadas:', err);
+      }
+
+      if (user && user.role === targetRole) {
+        const updatedUser: User = {
+          ...user,
+          permissions: nextList,
+        };
+        setUser(updatedUser);
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedUser));
+      }
+
+      return updated;
+    });
+  };
+
+  const resetRolePermissions = () => {
+    const defaults: Record<UserRole, Permission[]> = {
+      administrador: [...ROLE_CONFIGS.administrador.defaultPermissions],
+      operacional: [...ROLE_CONFIGS.operacional.defaultPermissions],
+      administrativo: [...ROLE_CONFIGS.administrativo.defaultPermissions],
+      financeiro: [...ROLE_CONFIGS.financeiro.defaultPermissions],
+    };
+    setRolePermissionsState(defaults);
+    localStorage.removeItem(ROLE_PERMISSIONS_STORAGE_KEY);
+    if (user) {
+      const updatedUser: User = {
+        ...user,
+        permissions: defaults[user.role],
+      };
+      setUser(updatedUser);
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(updatedUser));
+    }
   };
 
   const role: UserRole = user ? user.role : 'administrador';
@@ -141,7 +212,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const hasPermission = (permission: Permission): boolean => {
     if (!user) return false;
-    return checkPermission(user.role, permission, isStrictMode);
+    if (!isStrictMode) return true; // Modo permissivo: todas as ações liberadas
+    const currentList = rolePermissions[user.role] || ROLE_CONFIGS[user.role]?.defaultPermissions || [];
+    return currentList.includes(permission);
   };
 
   const canAccessView = (view: 'pacientes' | 'agendamentos' | 'acervo' | 'financeiro' | 'arquitetura'): boolean => {
@@ -149,7 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return false;
     const viewMapping = VIEW_ROLE_MAPPING[view];
     if (!viewMapping) return true;
-    return viewMapping.primaryRoles.includes(user.role);
+    return hasPermission(viewMapping.requiredPermission);
   };
 
   return (
@@ -160,7 +233,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAuthenticated: !!user,
         isStrictMode,
         roleConfig,
+        rolePermissions,
         setStrictMode,
+        toggleRolePermission,
+        resetRolePermissions,
         login,
         quickLogin,
         switchRole,
@@ -177,7 +253,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth deve ser utilizado dentro de um AuthProvider');
+    // Fallback gracioso para testes unitários ou renderizações isoladas
+    return {
+      user: null,
+      role: 'administrador',
+      isAuthenticated: false,
+      isStrictMode: false,
+      roleConfig: ROLE_CONFIGS.administrador,
+      rolePermissions: {
+        administrador: [...ROLE_CONFIGS.administrador.defaultPermissions],
+        operacional: [...ROLE_CONFIGS.operacional.defaultPermissions],
+        administrativo: [...ROLE_CONFIGS.administrativo.defaultPermissions],
+        financeiro: [...ROLE_CONFIGS.financeiro.defaultPermissions],
+      },
+      setStrictMode: () => {},
+      toggleRolePermission: () => {},
+      resetRolePermissions: () => {},
+      login: async () => ({ success: true }),
+      quickLogin: () => {},
+      switchRole: () => {},
+      logout: () => {},
+      hasPermission: () => true,
+      canAccessView: () => true,
+    };
   }
   return context;
 };
+

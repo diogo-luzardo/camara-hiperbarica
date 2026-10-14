@@ -14,7 +14,9 @@ import {
   Stethoscope,
   AlertCircle,
   X,
+  Lock,
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import { Patient, HyperbaricSession, Appointment } from '../types';
 import { CoverageBadge } from './CoverageBadge';
 
@@ -51,6 +53,10 @@ export const PatientList: React.FC<PatientListProps> = ({
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(12);
   const listTopRef = useRef<HTMLDivElement>(null);
+
+  const { hasPermission } = useAuth();
+  const canCreatePatient = hasPermission('patients:create');
+  const canCreateSession = hasPermission('sessions:create');
 
   // Extrair lista única de convênios presentes
   const conveniosList = useMemo(() => {
@@ -306,13 +312,24 @@ export const PatientList: React.FC<PatientListProps> = ({
             </button>
           </div>
 
-          <button
-            onClick={onNewPatient}
-            className="px-3.5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Cadastrar Paciente</span>
-          </button>
+          {canCreatePatient ? (
+            <button
+              onClick={onNewPatient}
+              className="px-3.5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Cadastrar Paciente</span>
+            </button>
+          ) : (
+            <button
+              disabled
+              title="Ação restrita pela política de acessos do perfil ativo (Cadastrar Paciente)"
+              className="px-3.5 py-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-400 font-bold text-xs shadow-none flex items-center gap-1.5 cursor-not-allowed opacity-80"
+            >
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <span>Cadastrar Paciente</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -406,14 +423,16 @@ export const PatientList: React.FC<PatientListProps> = ({
                   </span>
 
                   <div className="flex items-center gap-1.5">
-                    <button
-                      onClick={() => onNewSession(patient)}
-                      className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs flex items-center gap-1 transition-colors"
-                      title="Registrar Sessão OHB"
-                    >
-                      <HeartPulse className="w-3.5 h-3.5 text-cyan-600" />
-                      <span>+ Sessão</span>
-                    </button>
+                    {canCreateSession && (
+                      <button
+                        onClick={() => onNewSession(patient)}
+                        className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs flex items-center gap-1 transition-colors"
+                        title="Registrar Sessão OHB"
+                      >
+                        <HeartPulse className="w-3.5 h-3.5 text-cyan-600" />
+                        <span>+ Sessão</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => onSelectPatient(patient.id)}
                       className="px-3 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs transition-colors"

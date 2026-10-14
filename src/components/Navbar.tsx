@@ -55,9 +55,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   layoutMode = 'ultrawide',
   onLayoutModeChange,
 }) => {
-  const { user, role, switchRole, logout, isStrictMode } = useAuth();
+  const { user, role, switchRole, logout, isStrictMode, hasPermission } = useAuth();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  const canCreatePatient = hasPermission('patients:create');
+  const canCreateAppointment = hasPermission('appointments:create');
 
   // Fecha o menu de perfil ao clicar fora
   useEffect(() => {
@@ -449,24 +452,39 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Botões de Ação Rápida no Topo */}
           <div className="flex items-center gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={onNewAppointment}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 2xl:py-2 rounded-lg bg-cyan-950 hover:bg-cyan-900 text-cyan-300 text-xs font-bold border border-cyan-700/80 transition-colors shadow-2xs whitespace-nowrap cursor-pointer"
-            >
-              <Calendar className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span>+ Agendar</span>
-            </button>
+            {canCreateAppointment && (
+              <button
+                type="button"
+                onClick={onNewAppointment}
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 2xl:py-2 rounded-lg bg-cyan-950 hover:bg-cyan-900 text-cyan-300 text-xs font-bold border border-cyan-700/80 transition-colors shadow-2xs whitespace-nowrap cursor-pointer"
+              >
+                <Calendar className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+                <span>+ Agendar</span>
+              </button>
+            )}
 
-            <button
-              type="button"
-              onClick={onNewPatient}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 2xl:py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-md shadow-cyan-950/40 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
-              <span>Novo Paciente</span>
-            </button>
+            {canCreatePatient ? (
+              <button
+                type="button"
+                onClick={onNewPatient}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 2xl:py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-md shadow-cyan-950/40 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
+                <span>Novo Paciente</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                disabled
+                title="Ação restrita pela política de acessos do perfil ativo (Requer permissão de Cadastrar Paciente)"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 2xl:py-2 rounded-lg bg-slate-800 border border-slate-700/60 text-slate-500 font-medium text-xs whitespace-nowrap cursor-not-allowed opacity-60"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
+                <span>Novo Paciente</span>
+              </button>
+            )}
           </div>
+
         </div>
 
         {/* Barra de Navegação Mobile (Scroll horizontal suave sem quebra) */}
