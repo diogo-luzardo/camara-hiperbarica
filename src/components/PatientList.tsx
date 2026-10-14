@@ -22,23 +22,55 @@ export const PatientList: React.FC<PatientListProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<'todos' | 'em_tratamento' | 'alta'>('todos');
+  const [selectedConvenio, setSelectedConvenio] = useState<string>('todos');
+
+  // Extrair lista única de convênios presentes
+  const conveniosList = React.useMemo(() => {
+    const set = new Set<string>();
+    patients.forEach((p) => {
+      if (p.convenio) set.add(p.convenio);
+    });
+    return Array.from(set).sort();
+  }, [patients]);
 
   const filteredPatients = patients.filter((patient) => {
     const cleanSearch = searchTerm.toLowerCase().trim();
     const matchSearch =
+      !cleanSearch ||
       patient.nome.toLowerCase().includes(cleanSearch) ||
       patient.registroOHB.toLowerCase().includes(cleanSearch) ||
-      patient.cpf.includes(cleanSearch) ||
+      patient.cpf.replace(/\D/g, '').includes(cleanSearch.replace(/\D/g, '')) ||
       patient.diagnostico.toLowerCase().includes(cleanSearch) ||
-      patient.cid10.toLowerCase().includes(cleanSearch);
+      patient.cid10.toLowerCase().includes(cleanSearch) ||
+      (patient.endereco && patient.endereco.toLowerCase().includes(cleanSearch)) ||
+      (patient.bairro && patient.bairro.toLowerCase().includes(cleanSearch)) ||
+      (patient.convenio && patient.convenio.toLowerCase().includes(cleanSearch));
+
+    const matchConvenio =
+      selectedConvenio === 'todos' ||
+      (selectedConvenio === 'Particular'
+        ? patient.convenio.toLowerCase().includes('particular')
+        : patient.convenio === selectedConvenio);
 
     const patientSessions = sessions.filter((s) => s.patientId === patient.id);
     const isCompleted = patientSessions.length >= patient.numeroTratamentosPrevisto;
 
-    if (selectedFilter === 'em_tratamento') return matchSearch && !isCompleted;
-    if (selectedFilter === 'alta') return matchSearch && isCompleted;
-    return matchSearch;
+    if (!matchSearch || !matchConvenio) return false;
+
+    if (selectedFilter === 'em_tratamento') return !isCompleted;
+    if (selectedFilter === 'alta') return isCompleted;
+    return true;
   });
+
+  const emTratamentoCount = patients.filter((p) => {
+    const sCount = sessions.filter((s) => s.patientId === p.id).length;
+    return sCount < p.numeroTratamentosPrevisto;
+  }).length;
+
+  const altaCount = patients.filter((p) => {
+    const sCount = sessions.filter((s) => s.patientId === p.id).length;
+    return sCount >= p.numeroTratamentosPrevisto;
+  }).length;
 
   return (
     <div className="space-y-6">
@@ -97,17 +129,35 @@ export const PatientList: React.FC<PatientListProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Pesquisar por Registro OHB (ex: OHB-1082), CPF, Nome ou CID-10..."
+            placeholder="Pesquisar por Registro OHB, CPF, Nome, CID-10, Rua ou Bairro..."
             className="w-full text-xs pl-9 pr-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Filtro por Convênio */}
+          <select
+            value={selectedConvenio}
+            onChange={(e) => setSelectedConvenio(e.target.value)}
+            className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-medium focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 cursor-pointer"
+          >
+            <option value="todos">Todos os Convênios</option>
+            <option value="Particular">Particular (Sessões / Consultas)</option>
+            {conveniosList
+              .filter((c) => !c.toLowerCase().includes('particular'))
+              .map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+          </select>
+
+          {/* Abas de Status */}
           <div className="flex bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-xs font-medium">
             <button
               onClick={() => setSelectedFilter('todos')}
               className={`px-3 py-1.5 rounded-md transition-all ${
-                selectedFilter === 'todos' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600'
+                selectedFilter === 'todos' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               Todos ({patients.length})
@@ -115,10 +165,18 @@ export const PatientList: React.FC<PatientListProps> = ({
             <button
               onClick={() => setSelectedFilter('em_tratamento')}
               className={`px-3 py-1.5 rounded-md transition-all ${
-                selectedFilter === 'em_tratamento' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600'
+                selectedFilter === 'em_tratamento' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Em Tratamento
+              Em Tratamento ({emTratamentoCount})
+            </button>
+            <button
+              onClick={() => setSelectedFilter('alta')}
+              className={`px-3 py-1.5 rounded-md transition-all ${
+                selectedFilter === 'alta' ? 'bg-white text-slate-900 shadow-xs font-bold' : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Alta Clínica ({altaCount})
             </button>
           </div>
 

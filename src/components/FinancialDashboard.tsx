@@ -58,8 +58,9 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
 
     return sessions.map((s, idx) => {
       const patient = patients.find((p) => p.id === s.patientId || p.registroOHB === s.registroOHB);
-      const convenio = patient?.convenio || 'Bradesco Saúde';
-      const valorBase = convenio.toLowerCase().includes('particular') ? 550 : 420;
+      const isSessionParticular = s.modalidade === 'particular' || (patient?.convenio || '').toLowerCase().includes('particular');
+      const convenio = isSessionParticular ? (s.modalidade === 'particular' ? 'Particular (Sessão Avulsa)' : 'Particular') : (patient?.convenio || 'Bradesco Saúde');
+      const valorBase = isSessionParticular ? 550 : 420;
 
       const statuses: ('autorizado' | 'faturado' | 'em_analise' | 'pago' | 'glosado')[] = [
         'faturado',

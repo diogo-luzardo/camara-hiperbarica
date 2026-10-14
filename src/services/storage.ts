@@ -1,4 +1,5 @@
 import { Patient, HyperbaricSession, Appointment, DigitalizedDocument } from '../types';
+import { MOCK_PATIENTS_50, MOCK_SESSIONS_50, MOCK_APPOINTMENTS_50, MOCK_DOCUMENTS_50 } from '../data/mockPatients50';
 
 const API_BASE = 'http://localhost:8080/api';
 const DB_NAME = 'ClinicaOHB_Database';
@@ -10,6 +11,29 @@ const STORAGE_KEYS = {
   SESSIONS: 'ohb_sessions_v1',
   APPOINTMENTS: 'ohb_appointments_v1',
 };
+
+const STORAGE_MIGRATION_KEY = 'ohb_dataset_version';
+const CURRENT_DATASET_VERSION = 'v2_50_patients_realistic';
+
+function checkAndMigrateMockData() {
+  if (typeof window === 'undefined') return;
+  const currentVersion = localStorage.getItem(STORAGE_MIGRATION_KEY);
+  const rawPatients = localStorage.getItem(STORAGE_KEYS.PATIENTS);
+  let patientCount = 0;
+  if (rawPatients) {
+    try {
+      patientCount = JSON.parse(rawPatients).length;
+    } catch {}
+  }
+
+  // Se a versão do dataset mudou ou se há menos de 20 pacientes em cache, recarrega o banco mock completo com 50 pacientes
+  if (currentVersion !== CURRENT_DATASET_VERSION || patientCount < 20) {
+    localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(MOCK_PATIENTS_50));
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(MOCK_SESSIONS_50));
+    localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(MOCK_APPOINTMENTS_50));
+    localStorage.setItem(STORAGE_MIGRATION_KEY, CURRENT_DATASET_VERSION);
+  }
+}
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -34,169 +58,10 @@ function openIndexedDB(): Promise<IDBDatabase> {
   });
 }
 
-// Exemplos realistas baseados nas fichas fornecidas
-const INITIAL_PATIENTS: Patient[] = [
-  {
-    id: 'pat-1',
-    registroOHB: 'OHB-1082',
-    registroHospitalar: 'RH-49201',
-    unidade: 'Hospital São Luiz Jabaquara - Pitombeiras',
-    nome: 'Sebastião Pereira dos Santos',
-    convenio: 'Bradesco Saúde',
-    plano: 'Top Nacional',
-    matriculaConvenio: '84920193021',
-    validadeConvenio: '12/2027',
-    dataNascimento: '1962-04-18',
-    idade: 64,
-    sexo: 'M',
-    estadoCivil: 'Casado',
-    rg: '14.892.301-X',
-    cpf: '529.982.247-25',
-    profissao: 'Comerciante aposentado',
-    nomeMae: 'Francisca Pereira dos Santos',
-    cep: '04343-160',
-    endereco: 'Rua das Pitombeiras',
-    numero: '175',
-    complemento: 'Apto 42',
-    bairro: 'Jabaquara',
-    municipio: 'São Paulo',
-    uf: 'SP',
-    telefonesFixos: '(11) 5017-0698',
-    celular: '(11) 98765-4321',
-    email: 'sebastiao.santos@email.com',
-    procedencia: 'Ambulatório de Feridas Complexas',
-    remocao: 'Própria (veículo particular)',
-    medicoIndicou: 'Dr. Carlos Henrique Esteves (CRM 62.139)',
-    acompanhante: 'Dona Maria de Lourdes (Esposa)',
-    historiaClinica: 'Paciente diabético há 18 anos, hipertenso. Evoluiu com úlcera neuropática plantar profunda no hálux e antepé direito há 4 meses, com sinais de osteomielite refratária ao tratamento antibiótico venoso prévio.',
-    exameFisicoResumido: 'BEG, lúcido, eupneico. Pulsos pedioso e tibial posterior diminuídos à D (+/4+). Ausência de sopros carotídeos.',
-    localCurativos: 'Ambulatório Especializado de Feridas / Domiciliar com Hidrogel com Prata',
-    avaliacaoDor: 5,
-    grauEntendimento: 'Bom entendimento e aderência às orientações de descompressão e dieta.',
-    tempoExistenciaPatologia: '4 meses',
-    descricaoLesao: 'Úlcera em antepé plantar direito de 4.5 x 3.0 cm, com 60% de tecido de granulação e 40% de esfacelo. Bordas maceradas, secreção serossanguinolenta moderada. Sem odor fétido atual.',
-    diagnostico: 'Pé Diabético Complicado com Úlcera e Osteomielite Refratária',
-    cid10: 'E11.5',
-    numeroTratamentosPrevisto: 30,
-    medicamentosEmUso: 'Metformina 850mg 2x/dia, Insulina NPH 22UI manhã, Losartana 50mg/dia, Ciprofloxacino 500mg 12/12h',
-    alergias: 'Penicilinas (urticária e broncoespasmo)',
-    vicios: 'Ex-tabagista (parou há 8 anos, carga 20 anos/maço)',
-    otoscopia: 'Membrana timpânica íntegra bilateralmente, translúcida, sem hiperemia ou abaulamentos. Manobra de Valsalva positiva.',
-    proteses: 'Prótese dentária superior móvel (deve ser retirada antes de entrar na câmara)',
-    ventilacao: 'Espontânea em ar ambiente',
-    createdAt: '2026-08-15T09:00:00Z',
-    updatedAt: '2026-09-02T14:30:00Z',
-  },
-  {
-    id: 'pat-2',
-    registroOHB: 'OHB-1095',
-    registroHospitalar: 'RH-53102',
-    unidade: 'Hospital São Luiz Jabaquara - Pitombeiras',
-    nome: 'Helena Ribeiro de Castro',
-    convenio: 'SulAmérica',
-    plano: 'Especial 100',
-    matriculaConvenio: '90184729012',
-    validadeConvenio: '08/2028',
-    dataNascimento: '1974-11-23',
-    idade: 51,
-    sexo: 'F',
-    estadoCivil: 'Solteira',
-    rg: '28.109.844-3',
-    cpf: '153.508.897-56',
-    profissao: 'Arquiteta',
-    nomeMae: 'Carmen Lúcia Ribeiro',
-    cep: '04071-000',
-    endereco: 'Avenida Indianópolis',
-    numero: '1240',
-    complemento: 'Conj 501',
-    bairro: 'Planalto Paulista',
-    municipio: 'São Paulo',
-    uf: 'SP',
-    telefonesFixos: '(11) 5055-1234',
-    celular: '(11) 99123-8877',
-    email: 'helena.castro.arq@email.com',
-    procedencia: 'Hospital Albert Sabin',
-    remocao: 'Ambulatório',
-    medicoIndicou: 'Dra. Patricia Mendonça - Cirurgia Vascular (CRM 88.412)',
-    acompanhante: 'Irmã (Juliana)',
-    historiaClinica: 'Paciente submetida a debridamento cirúrgico de urgência por Fascite Necrotizante de panturrilha esquerda após pequeno trauma com espinho de roseira. Encaminhada para protocolo adjuvante de Oxigenoterapia Hiperbárica.',
-    exameFisicoResumido: 'Lúcida, corada, hidratada. Ausculta pulmonar limpa. Ferida cruenta em granulação após debridamento.',
-    localCurativos: 'Enfermagem da Clínica Hiperbárica',
-    avaliacaoDor: 3,
-    grauEntendimento: 'Excelente, compreende o papel da hiperoxigenação no controle bacteriano anaeróbio.',
-    tempoExistenciaPatologia: '3 semanas',
-    descricaoLesao: 'Ferida pós-operatória aberta em face posterior de perna E medindo 12 x 7 cm, fundo 80% fibrina/granulação, pouca secreção.',
-    diagnostico: 'Fascite Necrotizante Pós-Debridamento em Membro Inferior',
-    cid10: 'M72.6',
-    numeroTratamentosPrevisto: 20,
-    medicamentosEmUso: 'Ceftriaxona 2g IV 1x/dia, Dipirona 1g se dor',
-    alergias: 'Nega alergias medicamentosas ou alimentares',
-    vicios: 'Nenhum',
-    otoscopia: 'MT preservada bilateralmente',
-    proteses: 'Nenhuma',
-    ventilacao: 'Espontânea',
-    createdAt: '2026-08-28T10:30:00Z',
-    updatedAt: '2026-09-05T16:00:00Z',
-  }
-];
-
-const INITIAL_SESSIONS: HyperbaricSession[] = [
-  {
-    id: 'ses-1',
-    patientId: 'pat-1',
-    registroOHB: 'OHB-1082',
-    sessionNumber: 1,
-    data: '2026-08-16',
-    hora: '08:30',
-    ata: 2.4,
-    pa: '130/80',
-    glicemia: '142',
-    temperatura: '36.4',
-    duracaoMinutos: 90,
-    tratamentoMedicacao: 'Protocolo de O2 a 100% sob 2.4 ATA em câmara multipaciente',
-    intercorrencias: 'Boa adaptação à compressão. Leve desconforto em ouvido médio compensado com deglutição.',
-    medicoResponsavel: 'Dr. Carlos Henrique Esteves (CRM 62.139)',
-    enfermeiroResponsavel: 'Enf. Renan Matos (COREN-SP 214.901)',
-    tecnicoResponsavel: 'Téc. Lucas Silva',
-    conferenciaNome: true,
-    roupaAlgodao: true,
-    pulseiraEstatica: true,
-    removerMetaisEletronicos: true,
-    retirarProteses: true,
-    sondaVesicalAberta: false,
-    avpAvcPicc: false,
-    velocidadeCompressao: '0.1 ATA/min lenta e gradual',
-    velocidadeDescompressao: '0.1 ATA/min lenta',
-    covidFebreTosse: false,
-    diagDor: 'PR',
-    diagQueda: 'PR',
-    diagDeambulacao: 'PR',
-    diagGlicemia: 'ME',
-    diagPele: 'PR',
-    diagContaminacao: 'PR',
-    diagAnsiedade: 'ME',
-    evolucaoEnfermagem: 'Paciente admitido calmo, glicemia pré 142 mg/dL. Retirada prótese móvel. Sessão transcorreu sem intercorrências vitais.',
-    status: 'concluida',
-  }
-];
-
-const INITIAL_APPOINTMENTS: Appointment[] = [
-  {
-    id: 'app-1',
-    patientId: 'pat-1',
-    patientName: 'Sebastião Pereira dos Santos',
-    registroOHB: 'OHB-1082',
-    cpf: '529.982.247-25',
-    data: '2026-09-09',
-    horario: '08:30',
-    diaSemana: 'Quarta-feira',
-    sessaoNumero: 9,
-    pressaoATA: 2.4,
-    status: 'confirmado',
-    observacoes: 'Verificar glicemia capilar antes da entrada na câmara.',
-    telefonePaciente: '(11) 98765-4321',
-  }
-];
+// Dataset inicial robusto com 50 pacientes, sessões e agendamentos realistas
+const INITIAL_PATIENTS: Patient[] = MOCK_PATIENTS_50;
+const INITIAL_SESSIONS: HyperbaricSession[] = MOCK_SESSIONS_50;
+const INITIAL_APPOINTMENTS: Appointment[] = MOCK_APPOINTMENTS_50;
 
 function mapBackendPatientToFrontend(b: any): Patient {
   return {
@@ -249,45 +114,47 @@ function createSampleDocSvg(title: string, subtitle: string, color: string): str
 }
 
 export const StorageService = {
+  // Reset explícito para recarregar todos os 50 pacientes e dados associados
+  resetMockData(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(MOCK_PATIENTS_50));
+    localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(MOCK_SESSIONS_50));
+    localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(MOCK_APPOINTMENTS_50));
+    localStorage.setItem(STORAGE_MIGRATION_KEY, CURRENT_DATASET_VERSION);
+  },
+
   // === PACIENTES ===
   async getPatients(): Promise<Patient[]> {
+    checkAndMigrateMockData();
     try {
       const res = await fetch(`${API_BASE}/patients`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data) && data.length >= 20) {
           const patients = data.map(mapBackendPatientToFrontend);
           localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
           return patients;
-        } else {
-          // Se o H2 estiver vazio, envia os pacientes locais para popular o H2
-          const local = this.getLocalPatients();
-          for (const pat of local) {
-            await this.sendPatientToApi(pat);
-          }
-          const retryRes = await fetch(`${API_BASE}/patients`);
-          if (retryRes.ok) {
-            const retryData = await retryRes.json();
-            const patients = retryData.map(mapBackendPatientToFrontend);
-            localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
-            return patients;
-          }
         }
       }
     } catch (err) {
-      console.warn('Servidor Quarkus REST indisponível, utilizando cache do localStorage:', err);
+      console.warn('Servidor Quarkus REST indisponível, utilizando dados mock locais:', err);
     }
     return this.getLocalPatients();
   },
 
   getLocalPatients(): Patient[] {
+    checkAndMigrateMockData();
     const raw = localStorage.getItem(STORAGE_KEYS.PATIENTS);
     if (!raw) {
       localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(INITIAL_PATIENTS));
       return INITIAL_PATIENTS;
     }
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length >= 20) {
+        return parsed;
+      }
+      return INITIAL_PATIENTS;
     } catch {
       return INITIAL_PATIENTS;
     }
@@ -381,12 +248,13 @@ export const StorageService = {
 
   // === SESSÕES OHB ===
   async getSessions(patientId?: string): Promise<HyperbaricSession[]> {
+    checkAndMigrateMockData();
     try {
       const url = patientId ? `${API_BASE}/sessions?patientId=${patientId}` : `${API_BASE}/sessions`;
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data) && data.length >= 20) {
           const sessions = data.map(mapBackendSessionToFrontend);
           localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
           return sessions;
@@ -403,13 +271,18 @@ export const StorageService = {
   },
 
   getLocalSessions(): HyperbaricSession[] {
+    checkAndMigrateMockData();
     const raw = localStorage.getItem(STORAGE_KEYS.SESSIONS);
     if (!raw) {
       localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(INITIAL_SESSIONS));
       return INITIAL_SESSIONS;
     }
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length >= 20) {
+        return parsed;
+      }
+      return INITIAL_SESSIONS;
     } catch {
       return INITIAL_SESSIONS;
     }
@@ -463,11 +336,12 @@ export const StorageService = {
 
   // === AGENDAMENTOS ===
   async getAppointments(): Promise<Appointment[]> {
+    checkAndMigrateMockData();
     try {
       const res = await fetch(`${API_BASE}/appointments`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data) && data.length >= 20) {
           const appointments = data.map(mapBackendAppointmentToFrontend);
           localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
           return appointments;
@@ -480,13 +354,18 @@ export const StorageService = {
   },
 
   getLocalAppointments(): Appointment[] {
+    checkAndMigrateMockData();
     const raw = localStorage.getItem(STORAGE_KEYS.APPOINTMENTS);
     if (!raw) {
       localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(INITIAL_APPOINTMENTS));
       return INITIAL_APPOINTMENTS;
     }
     try {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length >= 10) {
+        return parsed;
+      }
+      return INITIAL_APPOINTMENTS;
     } catch {
       return INITIAL_APPOINTMENTS;
     }
@@ -547,23 +426,8 @@ export const StorageService = {
         const request = store.getAll();
         request.onsuccess = () => {
           let docs = request.result as DigitalizedDocument[];
-          if (!docs || docs.length === 0) {
-            docs = [
-              {
-                id: 'doc-1',
-                registroOHB: 'OHB-1082',
-                cpf: '529.982.247-25',
-                patientId: 'pat-1',
-                patientName: 'Sebastião Pereira dos Santos',
-                titulo: 'Prontuário Físico Histórico Escaneado (Ano 2022)',
-                tipo: 'prontuario_antigo',
-                dataDocumento: '2022-09-14',
-                dataUpload: '2026-08-15T10:00:00Z',
-                observacoes: 'Digitalização da ficha original de admissão prévia e biópsia óssea.',
-                imageUrl: createSampleDocSvg('Prontuário Antigo Digitalizado', 'Registro OHB-1082 | Paciente: Sebastião Pereira dos Santos', '#0284c7'),
-                tamanhoKb: 245,
-              }
-            ];
+          if (!docs || docs.length < 5) {
+            docs = MOCK_DOCUMENTS_50;
             const writeTx = db.transaction(STORE_DOCS, 'readwrite');
             const writeStore = writeTx.objectStore(STORE_DOCS);
             docs.forEach((d) => writeStore.put(d));
@@ -573,7 +437,7 @@ export const StorageService = {
         request.onerror = () => reject(request.error);
       });
     } catch {
-      return [];
+      return MOCK_DOCUMENTS_50;
     }
   },
 
