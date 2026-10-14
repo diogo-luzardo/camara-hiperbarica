@@ -54,12 +54,21 @@ describe('Modalidade Particular vs Convênio', () => {
     expect(container.firstChild).toHaveClass('bg-amber-50');
   });
 
-  it('CoverageBadge deve renderizar badge de Convênio com nome e plano', () => {
+  it('CoverageBadge com modalidade particular deve sobrepor o convenio do paciente', () => {
+    // Paciente tem Bradesco Saúde, mas esta sessão específica foi marcada como particular
     const { container } = render(
-      <CoverageBadge convenio="Unimed Seguros" plano="Especial" showPlano={true} size="sm" />
+      <CoverageBadge convenio="Bradesco Saúde" modalidade="particular" size="sm" />
     );
-    expect(screen.getByText('Unimed Seguros')).toBeDefined();
-    expect(screen.getByText('(Especial)')).toBeDefined();
+    expect(screen.getByText('Particular')).toBeDefined();
+    expect(screen.queryByText('Bradesco Saúde')).toBeNull();
+    expect(container.firstChild).toHaveClass('bg-amber-50');
+  });
+
+  it('CoverageBadge com modalidade convenio deve exibir o convenio do paciente', () => {
+    const { container } = render(
+      <CoverageBadge convenio="Bradesco Saúde" modalidade="convenio" size="sm" />
+    );
+    expect(screen.getByText('Bradesco Saúde')).toBeDefined();
     expect(container.firstChild).toHaveClass('bg-blue-50');
   });
 });

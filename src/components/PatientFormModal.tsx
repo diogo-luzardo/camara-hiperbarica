@@ -69,18 +69,16 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'dados' | 'endereco' | 'clinico' | 'ohb'>('dados');
 
-  // CEP Search State
+  // CEP Auto-Search State
   const [isCepLoading, setIsCepLoading] = useState(false);
+  const [isCepSuccess, setIsCepSuccess] = useState(false);
   const [cepError, setCepError] = useState<string | null>(null);
 
-  // Street Name Search State
-  const [addressSearchMode, setAddressSearchMode] = useState<'cep' | 'rua'>('cep');
-  const [streetUf, setStreetUf] = useState('SP');
-  const [streetCity, setStreetCity] = useState('São Paulo');
-  const [streetName, setStreetName] = useState('');
-  const [streetResults, setStreetResults] = useState<ViaCepResult[]>([]);
+  // Street Name Autocomplete (Google Maps style)
+  const [streetSuggestions, setStreetSuggestions] = useState<ViaCepResult[]>([]);
   const [isStreetLoading, setIsStreetLoading] = useState(false);
-  const [streetError, setStreetError] = useState<string | null>(null);
+  const [showStreetDropdown, setShowStreetDropdown] = useState(false);
+  const streetDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Modalidade de Atendimento: Particular vs Convênio
   const [isParticularMode, setIsParticularMode] = useState(false);
@@ -156,8 +154,9 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
     }
     setFormError(null);
     setCepError(null);
-    setStreetError(null);
-    setStreetResults([]);
+    setIsCepSuccess(false);
+    setStreetSuggestions([]);
+    setShowStreetDropdown(false);
   }, [initialPatient, existingPatientsCount, isOpen]);
 
   if (!isOpen) return null;
@@ -194,23 +193,13 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
     }
   };
 
-  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCEP(e.target.value);
-    setFormData((prev) => ({ ...prev, cep: formatted }));
-    setCepError(null);
-  };
-
-  const handleSearchCep = async () => {
-    const digits = cleanCEP(formData.cep || '');
-    if (digits.length !== 8) {
-      setCepError('Digite os 8 dígitos do CEP.');
-      return;
-    }
-
+  const autoFetchCep = async (rawDigits: string) => {
+    if (rawDigits.length !== 8) return;
     setIsCepLoading(true);
     setCepError(null);
+    setIsCepSuccess(false);
     try {
-      const data = await fetchAddressByCep(digits);
+      const data = await fetchAddressByCep(rawDigits);
       if (data) {
         setFormData((prev) => ({
           ...prev,
@@ -220,52 +209,83 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
           uf: data.uf || prev.uf,
           complemento: data.complemento || prev.complemento,
         }));
+        setIsCepSuccess(true);
+        setShowStreetDropdown(false);
       }
     } catch (err: unknown) {
-      setCepError(err instanceof Error ? err.message : 'Erro ao consultar CEP.');
+      setCepError(err instanceof Error ? err.message : 'CEP não encontrado.');
+      setIsCepSuccess(false);
     } finally {
       setIsCepLoading(false);
     }
   };
 
-  const handleSearchStreet = async () => {
-    if (streetName.trim().length < 3) {
-      setStreetError('Digite pelo menos 3 caracteres do nome da rua/logradouro.');
-      return;
+  const handleCepChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatCEP(e.target.value);
+    setFormData((prev) => ({ ...prev, cep: formatted }));
+    setCepError(null);
+    setIsCepSuccess(false);
+
+    const digits = cleanCEP(formatted);
+    if (digits.length === 8) {
+      autoFetchCep(digits);
     }
-    if (!streetCity.trim() || streetCity.trim().length < 3) {
-      setStreetError('Informe a cidade (mínimo 3 letras).');
+  };
+
+  const handleCepBlur = () => {
+    const digits = cleanCEP(formData.cep || '');
+    if (digits.length === 8 && !isCepSuccess) {
+      autoFetchCep(digits);
+    }
+  };
+
+  const handleStreetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setFormData((prev) => ({ ...prev, endereco: val }));
+
+    if (streetDebounceRef.current) {
+      clearTimeout(streetDebounceRef.current);
+    }
+
+    const trimmed = val.trim();
+    if (trimmed.length < 3) {
+      setStreetSuggestions([]);
+      setShowStreetDropdown(false);
+      setIsStreetLoading(false);
       return;
     }
 
     setIsStreetLoading(true);
-    setStreetError(null);
-    setStreetResults([]);
-    try {
-      const results = await searchAddressByStreet(streetUf, streetCity, streetName);
-      if (results.length === 0) {
-        setStreetError('Nenhum endereço encontrado para esta rua na cidade informada.');
+    streetDebounceRef.current = setTimeout(async () => {
+      try {
+        const city = formData.municipio?.trim() || 'São Paulo';
+        const uf = formData.uf?.trim() || 'SP';
+        const results = await searchAddressByStreet(uf, city, trimmed);
+        setStreetSuggestions(results);
+        setShowStreetDropdown(results.length > 0);
+      } catch (err) {
+        setStreetSuggestions([]);
+        setShowStreetDropdown(false);
+      } finally {
+        setIsStreetLoading(false);
       }
-      setStreetResults(results);
-    } catch (err: unknown) {
-      setStreetError(err instanceof Error ? err.message : 'Erro ao pesquisar rua.');
-    } finally {
-      setIsStreetLoading(false);
-    }
+    }, 350);
   };
 
-  const handleSelectStreetResult = (item: ViaCepResult) => {
+  const handleSelectStreetSuggestion = (item: ViaCepResult) => {
     setFormData((prev) => ({
       ...prev,
-      cep: formatCEP(item.cep),
       endereco: item.logradouro,
-      bairro: item.bairro,
-      municipio: item.localidade,
-      uf: item.uf,
+      cep: formatCEP(item.cep),
+      bairro: item.bairro || prev.bairro,
+      municipio: item.localidade || prev.municipio,
+      uf: item.uf || prev.uf,
       complemento: item.complemento || prev.complemento,
     }));
-    setStreetResults([]);
-    setAddressSearchMode('cep');
+    setShowStreetDropdown(false);
+    setStreetSuggestions([]);
+    setIsCepSuccess(true);
+    setCepError(null);
   };
 
   const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -382,7 +402,7 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
             }`}
           >
             <MapPin className="w-4 h-4" />
-            <span>2. Endereço & Busca Rua/CEP</span>
+            <span>2. Endereço Completo</span>
           </button>
 
           <button
@@ -752,203 +772,116 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
             </div>
           )}
 
-          {/* TAB 2: ENDEREÇO COM BUSCA POR CEP E BUSCA POR NOME DE RUA */}
+          {/* TAB 2: ENDEREÇO COM AUTOCOMPLETAR INTELIGENTE (SEM BOTÕES) */}
           {activeTab === 'endereco' && (
             <div className="space-y-4">
-              {/* Header com Seletor: Buscar por CEP ou Buscar por Nome de Rua */}
-              <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3.5 space-y-2.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 font-bold text-xs text-emerald-950">
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
-                    <span>Localização & Endereço Automático (ViaCEP / Correios):</span>
-                  </div>
-
-                  {/* Switch entre Busca por CEP e Busca por Nome de Rua */}
-                  <div className="flex bg-white p-0.5 rounded-lg border border-emerald-300 text-xs font-semibold">
-                    <button
-                      type="button"
-                      onClick={() => setAddressSearchMode('cep')}
-                      className={`px-3 py-1 rounded-md transition-all cursor-pointer ${
-                        addressSearchMode === 'cep'
-                          ? 'bg-emerald-600 text-white shadow-2xs font-bold'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      Buscar por CEP
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setAddressSearchMode('rua')}
-                      className={`px-3 py-1 rounded-md transition-all cursor-pointer flex items-center gap-1 ${
-                        addressSearchMode === 'rua'
-                          ? 'bg-emerald-600 text-white shadow-2xs font-bold'
-                          : 'text-slate-600 hover:text-slate-900'
-                      }`}
-                    >
-                      <Compass className="w-3 h-3" />
-                      <span>Não sei o CEP (Buscar Rua)</span>
-                    </button>
+              {/* Banner Informativo */}
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/80 rounded-xl p-3 flex items-center justify-between text-xs text-emerald-950">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <div>
+                    <span className="font-bold">Preenchimento Automático de Endereço:</span>
+                    <p className="text-[11px] text-emerald-800">
+                      Digite o <strong>CEP</strong> (busca ao completar/mudar de campo) ou comece a digitar o{' '}
+                      <strong>Nome da Rua</strong> para ver as sugestões em tempo real.
+                    </p>
                   </div>
                 </div>
-
-                <p className="text-[11px] text-emerald-800">
-                  {addressSearchMode === 'cep'
-                    ? 'Digite o CEP com 8 dígitos e clique em Buscar para preencher logradouro, bairro, cidade e estado automaticamente.'
-                    : 'Digite o nome da rua ou avenida e a cidade para consultar a base dos Correios e encontrar o CEP e dados completos.'}
-                </p>
               </div>
 
-              {/* MODO 1: BUSCA POR CEP */}
-              {addressSearchMode === 'cep' && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      CEP (Código Postal)
-                    </label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        maxLength={9}
-                        value={formData.cep || ''}
-                        onChange={handleCepChange}
-                        className="w-full text-xs font-mono px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
-                        placeholder="00000-000"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleSearchCep}
-                        disabled={isCepLoading}
-                        className="px-3.5 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white font-medium text-xs flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer shrink-0"
-                      >
-                        {isCepLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
-                        <span>Buscar CEP</span>
-                      </button>
+              {/* Linha 1: CEP e Logradouro com Autocomplete tipo Google Maps */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                {/* CEP com busca automática */}
+                <div className="sm:col-span-4 relative">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    CEP (Código Postal)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      maxLength={9}
+                      value={formData.cep || ''}
+                      onChange={handleCepChange}
+                      onBlur={handleCepBlur}
+                      className="w-full text-xs font-mono font-bold px-3 py-2 pr-8 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                      placeholder="00000-000"
+                    />
+                    <div className="absolute right-2.5 top-2.5 pointer-events-none">
+                      {isCepLoading && <Loader2 className="w-4 h-4 animate-spin text-cyan-600" />}
+                      {isCepSuccess && !isCepLoading && <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
                     </div>
-                    {cepError && <p className="text-[11px] text-rose-600 font-medium mt-1">{cepError}</p>}
+                  </div>
+                  {cepError && <p className="text-[11px] text-rose-600 font-medium mt-1">{cepError}</p>}
+                  {isCepSuccess && (
+                    <p className="text-[10px] text-emerald-700 font-medium mt-0.5">Endereço localizado pelo CEP</p>
+                  )}
+                </div>
+
+                {/* Logradouro / Nome da Rua com Autocomplete */}
+                <div className="sm:col-span-8 relative">
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-700">
+                      Logradouro / Nome da Rua
+                    </label>
+                    {isStreetLoading && (
+                      <span className="text-[10px] text-cyan-700 font-medium flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> Buscando sugestões...
+                      </span>
+                    )}
                   </div>
 
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Logradouro / Endereço</label>
+                  <div className="relative">
                     <input
                       type="text"
                       value={formData.endereco || ''}
-                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                      className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
-                      placeholder="Rua, Avenida, Praça..."
+                      onChange={handleStreetChange}
+                      onFocus={() => {
+                        if (streetSuggestions.length > 0) setShowStreetDropdown(true);
+                      }}
+                      onBlur={() => {
+                        setTimeout(() => setShowStreetDropdown(false), 250);
+                      }}
+                      className="w-full text-xs px-3 py-2 pr-8 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                      placeholder="Comece a digitar o nome da rua (ex: Jabaquara, Paulista, Pitombeiras...)"
                     />
-                  </div>
-                </div>
-              )}
+                    <MapPin className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
 
-              {/* MODO 2: BUSCA POR NOME DE RUA (QUANDO NÃO SOUBER O CEP) */}
-              {addressSearchMode === 'rua' && (
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
-                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
-                    <div className="sm:col-span-2">
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">UF (Estado)</label>
-                      <select
-                        value={streetUf}
-                        onChange={(e) => setStreetUf(e.target.value)}
-                        className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white font-bold"
-                      >
-                        <option value="SP">SP</option>
-                        <option value="RJ">RJ</option>
-                        <option value="MG">MG</option>
-                        <option value="PR">PR</option>
-                        <option value="SC">SC</option>
-                        <option value="RS">RS</option>
-                        <option value="BA">BA</option>
-                        <option value="DF">DF</option>
-                        <option value="ES">ES</option>
-                        <option value="GO">GO</option>
-                      </select>
-                    </div>
-
-                    <div className="sm:col-span-4">
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Cidade / Município</label>
-                      <input
-                        type="text"
-                        value={streetCity}
-                        onChange={(e) => setStreetCity(e.target.value)}
-                        className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 bg-white"
-                        placeholder="Ex: São Paulo"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-4">
-                      <label className="block text-xs font-semibold text-slate-700 mb-1">Nome da Rua / Avenida</label>
-                      <input
-                        type="text"
-                        value={streetName}
-                        onChange={(e) => setStreetName(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleSearchStreet())}
-                        className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 bg-white"
-                        placeholder="Ex: Pitombeiras, Paulista, Domingos..."
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <button
-                        type="button"
-                        onClick={handleSearchStreet}
-                        disabled={isStreetLoading}
-                        className="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
-                      >
-                        {isStreetLoading ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <Search className="w-3.5 h-3.5" />
-                        )}
-                        <span>Pesquisar</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {streetError && <p className="text-xs text-rose-600 font-semibold">{streetError}</p>}
-
-                  {/* Resultados da busca por rua */}
-                  {streetResults.length > 0 && (
-                    <div className="space-y-1.5 pt-1">
-                      <span className="text-[11px] font-bold text-slate-600 block">
-                        Selecione o endereço correto ({streetResults.length} encontrados):
-                      </span>
-                      <div className="max-h-48 overflow-y-auto divide-y divide-slate-200 border border-slate-200 rounded-lg bg-white shadow-xs">
-                        {streetResults.map((item, idx) => (
+                    {/* Dropdown de Sugestões estilo Google Maps */}
+                    {showStreetDropdown && streetSuggestions.length > 0 && (
+                      <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-2xl z-50 max-h-56 overflow-y-auto divide-y divide-slate-100 animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
+                          <span>Sugestões encontradas ({streetSuggestions.length})</span>
+                          <span className="text-[9px] text-slate-400">Clique para preencher tudo</span>
+                        </div>
+                        {streetSuggestions.map((item, idx) => (
                           <div
                             key={idx}
-                            onClick={() => handleSelectStreetResult(item)}
-                            className="p-2.5 hover:bg-emerald-50 transition-colors cursor-pointer flex items-center justify-between text-xs"
+                            onMouseDown={() => handleSelectStreetSuggestion(item)}
+                            className="p-2.5 hover:bg-cyan-50/80 cursor-pointer flex items-center justify-between text-xs transition-colors group"
                           >
-                            <div>
-                              <p className="font-bold text-slate-900">{item.logradouro}</p>
-                              <p className="text-[11px] text-slate-500">
-                                {item.bairro} • {item.localidade}/{item.uf}
-                              </p>
+                            <div className="flex items-start gap-2 pr-2">
+                              <MapPin className="w-3.5 h-3.5 text-cyan-600 mt-0.5 shrink-0 group-hover:scale-110 transition-transform" />
+                              <div>
+                                <p className="font-bold text-slate-900 group-hover:text-cyan-900">
+                                  {item.logradouro}
+                                </p>
+                                <p className="text-[11px] text-slate-500">
+                                  {item.bairro} • {item.localidade}/{item.uf}
+                                </p>
+                              </div>
                             </div>
-                            <span className="font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded text-[11px]">
+                            <span className="font-mono text-[10px] font-bold text-cyan-800 bg-cyan-100/70 border border-cyan-200 px-2 py-0.5 rounded shrink-0">
                               CEP: {item.cep}
                             </span>
                           </div>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Campo de logradouro preenchido */}
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">Logradouro Selecionado</label>
-                    <input
-                      type="text"
-                      value={formData.endereco || ''}
-                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
-                      className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
-                      placeholder="Nome da rua após selecionar acima..."
-                    />
+                    )}
                   </div>
                 </div>
-              )}
+              </div>
 
-              {/* Número, Complemento, Bairro, Cidade, UF */}
+              {/* Linha 2: Número, Complemento e Bairro */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Número</label>
@@ -970,34 +903,40 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
                     placeholder="Apto, Bloco"
                   />
                 </div>
-                <div>
+                <div className="col-span-2">
                   <label className="block text-xs font-semibold text-slate-700 mb-1">Bairro</label>
                   <input
                     type="text"
                     value={formData.bairro || ''}
                     onChange={(e) => setFormData({ ...formData, bairro: e.target.value })}
                     className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                    placeholder="Bairro"
+                  />
+                </div>
+              </div>
+
+              {/* Linha 3: Município / Cidade e UF */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="sm:col-span-3">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Município / Cidade</label>
+                  <input
+                    type="text"
+                    value={formData.municipio || ''}
+                    onChange={(e) => setFormData({ ...formData, municipio: e.target.value })}
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                    placeholder="São Paulo"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Município / UF</label>
-                  <div className="flex gap-1">
-                    <input
-                      type="text"
-                      value={formData.municipio || ''}
-                      onChange={(e) => setFormData({ ...formData, municipio: e.target.value })}
-                      className="w-3/4 text-xs px-2.5 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
-                      placeholder="São Paulo"
-                    />
-                    <input
-                      type="text"
-                      maxLength={2}
-                      value={formData.uf || ''}
-                      onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
-                      className="w-1/4 text-xs font-bold text-center px-1 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
-                      placeholder="SP"
-                    />
-                  </div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">UF (Estado)</label>
+                  <input
+                    type="text"
+                    maxLength={2}
+                    value={formData.uf || ''}
+                    onChange={(e) => setFormData({ ...formData, uf: e.target.value.toUpperCase() })}
+                    className="w-full text-xs font-bold text-center px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 uppercase"
+                    placeholder="SP"
+                  />
                 </div>
               </div>
 

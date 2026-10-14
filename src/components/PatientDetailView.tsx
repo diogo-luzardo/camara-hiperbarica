@@ -323,6 +323,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                   <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
                     <tr>
                       <th className="py-3 px-3">No.</th>
+                      <th className="py-3 px-3">Modalidade</th>
                       <th className="py-3 px-3">Data</th>
                       <th className="py-3 px-3">Hora</th>
                       <th className="py-3 px-3">ATA</th>
@@ -338,11 +339,15 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                   <tbody className="divide-y divide-slate-100 font-medium">
                     {sessions.map((ses) => (
                       <tr key={ses.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-3 px-3 font-bold font-mono text-cyan-900">
-                          <div className="flex items-center gap-1.5">
-                            <span>#{ses.sessionNumber}</span>
-                            <CoverageBadge convenio={ses.convenio || patient.convenio} size="xs" />
-                          </div>
+                        <td className="py-3 px-3 font-bold font-mono text-cyan-900 whitespace-nowrap">
+                          #{ses.sessionNumber}
+                        </td>
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          <CoverageBadge
+                            convenio={ses.convenio || patient.convenio}
+                            modalidade={ses.modalidade}
+                            size="xs"
+                          />
                         </td>
                         <td className="py-3 px-3 whitespace-nowrap text-slate-900 font-semibold">
                           {ses.data.split('-').reverse().join('/')}

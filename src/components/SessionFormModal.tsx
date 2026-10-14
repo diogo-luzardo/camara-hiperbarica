@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, HeartPulse, ShieldCheck, Stethoscope, AlertTriangle, CheckCircle, Clock, Lock } from 'lucide-react';
+import { X, HeartPulse, ShieldCheck, Stethoscope, AlertTriangle, CheckCircle, Clock, Lock, CreditCard, Building2, UserCheck } from 'lucide-react';
 import { HyperbaricSession, Patient } from '../types';
 import { CoverageBadge, isParticular } from './CoverageBadge';
 
@@ -20,6 +20,10 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
   nextSessionNumber,
   initialSession,
 }) => {
+  const [sessionModalidade, setSessionModalidade] = useState<'particular' | 'convenio'>(
+    isParticular(patient.convenio) ? 'particular' : 'convenio'
+  );
+
   const [formData, setFormData] = useState<Partial<HyperbaricSession>>({
     patientId: patient.id,
     registroOHB: patient.registroOHB,
@@ -63,19 +67,23 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
 
   useEffect(() => {
     if (initialSession) {
+      const mod = initialSession.modalidade || (isParticular(initialSession.convenio || patient.convenio) ? 'particular' : 'convenio');
+      setSessionModalidade(mod);
       setFormData({
         ...initialSession,
         duracaoMinutos: 150, // Travado em 150 minutos pelo protocolo
-        convenio: initialSession.convenio || patient.convenio,
-        modalidade: initialSession.modalidade || (isParticular(patient.convenio) ? 'particular' : 'convenio'),
+        convenio: initialSession.convenio || (mod === 'particular' ? 'Particular' : patient.convenio),
+        modalidade: mod,
       });
     } else {
+      const mod = isParticular(patient.convenio) ? 'particular' : 'convenio';
+      setSessionModalidade(mod);
       setFormData((prev) => ({
         ...prev,
         patientId: patient.id,
         registroOHB: patient.registroOHB,
-        convenio: patient.convenio,
-        modalidade: isParticular(patient.convenio) ? 'particular' : 'convenio',
+        convenio: mod === 'particular' ? 'Particular' : patient.convenio,
+        modalidade: mod,
         sessionNumber: nextSessionNumber,
         duracaoMinutos: 150,
         data: new Date().toISOString().split('T')[0],
@@ -94,8 +102,8 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     onSave({
       ...(formData as HyperbaricSession),
       duracaoMinutos: 150, // Garante que a duração fica fixada em 150 min
-      convenio: patient.convenio,
-      modalidade: isParticular(patient.convenio) ? 'particular' : 'convenio',
+      modalidade: sessionModalidade,
+      convenio: sessionModalidade === 'particular' ? 'Particular' : (patient.convenio || 'Particular'),
     });
     onClose();
   };
@@ -117,7 +125,12 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
                 <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-cyan-500 text-slate-950">
                   Sessão #{formData.sessionNumber}
                 </span>
-                <CoverageBadge convenio={patient.convenio} plano={patient.plano} size="xs" />
+                <CoverageBadge
+                  convenio={sessionModalidade === 'particular' ? 'Particular' : patient.convenio}
+                  plano={sessionModalidade === 'particular' ? undefined : patient.plano}
+                  modalidade={sessionModalidade}
+                  size="xs"
+                />
               </div>
               <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-1">
                 {patient.nome} • <span className="font-mono text-cyan-300 font-bold">{patient.registroOHB}</span>
@@ -131,6 +144,83 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
 
         {/* Content Form */}
         <form onSubmit={handleSubmit} className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-4 sm:space-y-6">
+          {/* Modalidade de Cobrança desta Sessão */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5 text-cyan-600" />
+                <span>Modalidade Desta Sessão:</span>
+              </label>
+              <span className="text-[11px] text-slate-500 font-medium">
+                {sessionModalidade === 'particular'
+                  ? 'Faturar como Particular'
+                  : `Convênio (${patient.convenio || 'Padrão'})`}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => setSessionModalidade('convenio')}
+                className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
+                  sessionModalidade === 'convenio'
+                    ? 'bg-blue-50/90 border-blue-400 ring-2 ring-blue-300 shadow-xs'
+                    : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-600'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    sessionModalidade === 'convenio' ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div className="truncate">
+                  <p className="text-xs font-bold text-slate-900 truncate">
+                    {patient.convenio && !isParticular(patient.convenio)
+                      ? `Convênio: ${patient.convenio}`
+                      : 'Convênio de Saúde'}
+                  </p>
+                  <p className="text-[10px] text-slate-500 truncate">
+                    {patient.plano ? `Plano ${patient.plano}` : 'Guia autorizada'}
+                  </p>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSessionModalidade('particular')}
+                className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all cursor-pointer ${
+                  sessionModalidade === 'particular'
+                    ? 'bg-amber-50/90 border-amber-400 ring-2 ring-amber-300 shadow-xs'
+                    : 'bg-white border-slate-200 hover:bg-slate-100 text-slate-600'
+                }`}
+              >
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                    sessionModalidade === 'particular' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-500'
+                  }`}
+                >
+                  <UserCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-900">Atendimento Particular</p>
+                  <p className="text-[10px] text-slate-500">Sessão avulsa ou consulta extra</p>
+                </div>
+              </button>
+            </div>
+
+            {sessionModalidade === 'particular' && patient.convenio && !isParticular(patient.convenio) && (
+              <div className="text-[11px] text-amber-900 bg-amber-100/70 border border-amber-200 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                <span>
+                  O paciente possui o convênio <strong>{patient.convenio}</strong> cadastrado, mas{' '}
+                  <strong>esta sessão #{formData.sessionNumber}</strong> será faturada como <strong>Particular</strong>.
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* Section 1: Dados da Sessão e Parâmetros Hiperbáricos */}
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 mb-3 flex items-center gap-1.5">
