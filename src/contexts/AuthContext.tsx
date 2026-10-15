@@ -139,16 +139,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await new Promise((resolve) => setTimeout(resolve, 500));
 
     const cleanEmail = email.trim().toLowerCase();
-    const matchedUser = MOCK_USERS.find((u) => u.email.toLowerCase() === cleanEmail);
+    const matchedUser = MOCK_USERS.find(
+      (u) =>
+        u.email.toLowerCase() === cleanEmail ||
+        u.email.split('@')[0].toLowerCase() === cleanEmail ||
+        u.role.toLowerCase() === cleanEmail
+    );
 
     if (!matchedUser) {
-      // Aceita também login genérico se senha tiver mais de 3 caracteres para facilitar testes
-      if (cleanEmail.includes('@') && password.length >= 3) {
+      // Aceita também login genérico com usuário/nome se senha tiver mais de 3 caracteres para facilitar testes
+      if (cleanEmail.length > 0 && password.length >= 3) {
+        const username = cleanEmail.includes('@') ? cleanEmail.split('@')[0] : cleanEmail;
         // Criar usuário customizado padrão Administrador
         const customUser: User = {
           id: 'user-custom-' + Date.now(),
-          name: cleanEmail.split('@')[0].toUpperCase(),
-          email: cleanEmail,
+          name: username.toUpperCase(),
+          email: cleanEmail.includes('@') ? cleanEmail : `${cleanEmail}@ohb.med.br`,
           role: 'administrador',
           roleLabel: 'Administrador Clínico',
           title: 'Profissional de Saúde',
@@ -161,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         return { success: true };
       }
-      return { success: false, error: 'E-mail ou credenciais não encontrados no sistema.' };
+      return { success: false, error: 'Usuário ou credenciais não encontrados no sistema.' };
     }
 
     // Senha padrão nos mocks aceita qualquer senha >= 3 caracteres para facilidade de demonstração

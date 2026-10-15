@@ -70,10 +70,10 @@ export async function searchAddressByStreet(
   const cleanStreet = logradouro.trim();
 
   if (cleanUf.length !== 2) {
-    throw new Error('Informe o estado (UF) com 2 letras (ex: SP).');
+    throw new Error('UF deve conter exatamente 2 letras (ex: SP, RJ).');
   }
   if (cleanCity.length < 3) {
-    throw new Error('O nome da cidade deve ter pelo menos 3 caracteres.');
+    throw new Error('O nome da cidade/município deve ter no mínimo 3 caracteres.');
   }
   if (cleanStreet.length < 3) {
     throw new Error('O nome do logradouro/rua deve ter pelo menos 3 caracteres.');
@@ -108,3 +108,4 @@ export async function searchAddressByStreet(
   }
 }
 
+export const fetchCepsByAddress = searchAddressByStreet;

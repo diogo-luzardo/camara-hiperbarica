@@ -1,0 +1,285 @@
+import { CidCatalogEntry } from '../types';
+
+export const CID_CATALOG_DATA: CidCatalogEntry[] = [
+  {
+    codigoCid11: '5A14',
+    codigoCid10: 'E11.5',
+    nome: 'Diabetes mellitus tipo 2 com complicações circulatórias periféricas (Pé Diabético)',
+    capitulo: '05 - Doenças endócrinas, nutricionais ou metabólicas',
+    sinonimos: 'pé diabético, úlcera neuropática, mal perfurante plantar, gangrena diabética, angiopatia diabética',
+  },
+  {
+    codigoCid11: '5A10',
+    codigoCid10: 'E10.5',
+    nome: 'Diabetes mellitus tipo 1 com complicações circulatórias periféricas (Úlcera / Pé Diabético)',
+    capitulo: '05 - Doenças endócrinas, nutricionais ou metabólicas',
+    sinonimos: 'pé diabético tipo 1, úlcera diabética juvenil',
+  },
+  {
+    codigoCid11: '1B74',
+    codigoCid10: 'M72.6',
+    nome: 'Fascite necrotizante (incluindo Gangrena de Fournier)',
+    capitulo: '01 - Doenças infecciosas ou parasitárias',
+    sinonimos: 'gangrena de fournier, celulite necrotizante, fasceíte, infecção necrotizante de partes moles',
+  },
+  {
+    codigoCid11: 'FB84.1',
+    codigoCid10: 'M86.9',
+    nome: 'Osteomielite crônica refratária',
+    capitulo: '15 - Doenças do sistema musculoesquelético',
+    sinonimos: 'osteomielite crônica, infecção óssea, sequestro ósseo, osteíte',
+  },
+  {
+    codigoCid11: 'FB84.0',
+    codigoCid10: 'M86.0',
+    nome: 'Osteomielite aguda hematogênica',
+    capitulo: '15 - Doenças do sistema musculoesquelético',
+    sinonimos: 'infecção óssea aguda, abscesso ósseo',
+  },
+  {
+    codigoCid11: 'EK90',
+    codigoCid10: 'T66',
+    nome: 'Lesões actínicas e radiodermite (efeitos tardios da radiação)',
+    capitulo: '14 - Doenças da pele',
+    sinonimos: 'radiodermite, necrose por radiação, lesão por radioterapia, radiólise tecidual',
+  },
+  {
+    codigoCid11: 'GC08.0',
+    codigoCid10: 'N30.4',
+    nome: 'Cistite actínica por radiação',
+    capitulo: '16 - Doenças do aparelho geniturinário',
+    sinonimos: 'cistite hemorrágica por radiação, hematúria pós-radioterapia',
+  },
+  {
+    codigoCid11: 'DB34',
+    codigoCid10: 'K62.7',
+    nome: 'Proctite e retite actínica por radiação',
+    capitulo: '13 - Doenças do aparelho digestivo',
+    sinonimos: 'retite actínica, sangramento retal pós-radioterapia, proctopatia por radiação',
+  },
+  {
+    codigoCid11: 'DA01.3',
+    codigoCid10: 'M87.1',
+    nome: 'Osteorradionecrose de mandíbula ou ossos faciais',
+    capitulo: '13 - Doenças do aparelho digestivo',
+    sinonimos: 'osteorradionecrose mandibular, necrose óssea por radioterapia de cabeça e pescoço',
+  },
+  {
+    codigoCid11: 'NF01.0',
+    codigoCid10: 'T79.0',
+    nome: 'Embolia gasosa traumática ou iatrogênica',
+    capitulo: '22 - Lesões, envenenamentos ou outras consequências de causas externas',
+    sinonimos: 'aeroembolia, embolia aérea, bolhas de ar intravascular',
+  },
+  {
+    codigoCid11: 'NF01.1',
+    codigoCid10: 'T70.3',
+    nome: 'Doença descompressiva (mal dos mergulhadores)',
+    capitulo: '22 - Lesões, envenenamentos ou outras consequências de causas externas',
+    sinonimos: 'bends, embolia por descompressão, doença caisson',
+  },
+  {
+    codigoCid11: 'NF01.6',
+    codigoCid10: 'T79.6',
+    nome: 'Isquemia traumática aguda e lesão por esmagamento',
+    capitulo: '22 - Lesões, envenenamentos ou outras consequências de causas externas',
+    sinonimos: 'crush syndrome, síndrome do esmagamento, trauma vascular agudo',
+  },
+  {
+    codigoCid11: 'FB82',
+    codigoCid10: 'T79.A',
+    nome: 'Síndrome compartimental traumática ou não traumática',
+    capitulo: '15 - Doenças do sistema musculoesquelético',
+    sinonimos: 'hipertensão compartimental, fasceíte de descompressão cirúrgica',
+  },
+  {
+    codigoCid11: 'NE81',
+    codigoCid10: 'T86.8',
+    nome: 'Comprometimento, sofrimento ou falência de retalhos cutâneos e enxertos',
+    capitulo: '22 - Lesões, envenenamentos ou outras consequências de causas externas',
+    sinonimos: 'retalho em sofrimento, isquemia de enxerto, retalho miocutâneo isquêmico',
+  },
+  {
+    codigoCid11: 'BD72',
+    codigoCid10: 'I83.0',
+    nome: 'Varizes dos membros inferiores com úlcera (Úlcera Venosa Crônica)',
+    capitulo: '11 - Doenças do aparelho circulatório',
+    sinonimos: 'úlcera venosa, estase venosa, úlcera varicosa, insuficiência venosa crônica',
+  },
+  {
+    codigoCid11: 'BD72.1',
+    codigoCid10: 'I83.2',
+    nome: 'Varizes dos membros inferiores com úlcera e inflamação',
+    capitulo: '11 - Doenças do aparelho circulatório',
+    sinonimos: 'úlcera venosa infectada, eczema estase com úlcera',
+  },
+  {
+    codigoCid11: 'BD53',
+    codigoCid10: 'I70.2',
+    nome: 'Aterosclerose das artérias das extremidades com úlcera isquêmica',
+    capitulo: '11 - Doenças do aparelho circulatório',
+    sinonimos: 'úlcera arterial, isquemia crítica de membros inferiores, oclusão arterial periférica',
+  },
+  {
+    codigoCid11: 'EH90',
+    codigoCid10: 'L89',
+    nome: 'Úlcera de decúbito / Úlcera por pressão estágio 3 e 4',
+    capitulo: '14 - Doenças da pele',
+    sinonimos: 'escaras, lesão por pressão, úlcera de pressão sacral, trocantérica ou calcânea',
+  },
+  {
+    codigoCid11: 'EE40',
+    codigoCid10: 'L98.4',
+    nome: 'Úlcera crônica da pele não classificada em outra parte',
+    capitulo: '14 - Doenças da pele',
+    sinonimos: 'ferida crônica refratária, lesão trófica de perna',
+  },
+  {
+    codigoCid11: '1B70',
+    codigoCid10: 'L03.9',
+    nome: 'Celulite e erisipela bolhosa ou complicada',
+    capitulo: '01 - Doenças infecciosas ou parasitárias',
+    sinonimos: 'celulite infecciosa, erisipela com necrose, infecção de pele e subcutâneo',
+  },
+  {
+    codigoCid11: '1A40',
+    codigoCid10: 'A48.0',
+    nome: 'Gangrena gasosa (Infecção por Clostridium perfringens)',
+    capitulo: '01 - Doenças infecciosas ou parasitárias',
+    sinonimos: 'miosites clostridiais, gangrena anaeróbica enfisematosa',
+  },
+  {
+    codigoCid11: 'NE80',
+    codigoCid10: 'T81.3',
+    nome: 'Deiscência de ferida cirúrgica infectada ou refratária',
+    capitulo: '22 - Lesões, envenenamentos ou outras consequências de causas externas',
+    sinonimos: 'abertura de pontos cirúrgicos, deiscência de sutura, ferida pós-operatória deiscente',
+  },
+  {
+    codigoCid11: 'NE82',
+    codigoCid10: 'T81.4',
+    nome: 'Infecção profunda de sítio cirúrgico',
+    capitulo: '22 - Lesões, envenenamentos ou outras consequências de causas externas',
+    sinonimos: 'infecção cirúrgica de órgão ou espaço, abscesso de parede cirúrgica',
+  },
+  {
+    codigoCid11: 'NE83',
+    codigoCid10: 'T87.4',
+    nome: 'Infecção ou necrose do coto de amputação',
+    capitulo: '22 - Lesões, envenenamentos ou outras consequências de causas externas',
+    sinonimos: 'coto de amputação infectado, deiscência de coto',
+  },
+  {
+    codigoCid11: 'ND50',
+    codigoCid10: 'T20-T32',
+    nome: 'Queimaduras térmicas de 2º e 3º graus extensas',
+    capitulo: '22 - Lesões, envenenamentos ou outras consequências de causas externas',
+    sinonimos: 'grande queimado, queimadura profunda, lesão térmica',
+  },
+  {
+    codigoCid11: 'ND56',
+    codigoCid10: 'T58',
+    nome: 'Intoxicação aguda por monóxido de carbono (CO) e fumaça',
+    capitulo: '22 - Lesões, envenenamentos ou outras consequências de causas externas',
+    sinonimos: 'inalação de fumaça, envenenamento por monóxido de carbono, carboxihemoglobina',
+  },
+  {
+    codigoCid11: '1F23',
+    codigoCid10: 'B44.9',
+    nome: 'Aspergilose e micoses profundas invasivas',
+    capitulo: '01 - Doenças infecciosas ou parasitárias',
+    sinonimos: 'micose oportunista, zigomicose, mucormicose rino-órbito-cerebral',
+  },
+  {
+    codigoCid11: 'AB10',
+    codigoCid10: 'H90.3',
+    nome: 'Surdez súbita idiopática ou neurossensorial aguda',
+    capitulo: '10 - Doenças do ouvido e da apófise mastoide',
+    sinonimos: 'perda auditiva neurossensorial súbita, hipoacusia súbita',
+  },
+  {
+    codigoCid11: '9B78',
+    codigoCid10: 'H34.1',
+    nome: 'Oclusão da artéria central da retina (OACR)',
+    capitulo: '09 - Doenças do aparelho visual',
+    sinonimos: 'isquemia retiniana aguda, oclusão vascular ocular',
+  },
+  {
+    codigoCid11: 'BA00',
+    codigoCid10: 'I10',
+    nome: 'Hipertensão arterial essencial primária',
+    capitulo: '11 - Doenças do aparelho circulatório',
+    sinonimos: 'pressão alta, HAS, doença hipertensiva',
+  },
+  {
+    codigoCid11: 'BD50',
+    codigoCid10: 'I73.9',
+    nome: 'Doença vascular periférica não especificada (Vasculopatia)',
+    capitulo: '11 - Doenças do aparelho circulatório',
+    sinonimos: 'má circulação, vasculopatia periférica',
+  },
+  {
+    codigoCid11: '4A40',
+    codigoCid10: 'L93.0',
+    nome: 'Lúpus eritematoso discóide com lesões cutâneas ulceradas',
+    capitulo: '04 - Doenças do sistema imunitário',
+    sinonimos: 'lúpus cutâneo, vasculite lúpica com úlcera',
+  },
+  {
+    codigoCid11: '4A44',
+    codigoCid10: 'M34.9',
+    nome: 'Esclerodermia e esclerose sistêmica com úlceras de ponta de dedo',
+    capitulo: '04 - Doenças do sistema imunitário',
+    sinonimos: 'esclerodermia, fenômeno de raynaud com úlcera isquêmica',
+  },
+  {
+    codigoCid11: '1B72',
+    codigoCid10: 'A49.0',
+    nome: 'Infecção por Staphylococcus aureus resistente à meticilina (MRSA)',
+    capitulo: '01 - Doenças infecciosas ou parasitárias',
+    sinonimos: 'MRSA, estafilococo multirresistente em ferida',
+  },
+  {
+    codigoCid11: '1B73',
+    codigoCid10: 'B96.5',
+    nome: 'Infecção por Pseudomonas aeruginosa em feridas crônicas',
+    capitulo: '01 - Doenças infecciosas ou parasitárias',
+    sinonimos: 'pseudomonas em ferida, exsudato esverdeado',
+  },
+];
+
+export const COMMON_CID_OHB_EXTENDED = [
+  { cid11: '5A14', cid10: 'E11.5', label: 'Pé Diabético Ulcerado / Gangrena' },
+  { cid11: '1B74', cid10: 'M72.6', label: 'Fascite Necrotizante / Fournier' },
+  { cid11: 'FB84.1', cid10: 'M86.9', label: 'Osteomielite Crônica Refratária' },
+  { cid11: 'EK90', cid10: 'T66', label: 'Lesões Actínicas / Radiodermite' },
+  { cid11: 'NF01.0', cid10: 'T79.0', label: 'Embolia Gasosa Aguda' },
+  { cid11: 'NE81', cid10: 'T86.8', label: 'Sofrimento de Enxertos e Retalhos' },
+  { cid11: 'BD72', cid10: 'I83.0', label: 'Úlcera Venosa Crônica' },
+  { cid11: 'EH90', cid10: 'L89', label: 'Úlcera por Pressão (Escara)' },
+];
+
+function normalizeText(text: string): string {
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+export function searchLocalCids(query: string, limit: number = 10): CidCatalogEntry[] {
+  if (!query || query.trim().length === 0) {
+    return CID_CATALOG_DATA.slice(0, limit);
+  }
+
+  const normalizedQuery = normalizeText(query.trim());
+
+  return CID_CATALOG_DATA.filter((entry) => {
+    return (
+      normalizeText(entry.codigoCid11).includes(normalizedQuery) ||
+      (entry.codigoCid10 && normalizeText(entry.codigoCid10).includes(normalizedQuery)) ||
+      normalizeText(entry.nome).includes(normalizedQuery) ||
+      (entry.sinonimos && normalizeText(entry.sinonimos).includes(normalizedQuery)) ||
+      (entry.capitulo && normalizeText(entry.capitulo).includes(normalizedQuery))
+    );
+  }).slice(0, limit);
+}

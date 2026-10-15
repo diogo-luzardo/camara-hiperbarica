@@ -7,11 +7,30 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Path("/api/patients")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class PatientResource {
+
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+        "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$"
+    );
+
+    private static boolean isValidEmail(String email) {
+        if (email == null) return true;
+        String trimmed = email.trim();
+        if (trimmed.isEmpty()) return true;
+        if (trimmed.length() > 254 || trimmed.contains("..") || trimmed.contains(" ")) return false;
+        String[] parts = trimmed.split("@");
+        if (parts.length != 2 || parts[0].isEmpty() || parts[1].isEmpty() || parts[0].length() > 64) return false;
+        String[] domainSegments = parts[1].split("\\.");
+        if (domainSegments.length < 2) return false;
+        String tld = domainSegments[domainSegments.length - 1];
+        if (tld.length() < 2 || !tld.matches("^[a-zA-Z]+$")) return false;
+        return EMAIL_PATTERN.matcher(trimmed).matches();
+    }
 
     @GET
     public List<Patient> listAll(@QueryParam("search") String search) {
@@ -54,6 +73,12 @@ public class PatientResource {
                 .build();
         }
 
+        if (!isValidEmail(patient.email)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("Endereço de e-mail inválido")
+                .build();
+        }
+
         Patient existing = null;
 
         // 1. Verificar unicidade por ID (se informado)
@@ -78,6 +103,10 @@ public class PatientResource {
             return Response.ok(existing).build();
         }
 
+        if (patient.email != null) {
+            patient.email = patient.email.trim().toLowerCase();
+        }
+
         patient.persist();
         return Response.status(Response.Status.CREATED).entity(patient).build();
     }
@@ -89,6 +118,12 @@ public class PatientResource {
         Patient patient = Patient.findById(id);
         if (patient == null || patient.deletedAt != null) {
             return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        if (!isValidEmail(updatedData.email)) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("Endereço de e-mail inválido")
+                .build();
         }
 
         copyFields(patient, updatedData);
@@ -123,7 +158,7 @@ public class PatientResource {
         if (source.uf != null) target.uf = source.uf;
         if (source.telefonesFixos != null) target.telefonesFixos = source.telefonesFixos;
         if (source.celular != null) target.celular = source.celular;
-        if (source.email != null) target.email = source.email;
+        if (source.email != null) target.email = source.email.trim().toLowerCase();
         if (source.procedencia != null) target.procedencia = source.procedencia;
         if (source.remocao != null) target.remocao = source.remocao;
         if (source.medicoIndicou != null) target.medicoIndicou = source.medicoIndicou;
@@ -137,6 +172,7 @@ public class PatientResource {
         if (source.descricaoLesao != null) target.descricaoLesao = source.descricaoLesao;
         if (source.diagnostico != null) target.diagnostico = source.diagnostico;
         if (source.cid10 != null) target.cid10 = source.cid10;
+        if (source.cid11 != null) target.cid11 = source.cid11;
         if (source.numeroTratamentosPrevisto != null) target.numeroTratamentosPrevisto = source.numeroTratamentosPrevisto;
         if (source.medicamentosEmUso != null) target.medicamentosEmUso = source.medicamentosEmUso;
         if (source.alergias != null) target.alergias = source.alergias;

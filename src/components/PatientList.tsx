@@ -122,6 +122,7 @@ export const PatientList: React.FC<PatientListProps> = ({
         normalizeText(patient.rg).includes(normalizedTerm) ||
         normalizeText(patient.diagnostico).includes(normalizedTerm) ||
         normalizeText(patient.cid10).includes(normalizedTerm) ||
+        (patient.cid11 ? normalizeText(patient.cid11).includes(normalizedTerm) : false) ||
         normalizeText(patient.convenio).includes(normalizedTerm) ||
         normalizeText(patient.plano).includes(normalizedTerm) ||
         normalizeText(patient.endereco).includes(normalizedTerm) ||
@@ -395,7 +396,14 @@ export const PatientList: React.FC<PatientListProps> = ({
                   <div className="mt-3 p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
                     <div className="flex items-center justify-between text-[11px] text-slate-400 mb-0.5 font-medium">
                       <span>DIAGNÓSTICO & CID</span>
-                      <span className="font-mono font-bold text-cyan-800">{patient.cid10}</span>
+                      <div className="flex items-center gap-1.5 font-mono font-bold">
+                        {patient.cid11 && (
+                          <span className="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded text-[10px] border border-emerald-200">
+                            {patient.cid11}
+                          </span>
+                        )}
+                        <span className="text-cyan-800">{patient.cid10}</span>
+                      </div>
                     </div>
                     <p className="font-medium text-slate-800 line-clamp-2">{patient.diagnostico}</p>
                   </div>

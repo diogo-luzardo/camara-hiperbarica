@@ -133,6 +133,9 @@ public class Patient extends PanacheEntityBase {
     @Column(length = 20)
     public String cid10;
 
+    @Column(name = "cid11", length = 30)
+    public String cid11;
+
     @Column(name = "numero_tratamentos_previsto")
     public Integer numeroTratamentosPrevisto;
 

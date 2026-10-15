@@ -1,5 +1,6 @@
-import { Patient, HyperbaricSession, Appointment, DigitalizedDocument } from '../types';
+import { Patient, HyperbaricSession, Appointment, DigitalizedDocument, CidCatalogEntry } from '../types';
 import { MOCK_PATIENTS_50, MOCK_SESSIONS_50, MOCK_APPOINTMENTS_50, MOCK_DOCUMENTS_50 } from '../data/mockPatients50';
+import { searchLocalCids } from '../data/cidDataset';
 
 const API_BASE = 'http://localhost:8080/api';
 const DB_NAME = 'ClinicaOHB_Database';
@@ -532,4 +533,23 @@ export const StorageService = {
       docs: parsed.data.digitalizedDocuments?.length || 0,
     };
   },
+
+  async searchCids(query: string, limit: number = 10): Promise<CidCatalogEntry[]> {
+    try {
+      const response = await fetch(
+        `${API_BASE}/cids?q=${encodeURIComponent(query)}&limit=${limit}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (Array.isArray(data) && data.length > 0) {
+          return data;
+        }
+      }
+    } catch {
+      // Fallback para catálogo local quando offline ou backend inacessível
+    }
+    return searchLocalCids(query, limit);
+  },
 };
+
+export const storageService = StorageService;

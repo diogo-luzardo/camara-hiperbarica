@@ -93,7 +93,9 @@ export const PrintSheetModal: React.FC<PrintSheetModalProps> = ({
             </div>
             <div className="col-span-2">
               <span className="text-slate-500 block">DIAGNÓSTICO:</span>
-              <strong>{patient.diagnostico} (CID-10: {patient.cid10})</strong>
+              <strong>
+                {patient.diagnostico} ({patient.cid11 ? `CID-11: ${patient.cid11} | ` : ''}CID-10: {patient.cid10})
+              </strong>
             </div>
             <div className="col-span-2">
               <span className="text-slate-500 block">MÉDICO ASSISTENTE:</span>

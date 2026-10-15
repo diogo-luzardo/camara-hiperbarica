@@ -16,9 +16,13 @@ import {
   Compass,
   Lock,
   Clock,
+  Mail,
 } from 'lucide-react';
-import { Patient } from '../types';
+import { Patient, CidCatalogEntry } from '../types';
+import { COMMON_CID_OHB_EXTENDED } from '../data/cidDataset';
+import { storageService } from '../services/storage';
 import { formatCPF, isValidCPF, cleanCPF } from '../utils/cpfValidator';
+import { isValidEmail, cleanEmail } from '../utils/emailValidator';
 import {
   fetchAddressByCep,
   searchAddressByStreet,
@@ -80,6 +84,13 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
   const [showStreetDropdown, setShowStreetDropdown] = useState(false);
   const streetDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
 
+  // CID-11 / CID-10 Autocomplete State
+  const [cidSearchQuery, setCidSearchQuery] = useState('');
+  const [cidSearchResults, setCidSearchResults] = useState<CidCatalogEntry[]>([]);
+  const [isCidSearching, setIsCidSearching] = useState(false);
+  const [showCidDropdown, setShowCidDropdown] = useState(false);
+  const cidDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
+
   // Modalidade de Atendimento: Particular vs Convênio
   const [isParticularMode, setIsParticularMode] = useState(false);
 
@@ -127,6 +138,7 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
     descricaoLesao: '',
     diagnostico: '',
     cid10: '',
+    cid11: '',
     numeroTratamentosPrevisto: 20,
     medicamentosEmUso: '',
     alergias: 'Nega alergias relatadas',
@@ -157,6 +169,10 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
     setIsCepSuccess(false);
     setStreetSuggestions([]);
     setShowStreetDropdown(false);
+    setCidSearchQuery('');
+    setCidSearchResults([]);
+    setShowCidDropdown(false);
+    setIsCidSearching(false);
   }, [initialPatient, existingPatientsCount, isOpen]);
 
   if (!isOpen) return null;
@@ -165,6 +181,11 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
   const rawCpfDigits = cleanCPF(formData.cpf || '');
   const isCpfFilled = rawCpfDigits.length === 11;
   const isCpfValid = isCpfFilled ? isValidCPF(formData.cpf || '') : false;
+
+  // Real-time E-mail checks
+  const rawEmail = (formData.email || '').trim();
+  const isEmailFilled = rawEmail.length > 0;
+  const isEmailValid = isEmailFilled ? isValidEmail(rawEmail) : true;
 
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatCPF(e.target.value);
@@ -308,6 +329,58 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
     }));
   };
 
+  const handleCidSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setCidSearchQuery(val);
+
+    if (cidDebounceRef.current) {
+      clearTimeout(cidDebounceRef.current);
+    }
+
+    const trimmed = val.trim();
+    if (trimmed.length < 2) {
+      setCidSearchResults([]);
+      setShowCidDropdown(false);
+      setIsCidSearching(false);
+      return;
+    }
+
+    setIsCidSearching(true);
+    cidDebounceRef.current = setTimeout(async () => {
+      try {
+        const results = await storageService.searchCids(trimmed, 12);
+        setCidSearchResults(results);
+        setShowCidDropdown(results.length > 0);
+      } catch {
+        setCidSearchResults([]);
+        setShowCidDropdown(false);
+      } finally {
+        setIsCidSearching(false);
+      }
+    }, 250);
+  };
+
+  const handleSelectCid = (entry: CidCatalogEntry) => {
+    setFormData((prev) => ({
+      ...prev,
+      diagnostico: entry.nome,
+      cid11: entry.codigoCid11,
+      cid10: entry.codigoCid10 || prev.cid10 || '',
+    }));
+    setCidSearchQuery('');
+    setShowCidDropdown(false);
+    setCidSearchResults([]);
+  };
+
+  const handleSelectQuickCid = (cid: { cid11: string; cid10: string; label: string }) => {
+    setFormData((prev) => ({
+      ...prev,
+      diagnostico: cid.label,
+      cid11: cid.cid11,
+      cid10: cid.cid10,
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -327,7 +400,19 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
       }
     }
 
-    onSave(formData as Patient);
+    // Validador de E-mail (quando preenchido)
+    if (isEmailFilled && !isEmailValid) {
+      setFormError('O e-mail informado é inválido. Por favor, verifique o formato digitado (ex: paciente@dominio.com).');
+      setActiveTab('endereco');
+      return;
+    }
+
+    const finalPatient: Patient = {
+      ...(formData as Patient),
+      email: isEmailFilled ? cleanEmail(rawEmail) : '',
+    };
+
+    onSave(finalPatient);
     onClose();
   };
 
@@ -969,14 +1054,57 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 mb-1">E-mail</label>
-                    <input
-                      type="email"
-                      value={formData.email || ''}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
-                      placeholder="paciente@email.com"
-                    />
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-semibold text-slate-700">
+                        E-mail <span className="text-slate-400 font-normal">(Opcional)</span>
+                      </label>
+                      {isEmailFilled && (
+                        <span
+                          className={`text-[10px] font-bold flex items-center gap-1 px-1.5 py-0.5 rounded ${
+                            isEmailValid
+                              ? 'text-emerald-700 bg-emerald-100'
+                              : 'text-rose-700 bg-rose-100'
+                          }`}
+                        >
+                          {isEmailValid ? (
+                            <>
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> E-mail Válido
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="w-3 h-3 text-rose-600" /> E-mail Inválido
+                            </>
+                          )}
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={formData.email || ''}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          setFormError(null);
+                        }}
+                        className={`w-full text-xs px-3 py-2 rounded-lg border transition-colors ${
+                          isEmailFilled
+                            ? isEmailValid
+                              ? 'border-emerald-500 bg-emerald-50/30 text-emerald-950 focus:ring-emerald-500'
+                              : 'border-rose-500 bg-rose-50/40 text-rose-950 focus:ring-rose-500'
+                            : 'border-slate-300 focus:ring-cyan-500'
+                        }`}
+                        placeholder="paciente@exemplo.com.br"
+                      />
+                    </div>
+                    {isEmailFilled && !isEmailValid ? (
+                      <p className="text-[10px] text-rose-600 mt-1 flex items-center gap-1 font-medium">
+                        <AlertCircle className="w-3 h-3 shrink-0" /> Formato de e-mail inválido. Exemplo: paciente@dominio.com.br
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 mt-1">
+                        Utilizado para avisos e envio de prontuários digitais.
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1119,12 +1247,103 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
           {/* TAB 4: PROTOCOLO OHB & SEGURANÇA DA CÂMARA */}
           {activeTab === 'ohb' && (
             <div className="space-y-4">
-              <div className="bg-slate-900 text-white rounded-xl p-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-2">
-                  Diagnóstico Nosológico & CID-10 para Oxigenoterapia Hiperbárica
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="sm:col-span-2">
+              <div className="bg-slate-900 text-white rounded-xl p-4 shadow-lg border border-slate-800">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <div>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                      Diagnóstico Clínico & Classificação CID-11 / CID-10 (OMS & ANS)
+                    </h3>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      Busque pelo nome da patologia, sintoma ou código para preenchimento automático sincronizado.
+                    </p>
+                  </div>
+                  <span className="text-[10px] font-medium text-emerald-400 bg-emerald-950/80 border border-emerald-700 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-2.5 h-2.5" />
+                    Catálogo CID-11 Oficial Ativo
+                  </span>
+                </div>
+
+                {/* Campo de Busca Inteligente de CID-11 / CID-10 */}
+                <div className="relative mb-4">
+                  <label className="block text-[11px] font-semibold text-cyan-300 mb-1">
+                    Pesquisar no Catálogo de Doenças (CID-11 / CID-10 / Patologias OHB)
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                      {isCidSearching ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-cyan-400" />
+                      ) : (
+                        <Search className="w-4 h-4 text-cyan-400" />
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      id="cid-catalog-search-input"
+                      value={cidSearchQuery}
+                      onChange={handleCidSearchChange}
+                      onFocus={() => {
+                        if (cidSearchResults.length > 0) setShowCidDropdown(true);
+                      }}
+                      className="w-full text-xs pl-9 pr-8 py-2 rounded-lg border border-cyan-800/80 bg-slate-950 text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 shadow-inner"
+                      placeholder="Digite patologia, sintoma ou código (ex: pé diabético, osteomielite, fascite, 5A14, E11.5)..."
+                    />
+                    {cidSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCidSearchQuery('');
+                          setShowCidDropdown(false);
+                          setCidSearchResults([]);
+                        }}
+                        className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-white cursor-pointer"
+                        title="Limpar busca"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Dropdown Flutuante de Resultados do Catálogo */}
+                  {showCidDropdown && cidSearchResults.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-slate-850 border border-slate-700 bg-slate-900 rounded-xl shadow-2xl z-50 max-h-64 overflow-y-auto divide-y divide-slate-800 animate-in fade-in slide-in-from-top-1 duration-150">
+                      <div className="px-3 py-1.5 bg-slate-950 text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+                        <span>Resultados Encontrados ({cidSearchResults.length})</span>
+                        <span className="text-[9px] text-cyan-400">Clique para preencher diagnóstico e CIDs</span>
+                      </div>
+                      {cidSearchResults.map((entry) => (
+                        <div
+                          key={entry.codigoCid11}
+                          onMouseDown={() => handleSelectCid(entry)}
+                          className="p-3 hover:bg-slate-800 cursor-pointer text-xs transition-colors group flex items-start justify-between gap-3"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-white group-hover:text-cyan-300 transition-colors">
+                              {entry.nome}
+                            </p>
+                            <p className="text-[11px] text-slate-400 truncate mt-0.5">
+                              {entry.capitulo}
+                            </p>
+                          </div>
+                          <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1.5 shrink-0">
+                            <span className="font-mono text-[11px] font-bold text-emerald-300 bg-emerald-950 border border-emerald-700 px-2 py-0.5 rounded shadow-xs" title="Código CID-11 (OMS)">
+                              CID-11: {entry.codigoCid11}
+                            </span>
+                            {entry.codigoCid10 && (
+                              <span className="font-mono text-[11px] font-bold text-cyan-300 bg-cyan-950 border border-cyan-800 px-2 py-0.5 rounded shadow-xs" title="Código CID-10 de equivalência">
+                                CID-10: {entry.codigoCid10}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Campos Sincronizados de Diagnóstico, CID-11 e CID-10 */}
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 pt-1 border-t border-slate-800">
+                  <div className="sm:col-span-6">
                     <label className="block text-xs font-semibold text-slate-300 mb-1">
                       Diagnóstico Principal <span className="text-rose-400">*</span>
                     </label>
@@ -1137,38 +1356,51 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
                       placeholder="Ex: Pé Diabético com úlcera isquêmica e infecção"
                     />
                   </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 mb-1">Código CID-10</label>
+                  <div className="sm:col-span-3">
+                    <label className="block text-xs font-semibold text-emerald-300 mb-1 flex items-center justify-between">
+                      <span>CID-11 (OMS)</span>
+                      <span className="text-[10px] text-emerald-400 font-normal">Padrão Atual</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.cid11 || ''}
+                      onChange={(e) => setFormData({ ...formData, cid11: e.target.value })}
+                      className="w-full text-xs font-mono font-bold text-emerald-300 px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 focus:ring-2 focus:ring-emerald-500"
+                      placeholder="Ex: 5A14"
+                    />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <label className="block text-xs font-semibold text-cyan-300 mb-1 flex items-center justify-between">
+                      <span>CID-10 (ANS/TISS)</span>
+                      <span className="text-[10px] text-cyan-400 font-normal">Faturamento</span>
+                    </label>
                     <input
                       type="text"
                       value={formData.cid10 || ''}
                       onChange={(e) => setFormData({ ...formData, cid10: e.target.value })}
                       className="w-full text-xs font-mono font-bold text-cyan-300 px-3 py-2 rounded-lg border border-slate-700 bg-slate-800 focus:ring-2 focus:ring-cyan-500"
-                      placeholder="E11.5"
+                      placeholder="Ex: E11.5"
                     />
                   </div>
                 </div>
 
-                {/* Sugestões Rápidas de CID-10 Frequentes em OHB */}
-                <div className="mt-3">
-                  <span className="text-[10px] text-slate-400 font-semibold block mb-1">
-                    Atalhos Rápidos de Patologias Cobertas por CFM em OHB:
+                {/* Sugestões Rápidas de Patologias Frequentes em OHB com CID-11 e CID-10 */}
+                <div className="mt-4 pt-3 border-t border-slate-800">
+                  <span className="text-[10px] text-slate-400 font-semibold block mb-1.5">
+                    Atalhos Rápidos de Patologias Cobertas por CFM em OHB (Preenche CID-11 & CID-10):
                   </span>
                   <div className="flex flex-wrap gap-1.5">
-                    {COMMON_CID_OHB.map((cid) => (
+                    {COMMON_CID_OHB_EXTENDED.map((cid) => (
                       <button
-                        key={cid.code}
+                        key={cid.cid11}
                         type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            cid10: cid.code,
-                            diagnostico: cid.label,
-                          })
-                        }
-                        className="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-cyan-950 text-slate-300 hover:text-cyan-300 border border-slate-700 hover:border-cyan-600 transition-colors cursor-pointer"
+                        onClick={() => handleSelectQuickCid(cid)}
+                        className="text-[10px] px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-cyan-950 text-slate-300 hover:text-cyan-200 border border-slate-700 hover:border-cyan-600 transition-all cursor-pointer flex items-center gap-1.5 shadow-xs"
                       >
-                        <strong className="text-cyan-400">{cid.code}</strong> - {cid.label}
+                        <span className="text-emerald-400 font-mono font-bold">{cid.cid11}</span>
+                        <span className="text-slate-500">/</span>
+                        <span className="text-cyan-400 font-mono font-bold">{cid.cid10}</span>
+                        <span className="text-slate-300 font-medium">{cid.label}</span>
                       </button>
                     ))}
                   </div>

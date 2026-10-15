@@ -150,6 +150,11 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
           <div className="flex items-center gap-2">
             <span className="font-bold text-slate-700">Diagnóstico Principal:</span>
             <span className="font-medium text-slate-900">{patient.diagnostico}</span>
+            {patient.cid11 && (
+              <span className="font-mono font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                CID-11: {patient.cid11}
+              </span>
+            )}
             <span className="font-mono font-bold text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
               CID-10: {patient.cid10}
             </span>

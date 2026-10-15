@@ -41,6 +41,7 @@ export interface Patient {
   descricaoLesao: string;
   diagnostico: string;
   cid10: string;
+  cid11?: string;
   numeroTratamentosPrevisto: number;
   medicamentosEmUso: string;
   alergias: string;
@@ -50,6 +51,15 @@ export interface Patient {
   ventilacao: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CidCatalogEntry {
+  id?: string;
+  codigoCid11: string;
+  codigoCid10?: string;
+  nome: string;
+  capitulo?: string;
+  sinonimos?: string;
 }
 
 export interface HyperbaricSession {

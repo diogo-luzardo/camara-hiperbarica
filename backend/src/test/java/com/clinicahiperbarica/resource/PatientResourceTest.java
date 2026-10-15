@@ -50,6 +50,25 @@ public class PatientResourceTest {
     }
 
     @Test
+    @Order(2)
+    public void testCreatePatientValidationFailsWhenInvalidEmail() {
+        String invalidEmailPayload = """
+            {
+                "registroOHB": "OHB-INVALID-EMAIL",
+                "nome": "Paciente Email Invalido",
+                "email": "email_invalido_sem_arroba"
+            }
+            """;
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(invalidEmailPayload)
+            .when().post("/api/patients")
+            .then()
+                .statusCode(400);
+    }
+
+    @Test
     @Order(3)
     public void testCreatePatientSuccess() {
         String payload = String.format("""
@@ -63,7 +82,8 @@ public class PatientResourceTest {
                 "diagnostico": "Úlcera Venosa Crônica",
                 "cid10": "I87.2",
                 "numeroTratamentosPrevisto": 20,
-                "celular": "(11) 98765-4321"
+                "celular": "(11) 98765-4321",
+                "email": "Maria.Fatima@Email.COM"
             }
             """, UNIQUE_OHB, UNIQUE_CPF);
 
@@ -77,6 +97,7 @@ public class PatientResourceTest {
                 .body("registroOHB", equalTo(UNIQUE_OHB))
                 .body("nome", equalTo("Maria de Fatima Teste"))
                 .body("convenio", equalTo("Unimed"))
+                .body("email", equalTo("maria.fatima@email.com"))
                 .extract().path("id");
     }
 
@@ -91,6 +112,7 @@ public class PatientResourceTest {
                 .contentType(ContentType.JSON)
                 .body("id", equalTo(createdPatientId))
                 .body("registroOHB", equalTo(UNIQUE_OHB))
+                .body("email", equalTo("maria.fatima@email.com"))
                 .body("diagnostico", equalTo("Úlcera Venosa Crônica"));
     }
 
@@ -120,11 +142,30 @@ public class PatientResourceTest {
 
     @Test
     @Order(7)
+    public void testUpdatePatientValidationFailsWhenInvalidEmail() {
+        String invalidUpdatePayload = """
+            {
+                "email": "email_sem_formato_correto"
+            }
+            """;
+
+        given()
+            .pathParam("id", createdPatientId)
+            .contentType(ContentType.JSON)
+            .body(invalidUpdatePayload)
+            .when().put("/api/patients/{id}")
+            .then()
+                .statusCode(400);
+    }
+
+    @Test
+    @Order(8)
     public void testUpdatePatient() {
         String updatePayload = """
             {
                 "nome": "Maria de Fatima Teste Atualizada",
                 "convenio": "Bradesco Saúde",
+                "email": "fatima.atualizada@clinica.com",
                 "numeroTratamentosPrevisto": 30
             }
             """;
@@ -138,11 +179,12 @@ public class PatientResourceTest {
                 .statusCode(200)
                 .body("nome", equalTo("Maria de Fatima Teste Atualizada"))
                 .body("convenio", equalTo("Bradesco Saúde"))
+                .body("email", equalTo("fatima.atualizada@clinica.com"))
                 .body("numeroTratamentosPrevisto", equalTo(30));
     }
 
     @Test
-    @Order(8)
+    @Order(9)
     public void testDeletePatientSoftDelete() {
         given()
             .pathParam("id", createdPatientId)
@@ -157,4 +199,31 @@ public class PatientResourceTest {
             .then()
                 .statusCode(404);
     }
+
+    @Test
+    @Order(10)
+    public void testCreatePatientWithCid11() {
+        String ohb = "OHB-CID11-" + System.currentTimeMillis();
+        String payload = String.format("""
+            {
+                "registroOHB": "%s",
+                "nome": "Paciente Com CID 11",
+                "diagnostico": "Pé Diabético Ulcerado",
+                "cid10": "E11.5",
+                "cid11": "5A14",
+                "numeroTratamentosPrevisto": 20
+            }
+            """, ohb);
+
+        given()
+            .contentType(ContentType.JSON)
+            .body(payload)
+            .when().post("/api/patients")
+            .then()
+                .statusCode(201)
+                .body("cid11", equalTo("5A14"))
+                .body("cid10", equalTo("E11.5"))
+                .body("diagnostico", equalTo("Pé Diabético Ulcerado"));
+    }
 }
+
