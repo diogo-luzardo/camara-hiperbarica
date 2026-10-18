@@ -6,22 +6,11 @@ on:
       - main
   workflow_dispatch:
 
-# Permissões necessárias para publicar no GitHub Pages
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Permite apenas uma implantação concorrente para evitar conflitos
-concurrency:
-  group: 'pages'
-  cancel-in-progress: true
+  contents: write
 
 jobs:
-  build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do Repositório
@@ -39,14 +28,8 @@ jobs:
       - name: Compilar Frontend (Vite Build)
         run: npm run build
 
-      - name: Configurar GitHub Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload do Artefato de Páginas
-        uses: actions/upload-pages-artifact@v3
+      - name: Publicar na branch gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: './dist'
-
-      - name: Deploy no GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          folder: dist
+          branch: gh-pages
