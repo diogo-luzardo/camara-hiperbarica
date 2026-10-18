@@ -10,8 +10,8 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-start sm:items-center justify-center p-1.5 sm:p-4 overflow-x-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[calc(100vw-12px)] sm:max-w-4xl my-auto overflow-hidden flex flex-col max-h-[92vh] min-w-0">
         {/* Header */}
         <div className="bg-slate-900 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">

@@ -26,8 +26,8 @@ export const PrintSheetModal: React.FC<PrintSheetModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 print:p-0 print:bg-white print:static">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[95vh] print:max-h-none print:border-none print:shadow-none print:rounded-none">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-start sm:items-center justify-center p-1.5 sm:p-3 print:p-0 print:bg-white print:static overflow-x-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[calc(100vw-12px)] sm:max-w-4xl my-auto overflow-hidden flex flex-col max-h-[95vh] min-w-0 print:max-h-none print:border-none print:shadow-none print:rounded-none">
         {/* Modal Toolbar (hidden when printing) */}
         <div className="bg-slate-900 text-white px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between print:hidden gap-2">
           <div className="flex items-center gap-2 min-w-0">

@@ -417,8 +417,8 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[96vh] sm:max-h-[92vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-start sm:items-center justify-center p-1.5 sm:p-4 overflow-x-hidden">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[calc(100vw-12px)] sm:max-w-4xl my-auto overflow-hidden flex flex-col max-h-[96vh] sm:max-h-[92vh] min-w-0">
         {/* Modal Header */}
         <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5 sm:gap-3">

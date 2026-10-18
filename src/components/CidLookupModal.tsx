@@ -329,34 +329,35 @@ export const CidLookupModal: React.FC<CidLookupModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-5xl overflow-hidden flex flex-col max-h-[96vh] sm:max-h-[92vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-start sm:items-center justify-center p-1.5 sm:p-4 animate-in fade-in duration-150 overflow-x-hidden">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 w-full max-w-[calc(100vw-12px)] sm:max-w-5xl my-auto overflow-hidden flex flex-col max-h-[96vh] sm:max-h-[92vh] min-w-0">
         {/* Modal Header */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-4 sm:px-6 py-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 border border-cyan-400/40 flex items-center justify-center text-white shadow-md shadow-cyan-900/40 shrink-0">
-              <BookOpen className="w-5 h-5 text-cyan-200" />
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-800 gap-2 min-w-0 shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-600 border border-cyan-400/40 flex items-center justify-center text-white shadow-md shadow-cyan-900/40 shrink-0">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-200" />
             </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-base sm:text-lg font-bold font-['Outfit'] text-white">
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h2 className="text-sm sm:text-lg font-bold font-['Outfit'] text-white truncate">
                   Consulta de Códigos CID-11 & CID-10
                 </h2>
-                <span className="text-[10px] uppercase font-black px-2 py-0.5 rounded-full bg-cyan-500 text-slate-950 tracking-wider shadow-2xs">
+                <span className="text-[9px] sm:text-[10px] uppercase font-black px-1.5 sm:px-2 py-0.5 rounded-full bg-cyan-500 text-slate-950 tracking-wider shadow-2xs shrink-0">
                   {TOTAL_WHO_DISEASES_COUNT.toLocaleString('pt-BR')} Doenças OMS
                 </span>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-cyan-300 border border-cyan-700/60 hidden sm:inline">
                   Tabela De-Para Bidirecional
                 </span>
               </div>
-              <p className="text-xs text-slate-300 truncate mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-300 truncate mt-0.5 hidden xs:block">
                 Catálogo Geral Unificado da OMS — Consulta de todas as patologias por capítulo, códigos e Rol ANS / CFM para Oxigenoterapia Hiperbárica.
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer shrink-0 ml-2"
+            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer shrink-0 ml-1"
             title="Fechar (Esc)"
           >
             <X className="w-5 h-5" />
@@ -364,8 +365,8 @@ export const CidLookupModal: React.FC<CidLookupModalProps> = ({
         </div>
 
         {/* Informative Guidance Banner */}
-        <div className="bg-cyan-50/80 border-b border-cyan-200/80 px-4 sm:px-6 py-2.5 flex items-start sm:items-center justify-between gap-3 text-xs text-cyan-950">
-          <div className="flex items-start sm:items-center gap-2 min-w-0">
+        <div className="bg-cyan-50/80 border-b border-cyan-200/80 px-3 sm:px-6 py-2 sm:py-2.5 flex items-start sm:items-center justify-between gap-2 text-xs text-cyan-950 min-w-0 shrink-0">
+          <div className="flex items-start sm:items-center gap-1.5 sm:gap-2 min-w-0">
             <Info className="w-4 h-4 text-cyan-700 shrink-0 mt-0.5 sm:mt-0" />
             <p className="text-[11px] sm:text-xs leading-relaxed text-cyan-900">
               <strong>Catálogo Geral:</strong> Navegue pelos <strong>24 Capítulos da OMS</strong> ou pesquise qualquer código de <strong>A00 a Z99</strong>. No prontuário clínico utilize o <strong>CID-11</strong> e no faturamento TUSS mantenha o <strong>CID-10</strong>.
@@ -374,24 +375,23 @@ export const CidLookupModal: React.FC<CidLookupModalProps> = ({
         </div>
 
         {/* Search Bar & Chapter Selector */}
-        <div className="p-4 sm:px-6 bg-slate-50 border-b border-slate-200 space-y-2.5">
+        <div className="p-3 sm:p-6 bg-slate-50 border-b border-slate-200 space-y-2.5 min-w-0 shrink-0">
           {/* Barra de Busca + Seletor de Capítulos da OMS */}
-          <div className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <div className="flex flex-col sm:flex-row gap-2 min-w-0">
+            <div className="relative flex-1 min-w-0">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                autoFocus
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Pesquise por qualquer doença ou código de A00 a Z99 (ex: 5A14, E11.5, I10, J45, M54, AVC, Infarto)..."
-                className="w-full text-xs pl-10 pr-9 py-2.5 rounded-xl border-2 border-slate-200 hover:border-slate-300 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 bg-white font-medium text-slate-900 placeholder:text-slate-400 transition-all outline-none shadow-2xs"
+                className="w-full text-sm sm:text-xs pl-9 pr-8 py-2 sm:py-2.5 rounded-xl border-2 border-slate-200 hover:border-slate-300 focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 bg-white font-medium text-slate-900 placeholder:text-slate-400 transition-all outline-none shadow-2xs min-w-0"
               />
               {searchTerm && (
                 <button
                   type="button"
                   onClick={() => setSearchTerm('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-200 transition-colors cursor-pointer"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-200 transition-colors cursor-pointer"
                   title="Limpar busca"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -400,14 +400,14 @@ export const CidLookupModal: React.FC<CidLookupModalProps> = ({
             </div>
 
             {/* Dropdown de Capítulos da OMS */}
-            <div className="sm:w-72 shrink-0">
+            <div className="w-full sm:w-72 shrink-0 min-w-0">
               <select
                 value={selectedChapter}
                 onChange={(e) => {
                   setSelectedChapter(e.target.value);
                   if (e.target.value !== 'todos') setSelectedCategory('todos');
                 }}
-                className="w-full text-xs py-2.5 px-3 rounded-xl border-2 border-slate-200 bg-white text-slate-800 font-semibold focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 outline-none cursor-pointer"
+                className="w-full max-w-full text-sm sm:text-xs py-2 sm:py-2.5 px-3 rounded-xl border-2 border-slate-200 bg-white text-slate-800 font-semibold focus:border-cyan-500 focus:ring-4 focus:ring-cyan-500/10 outline-none cursor-pointer truncate"
                 title="Filtrar por Capítulo da OMS (24 capítulos disponíveis)"
               >
                 <option value="todos">Todos os 24 Capítulos da OMS ({TOTAL_WHO_DISEASES_COUNT.toLocaleString('pt-BR')} doenças)</option>
@@ -421,7 +421,7 @@ export const CidLookupModal: React.FC<CidLookupModalProps> = ({
           </div>
 
           {/* Chips de Categorias Clínicas Rápidas (Scroll sem barra nativa) */}
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 -my-1 text-xs select-none">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth py-1 -my-1 text-xs select-none w-full min-w-0 max-w-full">
             <span className="text-slate-400 text-[11px] font-semibold shrink-0 mr-1 hidden sm:inline">
               Filtro Rápido:
             </span>
@@ -790,14 +790,14 @@ export const CidLookupModal: React.FC<CidLookupModalProps> = ({
 
               {/* Barra de Controles de Paginação (Visível sempre que houver mais de 1 página) */}
               {totalPages > 1 && (
-                <div className="pt-3 pb-1 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 select-none">
-                  <div className="text-xs text-slate-500">
+                <div className="pt-3 pb-1 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 select-none min-w-0">
+                  <div className="text-xs text-slate-500 min-w-0">
                     Página <strong className="text-slate-800 font-bold">{validCurrentPage}</strong> de{' '}
                     <strong className="text-slate-800 font-bold">{totalPages}</strong>
                   </div>
 
                   {/* Botões de Navegação de Páginas */}
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0 ml-auto">
                     {/* Botão Primeira Página */}
                     <button
                       type="button"
@@ -814,15 +814,15 @@ export const CidLookupModal: React.FC<CidLookupModalProps> = ({
                       type="button"
                       onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                       disabled={validCurrentPage === 1}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
                       title="Página anterior"
                     >
                       <ChevronLeft className="w-3.5 h-3.5" />
                       <span className="hidden xs:inline">Anterior</span>
                     </button>
 
-                    {/* Botões Numéricos de Página */}
-                    <div className="flex items-center gap-1 px-1">
+                    {/* Botões Numéricos de Página (visíveis em sm para economizar espaço no celular) */}
+                    <div className="hidden sm:flex items-center gap-1 px-0.5">
                       {pageNumbers.map((p, pIdx) =>
                         p === -1 ? (
                           <span key={`ellipsis-${pIdx}`} className="px-1 text-slate-400 text-xs">
@@ -850,7 +850,7 @@ export const CidLookupModal: React.FC<CidLookupModalProps> = ({
                       type="button"
                       onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                       disabled={validCurrentPage === totalPages}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-semibold text-slate-700 transition-colors cursor-pointer"
                       title="Próxima página"
                     >
                       <span className="hidden xs:inline">Próxima</span>
@@ -875,19 +875,19 @@ export const CidLookupModal: React.FC<CidLookupModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 px-4 sm:px-6 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-            <span>
+        <div className="bg-slate-50 px-3 sm:px-6 py-2.5 sm:py-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 min-w-0 shrink-0">
+          <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+            <span className="truncate text-[11px] sm:text-xs">
               Catálogo Oficial OMS 2026 / SUS & ANS — Base completa de <strong>{TOTAL_WHO_DISEASES_COUNT.toLocaleString('pt-BR')}</strong> diagnósticos clínicos em <strong>24 capítulos</strong>
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold transition-colors cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold transition-colors cursor-pointer text-xs"
             >
               Fechar Consulta
             </button>

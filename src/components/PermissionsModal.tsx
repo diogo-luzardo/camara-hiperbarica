@@ -62,8 +62,8 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
   }, 0);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-start sm:items-center justify-center p-1.5 sm:p-4 overflow-x-hidden">
+      <div className="bg-white w-full max-w-[calc(100vw-12px)] sm:max-w-5xl my-auto rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[95vh] sm:max-h-[92vh] min-w-0">
         {/* Modal Header */}
         <div className="bg-slate-900 text-white p-4 sm:p-6 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
