@@ -463,57 +463,57 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
         )}
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-200 bg-slate-50 px-3 sm:px-6 pt-2.5 sm:pt-3 gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar">
+        <div className="flex border-b border-slate-200 bg-slate-50 px-2 sm:px-6 pt-2 sm:pt-3 gap-1 sm:gap-2 overflow-x-auto no-scrollbar">
           <button
             type="button"
             onClick={() => setActiveTab('dados')}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'dados'
                 ? 'bg-white border-cyan-600 text-cyan-700 shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <User className="w-4 h-4" />
-            <span>1. Dados Pessoais & Modalidade</span>
+            <User className="w-4 h-4 shrink-0" />
+            <span><span className="sm:hidden">1. Dados</span><span className="hidden sm:inline">1. Dados Pessoais & Modalidade</span></span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('endereco')}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'endereco'
                 ? 'bg-white border-cyan-600 text-cyan-700 shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <MapPin className="w-4 h-4" />
-            <span>2. Endereço Completo</span>
+            <MapPin className="w-4 h-4 shrink-0" />
+            <span><span className="sm:hidden">2. Endereço</span><span className="hidden sm:inline">2. Endereço Completo</span></span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('clinico')}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'clinico'
                 ? 'bg-white border-cyan-600 text-cyan-700 shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Stethoscope className="w-4 h-4" />
-            <span>3. Avaliação Clínica</span>
+            <Stethoscope className="w-4 h-4 shrink-0" />
+            <span><span className="sm:hidden">3. Clínico</span><span className="hidden sm:inline">3. Avaliação Clínica</span></span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('ohb')}
-            className={`flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap cursor-pointer ${
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
               activeTab === 'ohb'
                 ? 'bg-white border-cyan-600 text-cyan-700 shadow-xs'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            <HeartPulse className="w-4 h-4" />
-            <span>4. Protocolo OHB</span>
+            <HeartPulse className="w-4 h-4 shrink-0" />
+            <span><span className="sm:hidden">4. Protocolo</span><span className="hidden sm:inline">4. Protocolo OHB</span></span>
           </button>
         </div>
 
@@ -1506,21 +1506,21 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
           )}
 
           {/* Modal Footer */}
-          <div className="border-t border-slate-200 pt-4 flex flex-wrap items-center justify-between gap-3">
-            <span className="text-xs text-slate-500">
+          <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <span className="text-xs text-slate-500 order-2 sm:order-1 text-center sm:text-left">
               * Campos obrigatórios para abertura e conformidade de prontuário OHB.
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-end order-1 sm:order-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                className="flex-1 sm:flex-none px-4 py-2.5 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors cursor-pointer text-center"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold shadow-md transition-all cursor-pointer"
+                className="flex-1 sm:flex-none px-5 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold shadow-md transition-all cursor-pointer text-center"
               >
                 Salvar Cadastro Clínico
               </button>

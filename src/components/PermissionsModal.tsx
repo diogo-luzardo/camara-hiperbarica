@@ -65,28 +65,28 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white w-full max-w-5xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="bg-slate-900 text-white p-5 sm:p-6 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-600/30 border border-cyan-500/50 flex items-center justify-center text-cyan-400">
-              <ShieldCheck className="w-6 h-6" />
+        <div className="bg-slate-900 text-white p-4 sm:p-6 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-600/30 border border-cyan-500/50 flex items-center justify-center text-cyan-400 shrink-0">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg sm:text-xl font-bold font-['Outfit'] text-white">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <h2 className="text-sm sm:text-xl font-bold font-['Outfit'] text-white truncate">
                   Matriz de Acessos & Separação por Perfil (RBAC)
                 </h2>
-                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
+                <span className="text-[9px] sm:text-[10px] uppercase font-bold px-1.5 sm:px-2 py-0.5 rounded bg-cyan-950 text-cyan-300 border border-cyan-800">
                   Totalmente Editável
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400 line-clamp-1">
                 Clique diretamente em qualquer célula para conceder ou revogar liberações específicas por perfil
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
+            className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer shrink-0 ml-2"
           >
             <X className="w-5 h-5" />
           </button>
@@ -262,8 +262,8 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
           </div>
 
           {/* Matrix Table */}
-          <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs">
+          <div className="border border-slate-200 rounded-2xl overflow-x-auto shadow-xs">
+            <table className="w-full text-left text-xs min-w-[560px]">
               <thead className="bg-slate-900 text-white text-[11px] font-bold uppercase tracking-wider">
                 <tr>
                   <th className="py-3.5 px-4 w-1/3">Capacidade / Ação Clínica & Administrativa</th>
@@ -361,15 +361,15 @@ export const PermissionsModal: React.FC<PermissionsModalProps> = ({ isOpen, onCl
         </div>
 
         {/* Modal Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 px-6 py-3.5 flex items-center justify-between text-xs text-slate-600">
+        <div className="bg-slate-50 border-t border-slate-200 px-4 sm:px-6 py-3 sm:py-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 text-xs text-slate-600">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-600" />
-            <span>Permissões persistidas no armazenamento seguro local. Arquitetura em conformidade com LGPD e CFM.</span>
+            <Sparkles className="w-4 h-4 text-cyan-600 shrink-0" />
+            <span className="text-[11px] sm:text-xs">Permissões persistidas no armazenamento seguro local (LGPD / CFM).</span>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+            className="w-full sm:w-auto px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer text-center"
           >
             Concluir / Fechar
           </button>

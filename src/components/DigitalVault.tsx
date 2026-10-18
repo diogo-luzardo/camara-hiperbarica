@@ -358,8 +358,8 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
         {/* COL 2 & 3: Gallery & Search Filters */}
         <div className="lg:col-span-2 xl:col-span-3 min-[2000px]:col-span-4 space-y-4">
           {/* Search bar & Type Filter */}
-          <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-            <div className="relative flex-1 min-w-[200px]">
+          <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div className="relative flex-1">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
@@ -370,12 +370,12 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
               />
             </div>
 
-            <div className="flex items-center gap-1.5 overflow-x-auto text-xs">
+            <div className="flex items-center gap-1.5 text-xs w-full sm:w-auto">
               <span className="text-slate-400 text-[11px] font-medium hidden sm:inline">Tipo:</span>
               <select
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white"
+                className="text-xs px-2.5 py-2 rounded-lg border border-slate-200 bg-white w-full sm:w-auto cursor-pointer"
               >
                 <option value="todos">Todos os tipos</option>
                 <option value="prontuario_antigo">Prontuário Antigo</option>
@@ -480,40 +480,40 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
 
       {/* LIGHTBOX / FULL-SCREEN VIEWER MODAL */}
       {viewingDoc && (
-        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex flex-col p-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex flex-col p-2 sm:p-4">
           {/* Lightbox Toolbar */}
-          <div className="flex items-center justify-between text-white pb-3 border-b border-slate-800">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-white pb-3 border-b border-slate-800 gap-2.5">
+            <div className="min-w-0">
               <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 rounded font-mono font-bold text-xs bg-cyan-500 text-slate-950">
+                <span className="px-2 py-0.5 rounded font-mono font-bold text-xs bg-cyan-500 text-slate-950 shrink-0">
                   {viewingDoc.registroOHB}
                 </span>
-                <h3 className="font-bold text-sm">{viewingDoc.titulo}</h3>
+                <h3 className="font-bold text-xs sm:text-sm truncate">{viewingDoc.titulo}</h3>
               </div>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {viewingDoc.patientName ? `Paciente: ${viewingDoc.patientName}` : 'Paciente vinculado por Registro OHB'} • CPF: {viewingDoc.cpf || 'Não informado'} • Data Doc: {viewingDoc.dataDocumento}
+              <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 line-clamp-1">
+                {viewingDoc.patientName ? `Paciente: ${viewingDoc.patientName}` : 'Paciente vinculado por Registro OHB'} • CPF: {viewingDoc.cpf || 'Não informado'} • Data: {viewingDoc.dataDocumento}
               </p>
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 self-end sm:self-auto shrink-0">
               <button
                 onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 3))}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200"
+                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
                 title="Aumentar Zoom"
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setZoomLevel((z) => Math.max(z - 0.25, 0.5))}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200"
+                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
                 title="Diminuir Zoom"
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setRotation((r) => (r + 90) % 360)}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200"
+                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer"
                 title="Girar 90 graus"
               >
                 <RotateCw className="w-4 h-4" />
@@ -521,21 +521,21 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
               <a
                 href={viewingDoc.imageUrl}
                 download={`${viewingDoc.registroOHB}_${viewingDoc.titulo}.png`}
-                className="p-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold"
+                className="p-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold cursor-pointer"
                 title="Baixar imagem original"
               >
                 <Download className="w-4 h-4" />
               </a>
               <button
                 onClick={() => handleDeleteDoc(viewingDoc.id)}
-                className="p-2 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white"
+                className="p-2 rounded-lg bg-rose-600/80 hover:bg-rose-600 text-white cursor-pointer"
                 title="Excluir do acervo"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setViewingDoc(null)}
-                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 ml-2"
+                className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 ml-1 sm:ml-2 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>

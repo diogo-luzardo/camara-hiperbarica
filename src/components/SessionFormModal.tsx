@@ -560,20 +560,20 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="border-t border-slate-200 pt-4 flex items-center justify-end gap-2">
+          <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+              className="flex-1 sm:flex-none px-4 py-2.5 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors text-center cursor-pointer"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-5 py-2 text-xs font-bold text-slate-950 bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 rounded-lg shadow-md transition-all shadow-cyan-900/20 flex items-center gap-1.5"
+              className="flex-1 sm:flex-none px-5 py-2.5 text-xs font-bold text-slate-950 bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 rounded-lg shadow-md transition-all shadow-cyan-900/20 flex items-center justify-center gap-1.5 cursor-pointer"
             >
               <CheckCircle className="w-4 h-4" />
-              <span>{initialSession ? 'Salvar Sessão' : 'Concluir Registro da Sessão'}</span>
+              <span>{initialSession ? 'Salvar Sessão' : 'Concluir Registro'}</span>
             </button>
           </div>
         </form>

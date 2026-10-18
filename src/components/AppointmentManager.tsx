@@ -191,10 +191,10 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 w-full md:w-auto">
           <button
             onClick={() => setIsBatchModalOpen(true)}
-            className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
             <span>+ Pacote de Sessões</span>
@@ -202,7 +202,7 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold shadow-md transition-all flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>Novo Agendamento</span>
@@ -210,26 +210,26 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
         </div>
       </div>
 
-      {/* Control Bar: Filters & Search */}
-      <div className="bg-white rounded-xl p-3 sm:p-4 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-1 min-w-[240px]">
-          <div className="relative w-full max-w-md 2xl:max-w-xl">
+      {/* Control Bar: Filters & Search (Mobile Fluid) */}
+      <div className="bg-white rounded-xl p-3 sm:p-4 border border-slate-200 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="w-full md:flex-1 md:max-w-md 2xl:max-w-xl">
+          <div className="relative w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por Paciente, Registro OHB ou CPF..."
-              className="w-full text-xs pl-9 pr-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+              className="w-full text-xs pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none"
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold gap-1">
+        <div className="w-full md:w-auto">
+          <div className="grid grid-cols-3 sm:flex w-full bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold gap-1">
             <button
               onClick={() => setFilterPeriod('hoje')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+              className={`py-1.5 px-2 sm:px-3.5 rounded-lg text-center transition-all duration-150 cursor-pointer text-[11px] sm:text-xs ${
                 filterPeriod === 'hoje'
                   ? 'bg-white text-cyan-950 shadow-xs font-extrabold ring-1 ring-slate-200/80'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -239,17 +239,17 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
             </button>
             <button
               onClick={() => setFilterPeriod('semana')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+              className={`py-1.5 px-2 sm:px-3.5 rounded-lg text-center transition-all duration-150 cursor-pointer text-[11px] sm:text-xs ${
                 filterPeriod === 'semana'
                   ? 'bg-white text-cyan-950 shadow-xs font-extrabold ring-1 ring-slate-200/80'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
               }`}
             >
-              Próximos 7 dias
+              7 dias
             </button>
             <button
               onClick={() => setFilterPeriod('todos')}
-              className={`px-3.5 py-1.5 rounded-lg transition-all duration-150 cursor-pointer ${
+              className={`py-1.5 px-2 sm:px-3.5 rounded-lg text-center transition-all duration-150 cursor-pointer text-[11px] sm:text-xs ${
                 filterPeriod === 'todos'
                   ? 'bg-white text-cyan-950 shadow-xs font-extrabold ring-1 ring-slate-200/80'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'

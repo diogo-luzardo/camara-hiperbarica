@@ -219,11 +219,11 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <button
             type="button"
             onClick={handleExportCSV}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+            className="w-full sm:w-auto justify-center px-3.5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
           >
             <Download className="w-4 h-4 text-emerald-400" />
             <span>Exportar Lote TISS (CSV)</span>
@@ -231,101 +231,101 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
         </div>
       </div>
 
-      {/* KPI Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* KPI Stats Cards (Otimizados para mobile) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Total Faturado */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              Faturamento Filtrado
+        <div className="bg-white rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-xs flex items-center justify-between">
+          <div className="min-w-0">
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-0.5 sm:mb-1 truncate">
+              Faturamento
             </span>
-            <h3 className="text-2xl font-bold font-['Outfit'] text-slate-900">
+            <h3 className="text-lg sm:text-2xl font-bold font-['Outfit'] text-slate-900 truncate">
               {formatCurrency(kpis.totalFaturado)}
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">
-              {filteredItems.length} sessões registradas
+            <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
+              {filteredItems.length} sessões
             </p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600">
-            <DollarSign className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shrink-0">
+            <DollarSign className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
         </div>
 
         {/* Total Liquidado / Pago */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              Recebido / Liquidado
+        <div className="bg-white rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-xs flex items-center justify-between">
+          <div className="min-w-0">
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-0.5 sm:mb-1 truncate">
+              Recebido
             </span>
-            <h3 className="text-2xl font-bold font-['Outfit'] text-emerald-700">
+            <h3 className="text-lg sm:text-2xl font-bold font-['Outfit'] text-emerald-700 truncate">
               {formatCurrency(kpis.totalPago)}
             </h3>
-            <p className="text-[11px] text-emerald-600 font-medium mt-0.5">
-              Compensação bancária confirmada
+            <p className="text-[10px] sm:text-[11px] text-emerald-600 font-medium mt-0.5 truncate">
+              Liquidado
             </p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-600">
-            <TrendingUp className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-600 shrink-0">
+            <TrendingUp className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
         </div>
 
         {/* Pendentes de Auditoria */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              Pendentes / Em Análise
+        <div className="bg-white rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-xs flex items-center justify-between">
+          <div className="min-w-0">
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-0.5 sm:mb-1 truncate">
+              Em Análise
             </span>
-            <h3 className="text-2xl font-bold font-['Outfit'] text-amber-600">
+            <h3 className="text-lg sm:text-2xl font-bold font-['Outfit'] text-amber-600 truncate">
               {kpis.pendentes} guias
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">Aguardando lote do convênio</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">Auditoria</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600">
-            <Clock className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
+            <Clock className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
         </div>
 
         {/* Ticket Médio */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">
-              Ticket Médio / Sessão
+        <div className="bg-white rounded-2xl p-3 sm:p-5 border border-slate-200 shadow-xs flex items-center justify-between">
+          <div className="min-w-0">
+            <span className="text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-0.5 sm:mb-1 truncate">
+              Ticket Médio
             </span>
-            <h3 className="text-2xl font-bold font-['Outfit'] text-slate-900">
+            <h3 className="text-lg sm:text-2xl font-bold font-['Outfit'] text-slate-900 truncate">
               {formatCurrency(kpis.ticketMedio)}
             </h3>
-            <p className="text-[11px] text-slate-500 mt-0.5">TUSS 20101202 (2.4 ATA)</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">Média por sessão</p>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600">
-            <Receipt className="w-6 h-6" />
+          <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 shrink-0">
+            <Receipt className="w-4 h-4 sm:w-6 sm:h-6" />
           </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="bg-white rounded-xl p-3 sm:p-4 border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 flex-1 min-w-[260px]">
-          <div className="relative w-full max-w-md">
+      {/* Filter and Search Bar (Mobile Responsivo) */}
+      <div className="bg-white rounded-xl p-3 sm:p-4 border border-slate-200 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="w-full md:flex-1 md:max-w-md">
+          <div className="relative w-full">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Buscar por Paciente, Registro OHB ou Nº de Guia..."
-              className="w-full text-xs pl-9 pr-3 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+              className="w-full text-xs pl-9 pr-3 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
             />
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 text-xs w-full md:w-auto">
           {/* Convênio Selector */}
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
-            <Building2 className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-500 font-semibold">Convênio:</span>
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 sm:py-1">
+            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="text-slate-500 font-semibold shrink-0">Convênio:</span>
             <select
               value={selectedConvenio}
               onChange={(e) => setSelectedConvenio(e.target.value)}
-              className="bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer"
+              className="w-full bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer"
             >
               <option value="todos">Todos ({conveniosList.length})</option>
               {conveniosList.map((c) => (
@@ -337,13 +337,13 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
           </div>
 
           {/* Status Selector */}
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-slate-500 font-semibold">Status:</span>
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 sm:py-1">
+            <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="text-slate-500 font-semibold shrink-0">Status:</span>
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer"
+              className="w-full bg-transparent text-slate-800 font-bold focus:outline-none cursor-pointer"
             >
               <option value="todos">Todos</option>
               <option value="pago">Pago</option>
@@ -356,9 +356,64 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
         </div>
       </div>
 
-      {/* Main Billing Table */}
+      {/* Main Billing Table & Mobile Cards */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile View: Cards para Celulares (< md) */}
+        <div className="md:hidden divide-y divide-slate-100">
+          {filteredItems.length === 0 ? (
+            <div className="py-10 text-center text-slate-400 p-4">
+              <DollarSign className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+              <p className="font-medium text-xs">Nenhum faturamento encontrado.</p>
+            </div>
+          ) : (
+            filteredItems.map((item) => (
+              <div key={item.id} className="p-4 space-y-2.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    {onSelectPatient ? (
+                      <button
+                        type="button"
+                        onClick={() => onSelectPatient(item.patientId)}
+                        className="font-bold text-slate-900 text-sm hover:text-cyan-800 text-left flex items-center gap-1 group transition-colors"
+                      >
+                        <span className="group-hover:underline truncate">Paciente: {item.patientName}</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+                      </button>
+                    ) : (
+                      <span className="font-bold text-slate-900 text-sm truncate block">Paciente: {item.patientName}</span>
+                    )}
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono mt-0.5">
+                      <span className="font-bold text-cyan-800 bg-cyan-100/60 px-1.5 py-0.5 rounded">
+                        {item.registroOHB}
+                      </span>
+                      <span className="text-slate-500 truncate">{item.convenio}</span>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="font-bold text-slate-900 text-sm block font-mono">
+                      {formatCurrency(item.valorSessao)}
+                    </span>
+                    <div className="mt-1">{getStatusBadge(item.statusGuia)}</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <div>
+                    <span className="text-slate-400 text-[10px] block">Sessão / Procedimento</span>
+                    <span className="font-semibold text-slate-800">Sessão #{item.sessaoNumero} • TUSS {item.codigoTUSS}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-slate-400 text-[10px] block">Nº da Guia</span>
+                    <span className="font-mono font-bold text-slate-700 text-[11px]">{item.numeroGuia}</span>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Desktop View: Tabela Completa (>= md) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left text-xs text-slate-600">
             <thead className="bg-slate-50 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[11px]">
               <tr>

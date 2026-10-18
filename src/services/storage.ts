@@ -2,7 +2,12 @@ import { Patient, HyperbaricSession, Appointment, DigitalizedDocument, CidCatalo
 import { MOCK_PATIENTS_50, MOCK_SESSIONS_50, MOCK_APPOINTMENTS_50, MOCK_DOCUMENTS_50 } from '../data/mockPatients50';
 import { searchLocalCids } from '../data/cidDataset';
 
-const API_BASE = 'http://localhost:8080/api';
+const isLocalhost =
+  typeof window !== 'undefined' &&
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+// Em produção/GitHub Pages (sem backend local), desativa chamadas para localhost:8080 evitando Mixed Content
+const API_BASE = isLocalhost ? 'http://localhost:8080/api' : '';
 const DB_NAME = 'ClinicaOHB_Database';
 const DB_VERSION = 1;
 const STORE_DOCS = 'digitalized_documents';
@@ -127,18 +132,20 @@ export const StorageService = {
   // === PACIENTES ===
   async getPatients(): Promise<Patient[]> {
     checkAndMigrateMockData();
-    try {
-      const res = await fetch(`${API_BASE}/patients`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length >= 20) {
-          const patients = data.map(mapBackendPatientToFrontend);
-          localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
-          return patients;
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/patients`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length >= 20) {
+            const patients = data.map(mapBackendPatientToFrontend);
+            localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(patients));
+            return patients;
+          }
         }
+      } catch (err) {
+        console.warn('Servidor Quarkus REST indisponível, utilizando dados mock locais:', err);
       }
-    } catch (err) {
-      console.warn('Servidor Quarkus REST indisponível, utilizando dados mock locais:', err);
     }
     return this.getLocalPatients();
   },
@@ -162,6 +169,7 @@ export const StorageService = {
   },
 
   async sendPatientToApi(patient: Patient): Promise<Patient | null> {
+    if (!API_BASE) return null;
     try {
       const payload: any = { ...patient };
       if (!isValidUUID(payload.id)) {
@@ -219,12 +227,12 @@ export const StorageService = {
   },
 
   async deletePatient(id: string): Promise<void> {
-    try {
-      if (isValidUUID(id)) {
+    if (API_BASE && isValidUUID(id)) {
+      try {
         await fetch(`${API_BASE}/patients/${id}`, { method: 'DELETE' });
+      } catch (err) {
+        console.error('Erro ao remover paciente do H2:', err);
       }
-    } catch (err) {
-      console.error('Erro ao remover paciente do H2:', err);
     }
     const list = this.getLocalPatients().filter((p) => p.id !== id);
     localStorage.setItem(STORAGE_KEYS.PATIENTS, JSON.stringify(list));
@@ -250,19 +258,21 @@ export const StorageService = {
   // === SESSÕES OHB ===
   async getSessions(patientId?: string): Promise<HyperbaricSession[]> {
     checkAndMigrateMockData();
-    try {
-      const url = patientId ? `${API_BASE}/sessions?patientId=${patientId}` : `${API_BASE}/sessions`;
-      const res = await fetch(url);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length >= 20) {
-          const sessions = data.map(mapBackendSessionToFrontend);
-          localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
-          return sessions;
+    if (API_BASE) {
+      try {
+        const url = patientId ? `${API_BASE}/sessions?patientId=${patientId}` : `${API_BASE}/sessions`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length >= 20) {
+            const sessions = data.map(mapBackendSessionToFrontend);
+            localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(sessions));
+            return sessions;
+          }
         }
+      } catch (err) {
+        console.warn('Servidor Quarkus indisponível para sessões:', err);
       }
-    } catch (err) {
-      console.warn('Servidor Quarkus indisponível para sessões:', err);
     }
     const local = this.getLocalSessions();
     if (patientId) {
@@ -290,29 +300,31 @@ export const StorageService = {
   },
 
   async saveSession(session: HyperbaricSession): Promise<HyperbaricSession> {
-    try {
-      const payload: any = { ...session };
-      if (!isValidUUID(payload.id)) delete payload.id;
-      if (session.patientId && isValidUUID(session.patientId)) {
-        payload.patient = { id: session.patientId };
+    if (API_BASE) {
+      try {
+        const payload: any = { ...session };
+        if (!isValidUUID(payload.id)) delete payload.id;
+        if (session.patientId && isValidUUID(session.patientId)) {
+          payload.patient = { id: session.patientId };
+        }
+        const res = await fetch(`${API_BASE}/sessions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const saved = mapBackendSessionToFrontend(data);
+          const list = this.getLocalSessions();
+          const idx = list.findIndex((s) => s.id === saved.id);
+          if (idx >= 0) list[idx] = saved;
+          else list.push(saved);
+          localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(list));
+          return saved;
+        }
+      } catch (err) {
+        console.error('Erro ao salvar sessão no backend:', err);
       }
-      const res = await fetch(`${API_BASE}/sessions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const saved = mapBackendSessionToFrontend(data);
-        const list = this.getLocalSessions();
-        const idx = list.findIndex((s) => s.id === saved.id);
-        if (idx >= 0) list[idx] = saved;
-        else list.push(saved);
-        localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(list));
-        return saved;
-      }
-    } catch (err) {
-      console.error('Erro ao salvar sessão no backend:', err);
     }
     // Fallback local
     const list = this.getLocalSessions();
@@ -324,12 +336,12 @@ export const StorageService = {
   },
 
   async deleteSession(id: string): Promise<void> {
-    try {
-      if (isValidUUID(id)) {
+    if (API_BASE && isValidUUID(id)) {
+      try {
         await fetch(`${API_BASE}/sessions/${id}`, { method: 'DELETE' });
+      } catch (err) {
+        console.error('Erro ao deletar sessão:', err);
       }
-    } catch (err) {
-      console.error('Erro ao deletar sessão:', err);
     }
     const list = this.getLocalSessions().filter((s) => s.id !== id);
     localStorage.setItem(STORAGE_KEYS.SESSIONS, JSON.stringify(list));
@@ -338,18 +350,20 @@ export const StorageService = {
   // === AGENDAMENTOS ===
   async getAppointments(): Promise<Appointment[]> {
     checkAndMigrateMockData();
-    try {
-      const res = await fetch(`${API_BASE}/appointments`);
-      if (res.ok) {
-        const data = await res.json();
-        if (Array.isArray(data) && data.length >= 20) {
-          const appointments = data.map(mapBackendAppointmentToFrontend);
-          localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
-          return appointments;
+    if (API_BASE) {
+      try {
+        const res = await fetch(`${API_BASE}/appointments`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length >= 20) {
+            const appointments = data.map(mapBackendAppointmentToFrontend);
+            localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(appointments));
+            return appointments;
+          }
         }
+      } catch (err) {
+        console.warn('Servidor Quarkus indisponível para agendamentos:', err);
       }
-    } catch (err) {
-      console.warn('Servidor Quarkus indisponível para agendamentos:', err);
     }
     return this.getLocalAppointments();
   },
@@ -373,29 +387,31 @@ export const StorageService = {
   },
 
   async saveAppointment(appointment: Appointment): Promise<Appointment> {
-    try {
-      const payload: any = { ...appointment };
-      if (!isValidUUID(payload.id)) delete payload.id;
-      if (appointment.patientId && isValidUUID(appointment.patientId)) {
-        payload.patient = { id: appointment.patientId };
+    if (API_BASE) {
+      try {
+        const payload: any = { ...appointment };
+        if (!isValidUUID(payload.id)) delete payload.id;
+        if (appointment.patientId && isValidUUID(appointment.patientId)) {
+          payload.patient = { id: appointment.patientId };
+        }
+        const res = await fetch(`${API_BASE}/appointments`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const saved = mapBackendAppointmentToFrontend(data);
+          const list = this.getLocalAppointments();
+          const idx = list.findIndex((a) => a.id === saved.id);
+          if (idx >= 0) list[idx] = saved;
+          else list.push(saved);
+          localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(list));
+          return saved;
+        }
+      } catch (err) {
+        console.error('Erro ao salvar agendamento no backend:', err);
       }
-      const res = await fetch(`${API_BASE}/appointments`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const saved = mapBackendAppointmentToFrontend(data);
-        const list = this.getLocalAppointments();
-        const idx = list.findIndex((a) => a.id === saved.id);
-        if (idx >= 0) list[idx] = saved;
-        else list.push(saved);
-        localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(list));
-        return saved;
-      }
-    } catch (err) {
-      console.error('Erro ao salvar agendamento no backend:', err);
     }
     const list = this.getLocalAppointments();
     const idx = list.findIndex((a) => a.id === appointment.id);
@@ -406,12 +422,12 @@ export const StorageService = {
   },
 
   async deleteAppointment(id: string): Promise<void> {
-    try {
-      if (isValidUUID(id)) {
+    if (API_BASE && isValidUUID(id)) {
+      try {
         await fetch(`${API_BASE}/appointments/${id}`, { method: 'DELETE' });
+      } catch (err) {
+        console.error('Erro ao deletar agendamento:', err);
       }
-    } catch (err) {
-      console.error('Erro ao deletar agendamento:', err);
     }
     const list = this.getLocalAppointments().filter((a) => a.id !== id);
     localStorage.setItem(STORAGE_KEYS.APPOINTMENTS, JSON.stringify(list));
@@ -535,18 +551,20 @@ export const StorageService = {
   },
 
   async searchCids(query: string, limit: number = 10): Promise<CidCatalogEntry[]> {
-    try {
-      const response = await fetch(
-        `${API_BASE}/cids?q=${encodeURIComponent(query)}&limit=${limit}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        if (Array.isArray(data) && data.length > 0) {
-          return data;
+    if (API_BASE) {
+      try {
+        const response = await fetch(
+          `${API_BASE}/cids?q=${encodeURIComponent(query)}&limit=${limit}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            return data;
+          }
         }
+      } catch {
+        // Fallback para catálogo local quando offline ou backend inacessível
       }
-    } catch {
-      // Fallback para catálogo local quando offline ou backend inacessível
     }
     return searchLocalCids(query, limit);
   },

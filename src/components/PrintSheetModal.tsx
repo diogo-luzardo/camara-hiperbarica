@@ -29,33 +29,33 @@ export const PrintSheetModal: React.FC<PrintSheetModalProps> = ({
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 print:p-0 print:bg-white print:static">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[95vh] print:max-h-none print:border-none print:shadow-none print:rounded-none">
         {/* Modal Toolbar (hidden when printing) */}
-        <div className="bg-slate-900 text-white px-6 py-3.5 flex items-center justify-between print:hidden">
-          <div className="flex items-center gap-2">
-            <FileText className="w-5 h-5 text-cyan-400" />
-            <h3 className="font-bold font-['Outfit'] text-sm">
-              Visualização para Impressão da Ficha Clínica Oficial
+        <div className="bg-slate-900 text-white px-3 sm:px-6 py-2.5 sm:py-3.5 flex items-center justify-between print:hidden gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400 shrink-0" />
+            <h3 className="font-bold font-['Outfit'] text-xs sm:text-sm truncate">
+              Visualização para Impressão
             </h3>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={handlePrint}
-              className="px-4 py-1.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm"
+              className="px-3 sm:px-4 py-1.5 rounded-lg bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
-              <Printer className="w-4 h-4" />
-              <span>Imprimir Documento</span>
+              <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span>Imprimir</span>
             </button>
-            <button onClick={onClose} className="p-1 rounded text-slate-400 hover:text-white">
+            <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer">
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Printable Paper Canvas */}
-        <div className="p-8 overflow-y-auto print:p-4 text-slate-900 font-sans text-xs bg-white">
+        <div className="p-4 sm:p-8 overflow-y-auto print:p-4 text-slate-900 font-sans text-xs bg-white">
           {/* Header replicating the actual medical sheet */}
-          <div className="border-b-2 border-slate-800 pb-4 mb-4 flex items-start justify-between">
+          <div className="border-b-2 border-slate-800 pb-4 mb-4 flex flex-col sm:flex-row items-start justify-between gap-3">
             <div>
-              <h1 className="text-base font-bold tracking-tight text-slate-950 uppercase font-['Outfit']">
+              <h1 className="text-sm sm:text-base font-bold tracking-tight text-slate-950 uppercase font-['Outfit']">
                 Medicina Hiperbárica Zona Sul • Clínica Médica & Terapia Intensiva
               </h1>
               <p className="text-[11px] text-slate-700 font-medium">
@@ -65,11 +65,11 @@ export const PrintSheetModal: React.FC<PrintSheetModalProps> = ({
                 Rua das Pitombeiras, 175 - Jabaquara - São Paulo/SP | Tel: (11) 5017-0698
               </p>
             </div>
-            <div className="text-right">
+            <div className="text-left sm:text-right w-full sm:w-auto">
               <span className="inline-block px-3 py-1 border-2 border-slate-900 font-mono font-bold text-xs">
                 REGISTRO OHB: {patient.registroOHB}
               </span>
-              <p className="text-[10px] text-slate-500 mt-1 font-mono">RH: {patient.registroHospitalar || 'N/A'}</p>
+              <p className="text-[10px] text-slate-500 mt-0.5 font-mono">RH: {patient.registroHospitalar || 'N/A'}</p>
             </div>
           </div>
 

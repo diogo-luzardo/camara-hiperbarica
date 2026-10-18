@@ -13,29 +13,29 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold">
+        <div className="bg-slate-900 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-800">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold shrink-0">
               <Cloud className="w-5 h-5" />
             </div>
-            <div>
-              <h2 className="text-base font-bold font-['Outfit']">
-                Arquitetura de Nuvem (AWS), Banco de Dados & Backend Java
+            <div className="min-w-0">
+              <h2 className="text-sm sm:text-base font-bold font-['Outfit'] truncate">
+                Arquitetura de Nuvem (AWS) & Backend Java
               </h2>
-              <p className="text-xs text-slate-300">
-                Guia técnico para produção: Spring Boot / Quarkus, PostgreSQL + JSONB e Armazenamento no AWS S3
+              <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-1">
+                Guia técnico para produção: Quarkus/Spring Boot, PostgreSQL + JSONB e AWS S3
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1 rounded-lg">
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1.5 rounded-lg cursor-pointer shrink-0 ml-2">
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
+        <div className="p-4 sm:p-6 overflow-y-auto space-y-4 sm:space-y-6 text-xs text-slate-700">
           {/* Section 1: Banco de Dados - Relacional vs JSON */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Database className="w-4 h-4 text-cyan-700" />
               <h3 className="font-bold text-slate-900 text-sm">
@@ -49,7 +49,7 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
               <div className="bg-white p-3.5 rounded-lg border border-emerald-200 space-y-2">
                 <div className="flex items-center gap-1.5 text-emerald-800 font-bold">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   <span>Por que Relacional (PostgreSQL) para o Core?</span>
                 </div>
                 <ul className="list-disc list-inside space-y-1 text-slate-600 text-[11px]">
@@ -61,7 +61,7 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
 
               <div className="bg-white p-3.5 rounded-lg border border-cyan-200 space-y-2">
                 <div className="flex items-center gap-1.5 text-cyan-800 font-bold">
-                  <Layers className="w-4 h-4 text-cyan-600" />
+                  <Layers className="w-4 h-4 text-cyan-600 shrink-0" />
                   <span>Onde usar JSON (JSONB no PostgreSQL)?</span>
                 </div>
                 <ul className="list-disc list-inside space-y-1 text-slate-600 text-[11px]">
@@ -73,7 +73,7 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
           </div>
 
           {/* Section 2: Armazenamento de Imagens e Prontuários no AWS S3 */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
             <div className="flex items-center gap-2">
               <HardDrive className="w-4 h-4 text-cyan-700" />
               <h3 className="font-bold text-slate-900 text-sm">
@@ -84,9 +84,9 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
               <strong>Regra de Ouro:</strong> Nunca salve arquivos binários pesados (JPEGs, PNGs, PDFs) dentro do banco de dados (como BLOBs). Isso sobrecarrega a memória RAM do servidor e torna os backups impraticáveis.
             </p>
 
-            <div className="bg-slate-900 text-cyan-300 p-3.5 rounded-lg font-mono text-[11px] space-y-1">
+            <div className="bg-slate-900 text-cyan-300 p-3.5 rounded-lg font-mono text-[11px] space-y-1 overflow-x-auto">
               <p className="text-slate-400">// Estrutura de Pastas no Bucket S3:</p>
-              <p>s3://clinica-ohb-prontuarios/<span className="text-white font-bold">{'{registro_ohb}'}</span>/ano-<span className="text-white">2024</span>/<span className="text-yellow-300">doc_uuid.webp</span></p>
+              <p className="break-all">s3://clinica-ohb-prontuarios/<span className="text-white font-bold">{'{registro_ohb}'}</span>/ano-<span className="text-white">2024</span>/<span className="text-yellow-300">doc_uuid.webp</span></p>
               <p className="text-slate-400 pt-1">// Fluxo de Acesso Seguro:</p>
               <p>1. Usuário envia a imagem escaneada.</p>
               <p>2. Backend Java gera uma Pre-Signed URL segura (válida por 5 minutos) direto para o S3.</p>
@@ -96,7 +96,7 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
           </div>
 
           {/* Section 3: Backend Java: Spring Boot vs Quarkus */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
             <div className="flex items-center gap-2">
               <Cpu className="w-4 h-4 text-cyan-700" />
               <h3 className="font-bold text-slate-900 text-sm">
@@ -134,7 +134,7 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
           </div>
 
           {/* Section 4: Arquitetura Geral da AWS (Diagrama) */}
-          <div className="border border-cyan-200 bg-cyan-50/30 rounded-xl p-4">
+          <div className="border border-cyan-200 bg-cyan-50/30 rounded-xl p-3.5 sm:p-4">
             <h4 className="font-bold text-slate-900 text-xs mb-3 flex items-center gap-1.5">
               <Server className="w-4 h-4 text-cyan-700" />
               Arquitetura Geral de Produção na AWS
@@ -164,10 +164,10 @@ export const ArchitectureModal: React.FC<ArchitectureModalProps> = ({ isOpen, on
         </div>
 
         {/* Footer */}
-        <div className="bg-slate-50 border-t border-slate-200 px-6 py-3 flex items-center justify-end">
+        <div className="bg-slate-50 border-t border-slate-200 px-4 sm:px-6 py-3 flex items-center justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 rounded-lg shadow-sm"
+            className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-slate-950 bg-cyan-400 hover:bg-cyan-300 rounded-xl shadow-sm text-center cursor-pointer"
           >
             Entendido
           </button>

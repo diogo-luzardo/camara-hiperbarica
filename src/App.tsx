@@ -10,6 +10,7 @@ import { SessionFormModal } from './components/SessionFormModal';
 import { PrintSheetModal } from './components/PrintSheetModal';
 import { ArchitectureModal } from './components/ArchitectureModal';
 import { PermissionsModal } from './components/PermissionsModal';
+import { CidLookupModal } from './components/CidLookupModal';
 import { LoginPage } from './components/LoginPage';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { StorageService } from './services/storage';
@@ -48,6 +49,7 @@ function MainClinicApp() {
 
   const [isArchModalOpen, setIsArchModalOpen] = useState(false);
   const [isPermissionsModalOpen, setIsPermissionsModalOpen] = useState(false);
+  const [isCidLookupModalOpen, setIsCidLookupModalOpen] = useState(false);
   const [autoOpenAppointmentModal, setAutoOpenAppointmentModal] = useState(false);
 
   // Vault jump filter
@@ -177,10 +179,10 @@ function MainClinicApp() {
 
   const containerClass =
     layoutMode === 'full'
-      ? 'flex-1 w-full px-4 sm:px-6 lg:px-8 2xl:px-12 py-4 sm:py-6'
+      ? 'flex-1 w-full px-3 sm:px-6 lg:px-8 2xl:px-12 pt-3 sm:pt-6 pb-20 sm:pb-8'
       : layoutMode === 'compact'
-      ? 'flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8'
-      : 'flex-1 max-w-[2100px] w-full mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 py-4 sm:py-6';
+      ? 'flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-6 pb-20 sm:pb-8'
+      : 'flex-1 max-w-[2100px] w-full mx-auto px-3 sm:px-6 lg:px-8 2xl:px-12 pt-3 sm:pt-6 pb-20 sm:pb-8';
 
   const isViewAllowed = canAccessView(activeView);
 
@@ -199,6 +201,7 @@ function MainClinicApp() {
         onNewPatient={handleOpenNewPatient}
         onNewAppointment={handleOpenNewAppointment}
         onOpenPermissions={() => setIsPermissionsModalOpen(true)}
+        onOpenCidLookup={() => setIsCidLookupModalOpen(true)}
         patientCount={patients.length}
         sessionCount={sessions.length}
         appointmentCount={appointments.length}
@@ -269,6 +272,7 @@ function MainClinicApp() {
                     onSelectPatient={(id) => setSelectedPatientId(id)}
                     onNewPatient={handleOpenNewPatient}
                     onNewSession={handleOpenNewSession}
+                    onOpenCidLookup={() => setIsCidLookupModalOpen(true)}
                   />
                 )}
               </>
@@ -376,6 +380,12 @@ function MainClinicApp() {
       <PermissionsModal
         isOpen={isPermissionsModalOpen}
         onClose={() => setIsPermissionsModalOpen(false)}
+      />
+
+      {/* MODAL: CONSULTA DE CÓDIGOS CID-11 & CID-10 */}
+      <CidLookupModal
+        isOpen={isCidLookupModalOpen}
+        onClose={() => setIsCidLookupModalOpen(false)}
       />
     </div>
   );
