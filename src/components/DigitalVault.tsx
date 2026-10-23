@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FolderArchive, Upload, Search, ZoomIn, ZoomOut, RotateCw, Download, Trash2, X, FileText, Image as ImageIcon, CheckCircle2, AlertCircle, Filter, Eye, Camera } from 'lucide-react';
+import { FolderArchive, Upload, Search, ZoomIn, ZoomOut, RotateCw, Download, Trash2, X, FileText, Image as ImageIcon, CheckCircle2, AlertCircle, Filter, Eye, Camera, User, Sparkles, FilePlus, Users } from 'lucide-react';
 import { DigitalizedDocument, Patient, HyperbaricSession } from '../types';
 import { StorageService } from '../services/storage';
 import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
@@ -24,10 +24,25 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
   const [selectedType, setSelectedType] = useState<string>('todos');
   const [isUploading, setIsUploading] = useState(false);
 
-  // Form State for new upload
+  // Modo de cadastro no acervo:
+  // 'novo_papel': Para prontuários em papel de pacientes que ainda NÃO estão cadastrados na plataforma
+  // 'cadastrado': Para anexar a um paciente já existente no sistema
+  const [recordMode, setRecordMode] = useState<'novo_papel' | 'cadastrado'>(
+    selectedPatientOHB ? 'cadastrado' : 'novo_papel'
+  );
+
+  // Campos para Novo Prontuário em Papel (sem cadastro prévio no sistema)
+  const [newPatientName, setNewPatientName] = useState('');
+  const [newNomeMae, setNewNomeMae] = useState('');
+  const [newRegistroFisico, setNewRegistroFisico] = useState('');
+  const [newCPF, setNewCPF] = useState('');
+
+  // Form State para paciente já cadastrado
   const [targetOHB, setTargetOHB] = useState(selectedPatientOHB || '');
   const [targetCPF, setTargetCPF] = useState('');
   const [targetSessionId, setTargetSessionId] = useState('');
+
+  // Metadados do documento
   const [docTitle, setDocTitle] = useState('');
   const [docType, setDocType] = useState<DigitalizedDocument['tipo']>('prontuario_antigo');
   const [docDate, setDocDate] = useState(new Date().toISOString().split('T')[0]);
@@ -55,6 +70,7 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
   // When patient selection changes
   useEffect(() => {
     if (selectedPatientOHB) {
+      setRecordMode('cadastrado');
       setSearchTerm(selectedPatientOHB);
       setTargetOHB(selectedPatientOHB);
       const pat = patients.find((p) => p.registroOHB === selectedPatientOHB);
@@ -76,7 +92,15 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
 
   const handleScannerSaved = (
     pages: ScannedPage[],
-    meta: { titulo: string; tipo: DigitalizedDocument['tipo']; dataDocumento: string; observacoes: string }
+    meta: {
+      titulo: string;
+      tipo: DigitalizedDocument['tipo'];
+      dataDocumento: string;
+      observacoes: string;
+      patientName?: string;
+      nomeMae?: string;
+      registroOHB?: string;
+    }
   ) => {
     pages.forEach((p, idx) => {
       setPreviewImages((prev) => [
@@ -92,6 +116,9 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
     if (meta.tipo) setDocType(meta.tipo);
     if (meta.dataDocumento) setDocDate(meta.dataDocumento);
     if (meta.observacoes) setObservations(meta.observacoes);
+    if (meta.patientName && !newPatientName) setNewPatientName(meta.patientName);
+    if (meta.nomeMae && !newNomeMae) setNewNomeMae(meta.nomeMae);
+    if (meta.registroOHB && !newRegistroFisico) setNewRegistroFisico(meta.registroOHB);
     setIsCameraScannerOpen(false);
   };
 
@@ -122,33 +149,68 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
 
   const handleSaveUploads = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!targetOHB.trim()) {
-      alert('Informe o Registro OHB para vincular os documentos.');
-      return;
+
+    let finalPatientId: string | undefined;
+    let finalPatientName: string;
+    let finalNomeMae: string | undefined;
+    let finalRegistroOHB: string;
+    let finalCPF: string;
+    let selectedSession: HyperbaricSession | undefined;
+
+    if (recordMode === 'novo_papel') {
+      if (!newPatientName.trim()) {
+        alert('Informe o Nome do Paciente para criar o novo cadastro no acervo.');
+        return;
+      }
+      if (!newNomeMae.trim()) {
+        alert('Informe o Nome da Mãe do Paciente (essencial para identificação e busca de prontuários em papel).');
+        return;
+      }
+      finalPatientName = newPatientName.trim();
+      finalNomeMae = newNomeMae.trim();
+      finalRegistroOHB = newRegistroFisico.trim()
+        ? newRegistroFisico.trim().toUpperCase()
+        : `PAPEL-${Date.now().toString().slice(-6)}`;
+      finalCPF = newCPF.trim();
+      finalPatientId = undefined;
+    } else {
+      if (!targetOHB.trim()) {
+        alert('Selecione ou informe o Registro OHB para vincular os documentos.');
+        return;
+      }
+      const patient = patients.find(
+        (p) => p.registroOHB.trim().toUpperCase() === targetOHB.trim().toUpperCase()
+      );
+      finalPatientId = patient?.id;
+      finalPatientName = patient?.nome || targetOHB;
+      finalNomeMae = patient?.nomeMae;
+      finalRegistroOHB = targetOHB.trim().toUpperCase();
+      finalCPF = targetCPF || patient?.cpf || '';
+      selectedSession = targetPatientSessions.find((s) => s.id === targetSessionId);
     }
+
     if (previewImages.length === 0) {
-      alert('Selecione pelo menos uma imagem para enviar.');
+      alert('Selecione ou escaneie pelo menos uma folha para arquivar.');
       return;
     }
 
     setIsUploading(true);
     try {
-      const patient = patients.find(
-        (p) => p.registroOHB.trim().toUpperCase() === targetOHB.trim().toUpperCase()
-      );
-      const selectedSession = targetPatientSessions.find((s) => s.id === targetSessionId);
-
       for (let i = 0; i < previewImages.length; i++) {
         const item = previewImages[i];
         const newDoc: DigitalizedDocument = {
           id: `doc-${Date.now()}-${i}`,
-          registroOHB: targetOHB.trim().toUpperCase(),
-          cpf: targetCPF || (patient ? patient.cpf : ''),
-          patientId: patient?.id,
-          patientName: patient?.nome,
+          registroOHB: finalRegistroOHB,
+          cpf: finalCPF,
+          patientId: finalPatientId,
+          patientName: finalPatientName,
+          nomeMae: finalNomeMae,
           sessionId: selectedSession?.id,
           sessionNumber: selectedSession?.sessionNumber,
-          titulo: previewImages.length === 1 ? docTitle : `${docTitle} (Pág. ${i + 1})`,
+          titulo:
+            previewImages.length === 1
+              ? docTitle.trim() || `Prontuário Antigo - ${finalPatientName}`
+              : `${docTitle.trim() || `Prontuário Antigo - ${finalPatientName}`} (Pág. ${i + 1})`,
           tipo: docType,
           dataDocumento: docDate,
           dataUpload: new Date().toISOString(),
@@ -162,8 +224,16 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
       setPreviewImages([]);
       setDocTitle('');
       setObservations('');
+      if (recordMode === 'novo_papel') {
+        setNewPatientName('');
+        setNewNomeMae('');
+        setNewRegistroFisico('');
+        setNewCPF('');
+      }
       onRefreshDocs();
-      alert(`${previewImages.length} documento(s) arquivado(s) e vinculado(s) ao Registro ${targetOHB} com sucesso!`);
+      alert(
+        `${previewImages.length} folha(s) arquivada(s) no acervo com sucesso para o paciente ${finalPatientName}! (Registro: ${finalRegistroOHB})`
+      );
     } catch (err) {
       console.error(err);
       alert('Erro ao salvar documentos no acervo digital.');
@@ -180,14 +250,16 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
     }
   };
 
-  // Filtered documents
+  // Filtered documents (Busca universal por Nome, Nome da Mãe, Registro e CPF)
   const filteredDocs = documents.filter((doc) => {
     const cleanSearch = searchTerm.trim().toLowerCase();
+    const cleanDigits = cleanSearch.replace(/\D/g, '');
     const matchSearch =
       !cleanSearch ||
       doc.registroOHB.toLowerCase().includes(cleanSearch) ||
-      doc.cpf.replace(/\D/g, '').includes(cleanSearch.replace(/\D/g, '')) ||
+      (cleanDigits.length > 0 && doc.cpf.replace(/\D/g, '').includes(cleanDigits)) ||
       (doc.patientName && doc.patientName.toLowerCase().includes(cleanSearch)) ||
+      (doc.nomeMae && doc.nomeMae.toLowerCase().includes(cleanSearch)) ||
       doc.titulo.toLowerCase().includes(cleanSearch);
 
     const matchType = selectedType === 'todos' || doc.tipo === selectedType;
@@ -240,80 +312,184 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
           </div>
 
           <form onSubmit={handleSaveUploads} className="space-y-3.5 text-xs">
-            {/* Vinculação do Registro OHB */}
+            {/* Seletor de Modo: Ficha Nova em Papel vs Paciente Já Cadastrado */}
             <div>
               <label className="block font-semibold text-slate-700 mb-1">
-                Registro OHB para Vinculação <span className="text-rose-500">*</span>
+                Origem do Documento
               </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  required
-                  value={targetOHB}
-                  onChange={(e) => setTargetOHB(e.target.value)}
-                  placeholder="Ex: OHB-1082"
-                  className="w-full text-xs font-mono font-bold text-cyan-900 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-cyan-50/30 uppercase"
-                />
-              </div>
-              <p className="text-[10px] text-slate-400 mt-0.5">Identificador central de arquivos da clínica</p>
-            </div>
-
-            {/* Ou selecione paciente existente */}
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">Vincular a Paciente Cadastrado</label>
-              <select
-                value={targetOHB}
-                onChange={(e) => handlePatientSelectChange(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
-              >
-                <option value="">-- Selecione ou digite acima --</option>
-                {patients.map((p) => (
-                  <option key={p.id} value={p.registroOHB}>
-                    {p.registroOHB} - {p.nome}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Vincular a Sessão (Opcional) */}
-            {targetPatientSessions.length > 0 && (
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">
-                  Vincular à Sessão Específica (Opcional)
-                </label>
-                <select
-                  value={targetSessionId}
-                  onChange={(e) => {
-                    setTargetSessionId(e.target.value);
-                    const s = targetPatientSessions.find((x) => x.id === e.target.value);
-                    if (s) {
-                      setDocTitle(`Prontuário Sessão #${s.sessionNumber} - ${s.data}`);
-                      setDocType('ficha_atendimento');
-                    }
-                  }}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+              <div className="bg-slate-100 p-1 rounded-xl grid grid-cols-2 gap-1 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setRecordMode('novo_papel')}
+                  className={`py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    recordMode === 'novo_papel'
+                      ? 'bg-white text-cyan-800 shadow-xs font-bold border border-cyan-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
                 >
-                  <option value="">Geral / Sem vínculo com sessão</option>
-                  {targetPatientSessions.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      Sessão #{s.sessionNumber} - {s.data} ({s.ata} ATA)
-                    </option>
-                  ))}
-                </select>
+                  <FilePlus className="w-3.5 h-3.5 text-cyan-600" />
+                  <span>✨ Novo em Papel</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRecordMode('cadastrado')}
+                  className={`py-2 px-2.5 rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    recordMode === 'cadastrado'
+                      ? 'bg-white text-cyan-800 shadow-xs font-bold border border-cyan-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  <Users className="w-3.5 h-3.5 text-cyan-600" />
+                  <span>📁 Já Cadastrado</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Campos quando for NOVO EM PAPEL (sem vínculo inicial e sem cadastro prévio) */}
+            {recordMode === 'novo_papel' ? (
+              <div className="space-y-2.5 p-3 rounded-xl bg-cyan-50/40 border border-cyan-100">
+                <div className="flex items-start gap-1.5 text-[11px] text-cyan-900">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-600 shrink-0 mt-0.5" />
+                  <span>
+                    Cadastre diretamente a ficha em papel informando o <strong>Nome do Paciente</strong> e o <strong>Nome da Mãe</strong> (essencial para desempate de homônimos).
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-0.5">
+                    Nome Completo do Paciente <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newPatientName}
+                    onChange={(e) => {
+                      setNewPatientName(e.target.value);
+                      if (!docTitle) setDocTitle(`Prontuário Antigo - ${e.target.value}`);
+                    }}
+                    placeholder="Ex: Maria Aparecida da Silva"
+                    className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-0.5">
+                    Nome da Mãe do Paciente <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newNomeMae}
+                    onChange={(e) => setNewNomeMae(e.target.value)}
+                    placeholder="Ex: Joana Ferreira da Silva"
+                    className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-0.5">Obrigatório para identificação segura e busca no acervo</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-0.5">
+                      Nº Prontuário Antigo / Pasta
+                    </label>
+                    <input
+                      type="text"
+                      value={newRegistroFisico}
+                      onChange={(e) => setNewRegistroFisico(e.target.value)}
+                      placeholder="Ex: 1042 ou A-12"
+                      className="w-full text-xs font-mono uppercase px-2.5 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                    />
+                    <p className="text-[9px] text-slate-400 mt-0.5">Gera PAPEL-XXXXXX se vazio</p>
+                  </div>
+
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-0.5">
+                      CPF (Opcional)
+                    </label>
+                    <input
+                      type="text"
+                      value={newCPF}
+                      onChange={(e) => setNewCPF(e.target.value)}
+                      placeholder="000.000.000-00"
+                      className="w-full text-xs font-mono px-2.5 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Campos para PACIENTE JÁ CADASTRADO NO SISTEMA */
+              <div className="space-y-2.5">
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Vincular a Paciente Cadastrado <span className="text-rose-500">*</span>
+                  </label>
+                  <select
+                    value={targetOHB}
+                    onChange={(e) => handlePatientSelectChange(e.target.value)}
+                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white font-medium"
+                  >
+                    <option value="">-- Selecione o Paciente --</option>
+                    {patients.map((p) => (
+                      <option key={p.id} value={p.registroOHB}>
+                        {p.registroOHB} - {p.nome} {p.nomeMae ? `(Mãe: ${p.nomeMae})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">
+                    Registro OHB <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={targetOHB}
+                    onChange={(e) => setTargetOHB(e.target.value)}
+                    placeholder="Ex: OHB-1082"
+                    className="w-full text-xs font-mono font-bold text-cyan-900 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-cyan-50/30 uppercase"
+                  />
+                </div>
+
+                {targetPatientSessions.length > 0 && (
+                  <div>
+                    <label className="block font-semibold text-slate-700 mb-1">
+                      Vincular à Sessão Específica (Opcional)
+                    </label>
+                    <select
+                      value={targetSessionId}
+                      onChange={(e) => {
+                        setTargetSessionId(e.target.value);
+                        const s = targetPatientSessions.find((x) => x.id === e.target.value);
+                        if (s) {
+                          setDocTitle(`Prontuário Sessão #${s.sessionNumber} - ${s.data}`);
+                          setDocType('ficha_atendimento');
+                        }
+                      }}
+                      className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                    >
+                      <option value="">Geral / Sem vínculo com sessão</option>
+                      {targetPatientSessions.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          Sessão #{s.sessionNumber} - {s.data} ({s.ata} ATA)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block font-semibold text-slate-700 mb-1">CPF Vinculado</label>
+                  <input
+                    type="text"
+                    value={targetCPF}
+                    onChange={(e) => setTargetCPF(e.target.value)}
+                    placeholder="000.000.000-00"
+                    className="w-full text-xs font-mono px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
+                  />
+                </div>
               </div>
             )}
-
-            {/* CPF */}
-            <div>
-              <label className="block font-semibold text-slate-700 mb-1">CPF Vinculado</label>
-              <input
-                type="text"
-                value={targetCPF}
-                onChange={(e) => setTargetCPF(e.target.value)}
-                placeholder="000.000.000-00"
-                className="w-full text-xs font-mono px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500"
-              />
-            </div>
 
             {/* Tipo de Documento */}
             <div className="grid grid-cols-2 gap-2">
@@ -512,6 +688,11 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
                       <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-900/80 text-cyan-300 backdrop-blur-xs">
                         {doc.registroOHB}
                       </span>
+                      {!doc.patientId && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-400 text-slate-950 shadow-xs">
+                          📄 Ficha Papel
+                        </span>
+                      )}
                       {doc.sessionNumber && (
                         <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500 text-slate-950 shadow-xs">
                           Sessão #{doc.sessionNumber}
@@ -543,8 +724,14 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
                         {doc.titulo}
                       </h4>
                       {doc.patientName && (
-                        <p className="text-slate-600 text-[11px] truncate font-medium mt-0.5">
-                          {doc.patientName}
+                        <p className="text-slate-800 text-[11px] truncate font-semibold mt-0.5 flex items-center gap-1">
+                          <User className="w-3 h-3 text-cyan-600 shrink-0" />
+                          <span>{doc.patientName}</span>
+                        </p>
+                      )}
+                      {doc.nomeMae && (
+                        <p className="text-slate-500 text-[10px] truncate mt-0.5 pl-4">
+                          <span className="text-slate-400 font-medium">Mãe:</span> {doc.nomeMae}
                         </p>
                       )}
                       {doc.observacoes && (
@@ -580,7 +767,10 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
                 <h3 className="font-bold text-xs sm:text-sm truncate">{viewingDoc.titulo}</h3>
               </div>
               <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5 line-clamp-1">
-                {viewingDoc.patientName ? `Paciente: ${viewingDoc.patientName}` : 'Paciente vinculado por Registro OHB'} • CPF: {viewingDoc.cpf || 'Não informado'} • Data: {viewingDoc.dataDocumento}
+                {viewingDoc.patientName ? `Paciente: ${viewingDoc.patientName}` : 'Paciente vinculado por Registro OHB'}
+                {viewingDoc.nomeMae ? ` • Mãe: ${viewingDoc.nomeMae}` : ''}
+                {!viewingDoc.patientId ? ' • (Ficha Física em Papel)' : ''}
+                {` • CPF: ${viewingDoc.cpf || 'Não informado'} • Data: ${viewingDoc.dataDocumento}`}
               </p>
             </div>
 
@@ -661,19 +851,29 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
           isOpen={isCameraScannerOpen}
           onClose={() => setIsCameraScannerOpen(false)}
           onSave={handleScannerSaved}
-          title="Escanear Documento para o Acervo"
+          title={
+            recordMode === 'novo_papel'
+              ? 'Escanear Prontuário em Papel'
+              : 'Escanear Documento para o Acervo'
+          }
           subtitle={
-            targetPatient
-              ? `${targetPatient.nome} • ${targetPatient.registroOHB}`
-              : 'Digitalização para o Acervo Digital'
+            recordMode === 'novo_papel'
+              ? (newPatientName ? `${newPatientName} • ${newNomeMae ? `Mãe: ${newNomeMae}` : 'Novo Acervo'}` : 'Novo Prontuário em Papel (Sem Cadastro Prévio)')
+              : (targetPatient
+                  ? `${targetPatient.nome} • ${targetPatient.registroOHB}`
+                  : 'Digitalização para o Acervo Digital')
           }
           defaultDocType={docType}
           defaultTitle={
             docTitle ||
-            (targetPatient ? `Prontuário Escaneado - ${targetPatient.nome}` : 'Documento Escaneado')
+            (recordMode === 'novo_papel'
+              ? (newPatientName ? `Prontuário Antigo - ${newPatientName}` : 'Prontuário Físico Escaneado')
+              : (targetPatient ? `Prontuário Escaneado - ${targetPatient.nome}` : 'Documento Escaneado'))
           }
-          patientOHB={targetOHB}
-          patientName={targetPatient?.nome}
+          patientOHB={recordMode === 'novo_papel' ? (newRegistroFisico || 'PAPEL') : targetOHB}
+          patientName={recordMode === 'novo_papel' ? newPatientName : targetPatient?.nome}
+          defaultNomeMae={recordMode === 'novo_papel' ? newNomeMae : targetPatient?.nomeMae}
+          allowEditPatientIdentity={recordMode === 'novo_papel'}
         />
       )}
     </div>

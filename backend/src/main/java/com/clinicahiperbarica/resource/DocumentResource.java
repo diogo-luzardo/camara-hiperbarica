@@ -78,23 +78,31 @@ public class DocumentResource {
     @POST
     @Transactional
     public Response create(DigitalizedDocument document) {
-        if (document.patient == null || document.patient.id == null) {
+        if (document.patient != null && document.patient.id != null) {
+            Patient patient = Patient.findById(document.patient.id);
+            if (patient != null) {
+                document.patient = patient;
+                if (document.patientName == null || document.patientName.trim().isEmpty()) {
+                    document.patientName = patient.nome;
+                }
+                if (document.registroOHB == null || document.registroOHB.trim().isEmpty()) {
+                    document.registroOHB = patient.registroOHB;
+                }
+                if (document.cpf == null || document.cpf.trim().isEmpty()) {
+                    document.cpf = patient.cpf;
+                }
+                if (document.nomeMae == null || document.nomeMae.trim().isEmpty()) {
+                    document.nomeMae = patient.nomeMae;
+                }
+            }
+        }
+
+        // Para prontuários físicos de pacientes ainda não cadastrados, exige ao menos o nome do paciente
+        if (document.patient == null && (document.patientName == null || document.patientName.trim().isEmpty())) {
             return Response.status(Response.Status.BAD_REQUEST)
-                .entity("Paciente é obrigatório para vincular o documento")
+                .entity("Nome do paciente ou vínculo a paciente existente é obrigatório")
                 .build();
         }
-
-        Patient patient = Patient.findById(document.patient.id);
-        if (patient == null) {
-            return Response.status(Response.Status.NOT_FOUND)
-                .entity("Paciente não encontrado")
-                .build();
-        }
-
-        document.patient = patient;
-        document.patientName = patient.nome;
-        document.registroOHB = patient.registroOHB;
-        document.cpf = patient.cpf;
 
         if (document.session != null && document.session.id != null) {
             HyperbaricSession session = HyperbaricSession.findById(document.session.id);

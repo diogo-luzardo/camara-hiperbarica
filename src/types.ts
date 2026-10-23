@@ -129,6 +129,7 @@ export interface DigitalizedDocument {
   cpf: string;
   patientId?: string;
   patientName?: string;
+  nomeMae?: string;
   sessionId?: string;
   sessionNumber?: number;
   titulo: string;

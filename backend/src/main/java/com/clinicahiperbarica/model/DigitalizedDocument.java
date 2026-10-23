@@ -22,7 +22,7 @@ public class DigitalizedDocument extends PanacheEntityBase {
     public UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "patient_id", nullable = false)
+    @JoinColumn(name = "patient_id")
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     public Patient patient;
 
@@ -39,6 +39,9 @@ public class DigitalizedDocument extends PanacheEntityBase {
 
     @Column(name = "patient_name", length = 255)
     public String patientName;
+
+    @Column(name = "nome_mae", length = 255)
+    public String nomeMae;
 
     @Column(nullable = false, length = 255)
     public String titulo;

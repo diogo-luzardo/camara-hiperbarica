@@ -45,6 +45,9 @@ interface CameraScannerModalProps {
     tipo: 'prontuario_antigo' | 'ficha_atendimento' | 'foto_lesao' | 'exame_laudo' | 'outro';
     dataDocumento: string;
     observacoes: string;
+    patientName?: string;
+    nomeMae?: string;
+    registroOHB?: string;
   }) => void;
   title?: string;
   subtitle?: string;
@@ -53,6 +56,8 @@ interface CameraScannerModalProps {
   sessionId?: string;
   patientOHB?: string;
   patientName?: string;
+  defaultNomeMae?: string;
+  allowEditPatientIdentity?: boolean;
 }
 
 export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
@@ -65,10 +70,17 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
   defaultTitle = '',
   patientOHB,
   patientName,
+  defaultNomeMae = '',
+  allowEditPatientIdentity = false,
 }) => {
   const [activeMode, setActiveMode] = useState<'camera' | 'upload'>('camera');
   const [pages, setPages] = useState<ScannedPage[]>([]);
   const [selectedPageIndex, setSelectedPageIndex] = useState<number | null>(null);
+
+  // Identity metadata (para prontuários em papel de novos pacientes)
+  const [patientNameInput, setPatientNameInput] = useState(patientName || '');
+  const [nomeMaeInput, setNomeMaeInput] = useState(defaultNomeMae || '');
+  const [registroOHBInput, setRegistroOHBInput] = useState(patientOHB || '');
 
   // Form metadata
   const [docTitle, setDocTitle] = useState(defaultTitle);
@@ -92,18 +104,26 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nativeCameraInputRef = useRef<HTMLInputElement>(null);
 
+  // Sync props to state
+  useEffect(() => {
+    if (patientName) setPatientNameInput(patientName);
+    if (defaultNomeMae) setNomeMaeInput(defaultNomeMae);
+    if (patientOHB) setRegistroOHBInput(patientOHB);
+  }, [patientName, defaultNomeMae, patientOHB, isOpen]);
+
   // Pre-fill default title when props change
   useEffect(() => {
+    const activePatName = patientNameInput || patientName;
     if (defaultTitle) {
       setDocTitle(defaultTitle);
-    } else if (patientName) {
+    } else if (activePatName) {
       setDocTitle(
         defaultDocType === 'prontuario_antigo'
-          ? `Ficha Física Antiga - ${patientName}`
-          : `Prontuário da Sessão - ${patientName}`
+          ? `Ficha Física Antiga - ${activePatName}`
+          : `Prontuário da Sessão - ${activePatName}`
       );
     }
-  }, [defaultTitle, patientName, defaultDocType, isOpen]);
+  }, [defaultTitle, patientName, patientNameInput, defaultDocType, isOpen]);
 
   // Start Camera Stream
   const startCamera = useCallback(async (facing: 'environment' | 'user') => {
@@ -320,8 +340,8 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
       alert('Nenhuma página foi escaneada ou importada ainda.');
       return;
     }
-    if (!docTitle.trim()) {
-      alert('Informe um título para o documento.');
+    if ((allowEditPatientIdentity || !patientOHB) && !patientNameInput.trim()) {
+      alert('Informe o Nome do Paciente para identificar o documento arquivado.');
       return;
     }
 
@@ -330,6 +350,9 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
       tipo: docType,
       dataDocumento: docDate,
       observacoes: observacoes.trim(),
+      patientName: patientNameInput.trim() || undefined,
+      nomeMae: nomeMaeInput.trim() || undefined,
+      registroOHB: registroOHBInput.trim() || undefined,
     });
 
     handleCloseClean();
@@ -727,6 +750,42 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
 
         {/* Bottom Form Configuration & Confirmation (Light Background) */}
         <div className="bg-white p-3 sm:p-5 border-t border-slate-200 shrink-0 space-y-3">
+          {/* Identificação do Paciente para Prontuários em Papel / Novos Cadastros */}
+          {(allowEditPatientIdentity || (!patientOHB && !patientName)) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs p-3 bg-cyan-50/70 rounded-2xl border border-cyan-200 shadow-2xs">
+              <div>
+                <label className="block font-bold text-cyan-950 mb-1">
+                  Nome Completo do Paciente <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={patientNameInput}
+                  onChange={(e) => {
+                    setPatientNameInput(e.target.value);
+                    if (!docTitle && e.target.value.trim()) {
+                      setDocTitle(`Prontuário Antigo - ${e.target.value.trim()}`);
+                    }
+                  }}
+                  placeholder="Nome constante na ficha física"
+                  className="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10 outline-none bg-white text-slate-800 font-medium"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-cyan-950 mb-1">
+                  Nome da Mãe do Paciente <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={nomeMaeInput}
+                  onChange={(e) => setNomeMaeInput(e.target.value)}
+                  placeholder="Nome da mãe na ficha (desambiguação)"
+                  className="w-full text-xs px-3 py-2 rounded-xl border border-slate-300 focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/10 outline-none bg-white text-slate-800 font-medium"
+                />
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs">
             <div className="sm:col-span-2">
               <label className="block font-bold text-slate-700 mb-1">Título do Documento / Prontuário *</label>
