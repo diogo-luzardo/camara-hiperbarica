@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X,
   Search,
@@ -17,6 +17,10 @@ import {
   Lock,
   Clock,
   Mail,
+  Camera,
+  Upload,
+  Trash2,
+  RotateCw,
 } from 'lucide-react';
 import { Patient, CidCatalogEntry } from '../types';
 import { COMMON_CID_OHB_EXTENDED } from '../data/cidDataset';
@@ -31,13 +35,16 @@ import {
   ViaCepResult,
 } from '../utils/cepService';
 import { isParticular } from './CoverageBadge';
+import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
 
 interface PatientFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (patient: Patient) => void;
+  onSave: (patient: Patient, scannedPages?: ScannedPage[]) => void;
   initialPatient?: Patient | null;
-  existingPatientsCount: number;
+  existingPatientsCount?: number;
+  existingPatients?: Patient[];
+  initialTab?: 'dados' | 'endereco' | 'clinico' | 'ohb' | 'scanner';
 }
 
 const COMMON_CID_OHB = [
@@ -69,9 +76,21 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
   onClose,
   onSave,
   initialPatient,
-  existingPatientsCount,
+  existingPatientsCount = 0,
+  initialTab,
 }) => {
-  const [activeTab, setActiveTab] = useState<'dados' | 'endereco' | 'clinico' | 'ohb'>('dados');
+  const [activeTab, setActiveTab] = useState<'dados' | 'endereco' | 'clinico' | 'ohb' | 'scanner'>(
+    initialTab || 'dados'
+  );
+  const [scannedPaperPages, setScannedPaperPages] = useState<ScannedPage[]>([]);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const paperFileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (initialTab && isOpen) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab, isOpen]);
 
   // CEP Auto-Search State
   const [isCepLoading, setIsCepLoading] = useState(false);
@@ -412,7 +431,7 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
       email: isEmailFilled ? cleanEmail(rawEmail) : '',
     };
 
-    onSave(finalPatient);
+    onSave(finalPatient, scannedPaperPages);
     onClose();
   };
 
@@ -514,6 +533,27 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
           >
             <HeartPulse className="w-4 h-4 shrink-0" />
             <span><span className="sm:hidden">4. Protocolo</span><span className="hidden sm:inline">4. Protocolo OHB</span></span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('scanner')}
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold rounded-t-lg border-b-2 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+              activeTab === 'scanner'
+                ? 'bg-white border-cyan-600 text-cyan-700 shadow-xs ring-1 ring-cyan-200'
+                : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100/60'
+            }`}
+          >
+            <Camera className="w-4 h-4 shrink-0 text-cyan-600" />
+            <span>
+              <span className="sm:hidden">5. Scanner</span>
+              <span className="hidden sm:inline">5. Fichas em Papel</span>
+            </span>
+            {scannedPaperPages.length > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-cyan-500 text-slate-950">
+                {scannedPaperPages.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -1505,6 +1545,148 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
             </div>
           )}
 
+          {/* TAB 5: IMPORTAÇÃO DE PRONTUÁRIO ANTIGO EM PAPEL (SCANNER) */}
+          {activeTab === 'scanner' && (
+            <div className="space-y-4">
+              <div className="bg-gradient-to-r from-cyan-950 via-slate-900 to-slate-950 border border-cyan-500/40 rounded-2xl p-4 sm:p-5 text-white shadow-md relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="p-2 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                        <Camera className="w-5 h-5" />
+                      </span>
+                      <h3 className="font-bold text-sm sm:text-base font-['Outfit'] text-white">
+                        Digitalização de Prontuário Antigo / Ficha Física em Papel
+                      </h3>
+                    </div>
+                    <p className="text-xs text-slate-300 max-w-xl">
+                      Utilize a câmera do celular ou computador como scanner para digitalizar fichas de anamnese física, termos de consentimento e históricos médicos antigos. Todos os documentos serão automaticamente vinculados ao Registro OHB <strong className="text-cyan-300 font-mono">{formData.registroOHB || 'do Paciente'}</strong>.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setIsScannerOpen(true)}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-2 cursor-pointer"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span>Escanear com Câmera</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => paperFileInputRef.current?.click()}
+                      className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-cyan-500/30 font-bold text-xs transition-colors flex items-center gap-2 cursor-pointer"
+                    >
+                      <Upload className="w-4 h-4" />
+                      <span>Importar Arquivo / Galeria</span>
+                    </button>
+
+                    <input
+                      ref={paperFileInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      multiple
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (!files || files.length === 0) return;
+                        Array.from(files).forEach((file: File) => {
+                          const reader = new FileReader();
+                          reader.onload = (loadEvt) => {
+                            const dataUrl = loadEvt.target?.result as string;
+                            setScannedPaperPages((prev) => [
+                              ...prev,
+                              {
+                                id: `paper-${Date.now()}-${prev.length + 1}`,
+                                dataUrl,
+                                sizeKb: Math.round(file.size / 1024),
+                                filter: 'bw',
+                                rotation: 0,
+                              },
+                            ]);
+                          };
+                          reader.readAsDataURL(file);
+                        });
+                        e.target.value = '';
+                      }}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Scanned Pages Grid */}
+              {scannedPaperPages.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+                    <span>Folhas Escaneadas ({scannedPaperPages.length})</span>
+                    <span className="text-[11px] text-slate-500">
+                      Serão salvas no acervo digital ao concluir o cadastro
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {scannedPaperPages.map((page, idx) => (
+                      <div
+                        key={page.id}
+                        className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden shadow-2xs hover:border-cyan-400 transition-all group"
+                      >
+                        <div className="aspect-3/4 bg-slate-900 relative">
+                          <img
+                            src={page.dataUrl}
+                            alt={`Folha ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-950/80 text-cyan-300 backdrop-blur-xs">
+                            Página {idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setScannedPaperPages((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                            className="absolute top-1.5 right-1.5 p-1 rounded-md bg-rose-600/90 text-white hover:bg-rose-700 transition-colors cursor-pointer"
+                            title="Remover folha"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <div className="p-2 text-xs flex items-center justify-between text-slate-600">
+                          <span className="font-semibold text-[11px]">Folha #{idx + 1}</span>
+                          <span className="text-[10px] text-slate-400">{page.sizeKb} KB</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-8 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-50 border border-cyan-200 text-cyan-600 flex items-center justify-center mx-auto">
+                    <Camera className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 text-xs sm:text-sm">
+                      Nenhuma folha em papel escaneada ainda
+                    </h4>
+                    <p className="text-[11px] sm:text-xs text-slate-500 max-w-md mx-auto mt-0.5">
+                      Para cadastrar pacientes que já possuem histórico físico em papel na clínica, clique em <strong>"Escanear com Câmera"</strong> para fotografar os prontuários ou <strong>"Importar Arquivo"</strong> para subir fotos da galeria.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsScannerOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs shadow-xs inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <span>Abrir Scanner com Câmera</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Modal Footer */}
           <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <span className="text-xs text-slate-500 order-2 sm:order-1 text-center sm:text-left">
@@ -1527,6 +1709,24 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
             </div>
           </div>
         </form>
+
+        {/* Embedded Camera Scanner Modal */}
+        {isScannerOpen && (
+          <CameraScannerModal
+            isOpen={isScannerOpen}
+            onClose={() => setIsScannerOpen(false)}
+            onSave={(pages) => {
+              setScannedPaperPages((prev) => [...prev, ...pages]);
+              setIsScannerOpen(false);
+            }}
+            title="Escanear Fichas Físicas do Paciente"
+            subtitle={`${formData.nome || 'Paciente'} • Registro ${formData.registroOHB}`}
+            defaultDocType="prontuario_antigo"
+            defaultTitle={`Ficha Histórica em Papel - ${formData.nome || formData.registroOHB}`}
+            patientOHB={formData.registroOHB}
+            patientName={formData.nome}
+          />
+        )}
       </div>
     </div>
   );

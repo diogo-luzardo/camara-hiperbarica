@@ -460,14 +460,38 @@ export const StorageService = {
 
   async saveDigitalizedDoc(doc: DigitalizedDocument): Promise<DigitalizedDocument> {
     const db = await openIndexedDB();
+    const record: DigitalizedDocument = {
+      ...doc,
+      id: doc.id || `doc-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      dataUpload: doc.dataUpload || new Date().toISOString(),
+    };
+
+    // 1. Tenta sincronizar com Quarkus REST API se disponível
+    if (API_BASE && record.patientId && isValidUUID(record.patientId)) {
+      try {
+        await fetch(`${API_BASE}/documents`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            patient: { id: record.patientId },
+            session: record.sessionId && isValidUUID(record.sessionId) ? { id: record.sessionId } : undefined,
+            titulo: record.titulo,
+            tipo: record.tipo,
+            dataDocumento: record.dataDocumento,
+            observacoes: record.observacoes,
+            imageUrl: record.imageUrl,
+            tamanhoKb: record.tamanhoKb,
+          }),
+        });
+      } catch (err) {
+        console.warn('Não foi possível sincronizar documento com Quarkus REST:', err);
+      }
+    }
+
+    // 2. Grava no IndexedDB local de alta capacidade
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_DOCS, 'readwrite');
       const store = tx.objectStore(STORE_DOCS);
-      const record = {
-        ...doc,
-        id: doc.id || `doc-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-        dataUpload: doc.dataUpload || new Date().toISOString(),
-      };
       const req = store.put(record);
       req.onsuccess = () => resolve(record);
       req.onerror = () => reject(req.error);
@@ -475,6 +499,13 @@ export const StorageService = {
   },
 
   async deleteDigitalizedDoc(id: string): Promise<void> {
+    if (API_BASE && isValidUUID(id)) {
+      try {
+        await fetch(`${API_BASE}/documents/${id}`, { method: 'DELETE' });
+      } catch (err) {
+        console.warn('Erro ao remover documento no backend:', err);
+      }
+    }
     const db = await openIndexedDB();
     return new Promise((resolve, reject) => {
       const tx = db.transaction(STORE_DOCS, 'readwrite');
@@ -483,6 +514,16 @@ export const StorageService = {
       req.onsuccess = () => resolve();
       req.onerror = () => reject(req.error);
     });
+  },
+
+  async getDocsByPatientId(patientId: string): Promise<DigitalizedDocument[]> {
+    const all = await this.getAllDigitalizedDocs();
+    return all.filter((d) => d.patientId === patientId);
+  },
+
+  async getDocsBySessionId(sessionId: string): Promise<DigitalizedDocument[]> {
+    const all = await this.getAllDigitalizedDocs();
+    return all.filter((d) => d.sessionId === sessionId);
   },
 
   async getDocsByRegistroOHB(registroOHB: string): Promise<DigitalizedDocument[]> {

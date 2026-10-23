@@ -16,6 +16,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { StorageService } from './services/storage';
 import { Patient, HyperbaricSession, Appointment, DigitalizedDocument } from './types';
 import { Lock, ShieldCheck, ArrowRight } from 'lucide-react';
+import { ScannedPage } from './components/CameraScannerModal';
 
 function MainClinicApp() {
   const { isAuthenticated, canAccessView, role, switchRole } = useAuth();
@@ -78,22 +79,62 @@ function MainClinicApp() {
     }
   };
 
+  const [patientFormInitialTab, setPatientFormInitialTab] = useState<
+    'dados' | 'endereco' | 'clinico' | 'ohb' | 'scanner'
+  >('dados');
+
   // Patients Actions
-  const handleSavePatient = async (patient: Patient) => {
-    await StorageService.savePatient(patient);
+  const handleSavePatient = async (patient: Patient, scannedPages?: ScannedPage[]) => {
+    const saved = await StorageService.savePatient(patient);
+
+    if (scannedPages && scannedPages.length > 0) {
+      for (let i = 0; i < scannedPages.length; i++) {
+        const page = scannedPages[i];
+        const docRecord: DigitalizedDocument = {
+          id: `doc-${Date.now()}-${i}`,
+          registroOHB: saved.registroOHB,
+          cpf: saved.cpf,
+          patientId: saved.id,
+          patientName: saved.nome,
+          titulo:
+            scannedPages.length === 1
+              ? `Ficha Física Histórica - ${saved.nome}`
+              : `Ficha Física Histórica - ${saved.nome} (Pág. ${i + 1})`,
+          tipo: 'prontuario_antigo',
+          dataDocumento: new Date().toISOString().split('T')[0],
+          dataUpload: new Date().toISOString(),
+          observacoes: 'Ficha física de papel escaneada via câmera/scanner no cadastro histórico.',
+          imageUrl: page.dataUrl,
+          tamanhoKb: page.sizeKb,
+        };
+        await StorageService.saveDigitalizedDoc(docRecord);
+      }
+      const refreshedDocs = await StorageService.getAllDigitalizedDocs();
+      setDocuments(refreshedDocs);
+    }
+
     const updated = await StorageService.getPatients();
     setPatients(updated);
     setIsPatientModalOpen(false);
     setEditingPatient(null);
+    setPatientFormInitialTab('dados');
   };
 
   const handleOpenNewPatient = () => {
     setEditingPatient(null);
+    setPatientFormInitialTab('dados');
+    setIsPatientModalOpen(true);
+  };
+
+  const handleOpenNewPatientWithScanner = () => {
+    setEditingPatient(null);
+    setPatientFormInitialTab('scanner');
     setIsPatientModalOpen(true);
   };
 
   const handleOpenEditPatient = (patient: Patient) => {
     setEditingPatient(patient);
+    setPatientFormInitialTab('dados');
     setIsPatientModalOpen(true);
   };
 
@@ -104,8 +145,39 @@ function MainClinicApp() {
     setIsSessionModalOpen(true);
   };
 
-  const handleSaveSession = async (session: HyperbaricSession) => {
-    await StorageService.saveSession(session);
+  const handleSaveSession = async (
+    session: HyperbaricSession,
+    attachedDocs?: { id: string; dataUrl: string; sizeKb: number; title: string }[]
+  ) => {
+    const saved = await StorageService.saveSession(session);
+
+    if (attachedDocs && attachedDocs.length > 0) {
+      for (let i = 0; i < attachedDocs.length; i++) {
+        const att = attachedDocs[i];
+        if (att.id.startsWith('doc-')) continue; // Já salvo previamente
+
+        const docRecord: DigitalizedDocument = {
+          id: `doc-${Date.now()}-${i}`,
+          registroOHB: saved.registroOHB,
+          cpf: sessionPatient?.cpf || '',
+          patientId: saved.patientId,
+          patientName: sessionPatient?.nome || '',
+          sessionId: saved.id,
+          sessionNumber: saved.sessionNumber,
+          titulo: att.title || `Prontuário Sessão #${saved.sessionNumber} (${saved.data})`,
+          tipo: 'ficha_atendimento',
+          dataDocumento: saved.data,
+          dataUpload: new Date().toISOString(),
+          observacoes: `Prontuário manual anexado à Sessão #${saved.sessionNumber}`,
+          imageUrl: att.dataUrl,
+          tamanhoKb: att.sizeKb,
+        };
+        await StorageService.saveDigitalizedDoc(docRecord);
+      }
+      const refreshedDocs = await StorageService.getAllDigitalizedDocs();
+      setDocuments(refreshedDocs);
+    }
+
     const updated = await StorageService.getSessions();
     setSessions(updated);
     setIsSessionModalOpen(false);
@@ -199,6 +271,7 @@ function MainClinicApp() {
           }
         }}
         onNewPatient={handleOpenNewPatient}
+        onNewPatientWithScanner={handleOpenNewPatientWithScanner}
         onNewAppointment={handleOpenNewAppointment}
         onOpenPermissions={() => setIsPermissionsModalOpen(true)}
         onOpenCidLookup={() => setIsCidLookupModalOpen(true)}
@@ -263,6 +336,7 @@ function MainClinicApp() {
                     onUploadDocForPatient={handleUploadDocForPatient}
                     onDeleteSession={handleDeleteSession}
                     onPrintSheet={handleOpenPrintSheet}
+                    onRefreshDocs={handleRefreshDocs}
                   />
                 ) : (
                   <PatientList
@@ -271,6 +345,7 @@ function MainClinicApp() {
                     appointments={appointments}
                     onSelectPatient={(id) => setSelectedPatientId(id)}
                     onNewPatient={handleOpenNewPatient}
+                    onNewPatientWithScanner={handleOpenNewPatientWithScanner}
                     onNewSession={handleOpenNewSession}
                     onOpenCidLookup={() => setIsCidLookupModalOpen(true)}
                   />
@@ -305,6 +380,7 @@ function MainClinicApp() {
               <DigitalVault
                 documents={documents}
                 patients={patients}
+                sessions={sessions}
                 onRefreshDocs={handleRefreshDocs}
                 selectedPatientOHB={vaultTargetOHB}
               />
@@ -335,6 +411,7 @@ function MainClinicApp() {
         onSave={handleSavePatient}
         initialPatient={editingPatient}
         existingPatients={patients}
+        initialTab={patientFormInitialTab}
       />
 
       {/* MODAL: REGISTRO DE SESSÃO OHB & SAE */}

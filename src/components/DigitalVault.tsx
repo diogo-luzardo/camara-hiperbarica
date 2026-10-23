@@ -1,11 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FolderArchive, Upload, Search, ZoomIn, ZoomOut, RotateCw, Download, Trash2, X, FileText, Image as ImageIcon, CheckCircle2, AlertCircle, Filter, Eye } from 'lucide-react';
-import { DigitalizedDocument, Patient } from '../types';
+import { FolderArchive, Upload, Search, ZoomIn, ZoomOut, RotateCw, Download, Trash2, X, FileText, Image as ImageIcon, CheckCircle2, AlertCircle, Filter, Eye, Camera } from 'lucide-react';
+import { DigitalizedDocument, Patient, HyperbaricSession } from '../types';
 import { StorageService } from '../services/storage';
+import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
 
 interface DigitalVaultProps {
   documents: DigitalizedDocument[];
   patients: Patient[];
+  sessions?: HyperbaricSession[];
   onRefreshDocs: () => void;
   selectedPatientOHB?: string;
 }
@@ -13,6 +15,7 @@ interface DigitalVaultProps {
 export const DigitalVault: React.FC<DigitalVaultProps> = ({
   documents,
   patients,
+  sessions = [],
   onRefreshDocs,
   selectedPatientOHB,
 }) => {
@@ -23,11 +26,13 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
   // Form State for new upload
   const [targetOHB, setTargetOHB] = useState(selectedPatientOHB || '');
   const [targetCPF, setTargetCPF] = useState('');
+  const [targetSessionId, setTargetSessionId] = useState('');
   const [docTitle, setDocTitle] = useState('');
   const [docType, setDocType] = useState<DigitalizedDocument['tipo']>('prontuario_antigo');
   const [docDate, setDocDate] = useState(new Date().toISOString().split('T')[0]);
   const [observations, setObservations] = useState('');
   const [previewImages, setPreviewImages] = useState<{ name: string; dataUrl: string; sizeKb: number }[]>([]);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
 
   // Lightbox Modal State
   const [viewingDoc, setViewingDoc] = useState<DigitalizedDocument | null>(null);
@@ -35,6 +40,16 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
   const [rotation, setRotation] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Target patient sessions
+  const targetPatient = patients.find(
+    (p) => p.registroOHB.trim().toUpperCase() === targetOHB.trim().toUpperCase()
+  );
+  const targetPatientSessions = targetPatient
+    ? sessions.filter(
+        (s) => s.patientId === targetPatient.id || s.registroOHB === targetPatient.registroOHB
+      )
+    : [];
 
   // When patient selection changes
   useEffect(() => {
@@ -48,6 +63,7 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
 
   const handlePatientSelectChange = (ohb: string) => {
     setTargetOHB(ohb);
+    setTargetSessionId('');
     const pat = patients.find((p) => p.registroOHB === ohb);
     if (pat) {
       setTargetCPF(pat.cpf);
@@ -55,6 +71,27 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
         setDocTitle(`Prontuário Antigo Escaneado - ${pat.nome}`);
       }
     }
+  };
+
+  const handleScannerSaved = (
+    pages: ScannedPage[],
+    meta: { titulo: string; tipo: DigitalizedDocument['tipo']; dataDocumento: string; observacoes: string }
+  ) => {
+    pages.forEach((p, idx) => {
+      setPreviewImages((prev) => [
+        ...prev,
+        {
+          name: pages.length === 1 ? meta.titulo : `${meta.titulo} (Pág. ${idx + 1})`,
+          dataUrl: p.dataUrl,
+          sizeKb: p.sizeKb,
+        },
+      ]);
+    });
+    if (meta.titulo && !docTitle) setDocTitle(meta.titulo);
+    if (meta.tipo) setDocType(meta.tipo);
+    if (meta.dataDocumento) setDocDate(meta.dataDocumento);
+    if (meta.observacoes) setObservations(meta.observacoes);
+    setIsCameraScannerOpen(false);
   };
 
   const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,6 +134,7 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
       const patient = patients.find(
         (p) => p.registroOHB.trim().toUpperCase() === targetOHB.trim().toUpperCase()
       );
+      const selectedSession = targetPatientSessions.find((s) => s.id === targetSessionId);
 
       for (let i = 0; i < previewImages.length; i++) {
         const item = previewImages[i];
@@ -106,6 +144,8 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
           cpf: targetCPF || (patient ? patient.cpf : ''),
           patientId: patient?.id,
           patientName: patient?.nome,
+          sessionId: selectedSession?.id,
+          sessionNumber: selectedSession?.sessionNumber,
           titulo: previewImages.length === 1 ? docTitle : `${docTitle} (Pág. ${i + 1})`,
           tipo: docType,
           dataDocumento: docDate,
@@ -233,6 +273,34 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
               </select>
             </div>
 
+            {/* Vincular a Sessão (Opcional) */}
+            {targetPatientSessions.length > 0 && (
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Vincular à Sessão Específica (Opcional)
+                </label>
+                <select
+                  value={targetSessionId}
+                  onChange={(e) => {
+                    setTargetSessionId(e.target.value);
+                    const s = targetPatientSessions.find((x) => x.id === e.target.value);
+                    if (s) {
+                      setDocTitle(`Prontuário Sessão #${s.sessionNumber} - ${s.data}`);
+                      setDocType('ficha_atendimento');
+                    }
+                  }}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                >
+                  <option value="">Geral / Sem vínculo com sessão</option>
+                  {targetPatientSessions.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      Sessão #{s.sessionNumber} - {s.data} ({s.ata} ATA)
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* CPF */}
             <div>
               <label className="block font-semibold text-slate-700 mb-1">CPF Vinculado</label>
@@ -285,25 +353,39 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
               />
             </div>
 
-            {/* Upload Area (Drag & Drop / Selector) */}
+            {/* Upload Area (Opção de Câmera Scanner ou Importação de Arquivo) */}
             <div>
-              <label className="block font-semibold text-slate-700 mb-1">Selecionar Imagens / Escaneamentos</label>
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-slate-300 hover:border-cyan-500 bg-slate-50 hover:bg-cyan-50/30 rounded-xl p-4 text-center cursor-pointer transition-colors"
-              >
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  accept="image/*,.pdf"
-                  onChange={handleFilesSelected}
-                  className="hidden"
-                />
-                <Upload className="w-6 h-6 text-slate-400 mx-auto mb-1.5" />
-                <p className="font-semibold text-slate-700 text-xs">Arraste ou clique para selecionar fotos</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">JPEG, PNG, WebP (Suporta múltiplas páginas)</p>
+              <label className="block font-semibold text-slate-700 mb-1.5">
+                Capturar ou Importar Documentos
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCameraScannerOpen(true)}
+                  className="p-3.5 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 font-bold text-xs shadow-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Escanear com Câmera</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-3.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-300 flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>Importar da Galeria / PC</span>
+                </button>
               </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,.pdf"
+                onChange={handleFilesSelected}
+                className="hidden"
+              />
             </div>
 
             {/* Previews */}
@@ -424,10 +506,15 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
                     </div>
 
                     {/* Top Badges */}
-                    <div className="absolute top-2 left-2 flex gap-1">
+                    <div className="absolute top-2 left-2 flex flex-wrap gap-1">
                       <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-900/80 text-cyan-300 backdrop-blur-xs">
                         {doc.registroOHB}
                       </span>
+                      {doc.sessionNumber && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500 text-slate-950 shadow-xs">
+                          Sessão #{doc.sessionNumber}
+                        </span>
+                      )}
                     </div>
 
                     <div className="absolute top-2 right-2">
@@ -564,6 +651,28 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
             Zoom: {Math.round(zoomLevel * 100)}% | Rotação: {rotation}° | Observações: {viewingDoc.observacoes || 'Nenhuma'}
           </div>
         </div>
+      )}
+
+      {/* Embedded Camera Scanner Modal */}
+      {isCameraScannerOpen && (
+        <CameraScannerModal
+          isOpen={isCameraScannerOpen}
+          onClose={() => setIsCameraScannerOpen(false)}
+          onSave={handleScannerSaved}
+          title="Escanear Documento para o Acervo"
+          subtitle={
+            targetPatient
+              ? `${targetPatient.nome} • ${targetPatient.registroOHB}`
+              : 'Digitalização para o Acervo Digital'
+          }
+          defaultDocType={docType}
+          defaultTitle={
+            docTitle ||
+            (targetPatient ? `Prontuário Escaneado - ${targetPatient.nome}` : 'Documento Escaneado')
+          }
+          patientOHB={targetOHB}
+          patientName={targetPatient?.nome}
+        />
       )}
     </div>
   );

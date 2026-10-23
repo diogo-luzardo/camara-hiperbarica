@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowLeft, User, Phone, MapPin, HeartPulse, ShieldCheck, FolderArchive, Calendar, Plus, Printer, Edit, Trash2, Clock, AlertCircle, FileText, CheckCircle2, ChevronRight, Stethoscope, Lock } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, HeartPulse, ShieldCheck, FolderArchive, Calendar, Plus, Printer, Edit, Trash2, Clock, AlertCircle, FileText, CheckCircle2, ChevronRight, Stethoscope, Lock, Camera, ZoomIn, ZoomOut, RotateCw, X as XIcon, Eye, Download, Upload } from 'lucide-react';
 import { Patient, HyperbaricSession, Appointment, DigitalizedDocument } from '../types';
 import { downloadIcsAppointment, getGoogleCalendarUrl, getWhatsAppReminderUrl } from '../utils/calendarExport';
 import { CoverageBadge } from './CoverageBadge';
+import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
+import { StorageService } from '../services/storage';
 
 interface PatientDetailViewProps {
   patient: Patient;
@@ -16,6 +18,7 @@ interface PatientDetailViewProps {
   onUploadDocForPatient: (registroOHB: string) => void;
   onDeleteSession: (sessionId: string) => void;
   onPrintSheet: (type: 'tratamento' | 'enfermagem' | 'agendamento', patient: Patient) => void;
+  onRefreshDocs?: () => void;
 }
 
 export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
@@ -30,14 +33,63 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
   onUploadDocForPatient,
   onDeleteSession,
   onPrintSheet,
+  onRefreshDocs,
 }) => {
   const [activeTab, setActiveTab] = useState<'sessoes' | 'enfermagem' | 'documentos' | 'agendamentos' | 'dados'>('sessoes');
+  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [scanTargetSession, setScanTargetSession] = useState<HyperbaricSession | null>(null);
+  const [viewingDoc, setViewingDoc] = useState<DigitalizedDocument | null>(null);
+  const [lightboxZoom, setLightboxZoom] = useState(1);
+  const [lightboxRotate, setLightboxRotate] = useState(0);
 
   const completedCount = sessions.length;
   const progressPercent = Math.min(
     Math.round((completedCount / (patient.numeroTratamentosPrevisto || 20)) * 100),
     100
   );
+
+  const handleOpenScanForSession = (session?: HyperbaricSession | null) => {
+    setScanTargetSession(session || null);
+    setIsScanModalOpen(true);
+  };
+
+  const handleSaveScannedPages = async (
+    pages: ScannedPage[],
+    meta: {
+      titulo: string;
+      tipo: 'prontuario_antigo' | 'ficha_atendimento' | 'foto_lesao' | 'exame_laudo' | 'outro';
+      dataDocumento: string;
+      observacoes: string;
+    }
+  ) => {
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i];
+      const newDoc: DigitalizedDocument = {
+        id: `doc-${Date.now()}-${i}`,
+        registroOHB: patient.registroOHB,
+        cpf: patient.cpf,
+        patientId: patient.id,
+        patientName: patient.nome,
+        sessionId: scanTargetSession?.id,
+        sessionNumber: scanTargetSession?.sessionNumber,
+        titulo: pages.length === 1 ? meta.titulo : `${meta.titulo} (Pág. ${i + 1})`,
+        tipo: meta.tipo,
+        dataDocumento: meta.dataDocumento,
+        dataUpload: new Date().toISOString(),
+        observacoes:
+          meta.observacoes ||
+          (scanTargetSession ? `Anexado à Sessão #${scanTargetSession.sessionNumber}` : ''),
+        imageUrl: page.dataUrl,
+        tamanhoKb: page.sizeKb,
+      };
+      await StorageService.saveDigitalizedDoc(newDoc);
+    }
+    if (onRefreshDocs) {
+      onRefreshDocs();
+    }
+    setIsScanModalOpen(false);
+    setScanTargetSession(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -318,6 +370,43 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                     <div className="text-[11px] text-slate-400 flex items-center justify-between">
                       <span>Médico: {ses.medicoResponsavel || 'Dr. Carlos Henrique'}</span>
                     </div>
+
+                    {/* Scanned records indicator / button */}
+                    {(() => {
+                      const sesDocs = documents.filter(
+                        (d) =>
+                          d.sessionId === ses.id ||
+                          (d.sessionNumber === ses.sessionNumber && d.registroOHB === patient.registroOHB)
+                      );
+                      return (
+                        <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-xs">
+                          {sesDocs.length > 0 ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setLightboxZoom(1);
+                                setLightboxRotate(0);
+                                setViewingDoc(sesDocs[0]);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 text-xs font-bold cursor-pointer"
+                            >
+                              <Camera className="w-3.5 h-3.5 text-cyan-600" />
+                              <span>{sesDocs.length} {sesDocs.length === 1 ? 'Prontuário' : 'Prontuários'}</span>
+                            </button>
+                          ) : (
+                            <span className="text-[11px] text-slate-400">Sem folha anexada</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenScanForSession(ses)}
+                            className="text-xs font-bold text-cyan-700 hover:text-cyan-800 flex items-center gap-1 p-1 cursor-pointer"
+                          >
+                            <Camera className="w-3.5 h-3.5" />
+                            <span>+ Escanear Folha</span>
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
@@ -337,6 +426,7 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                       <th className="py-3 px-3">TEMP.</th>
                       <th className="py-3 px-3">Duração</th>
                       <th className="py-3 px-4">Intercorrências & Observações</th>
+                      <th className="py-3 px-3">Prontuário Físico</th>
                       <th className="py-3 px-3">Médico</th>
                       <th className="py-3 px-3 text-right">Ações</th>
                     </tr>
@@ -380,17 +470,64 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                         <td className="py-3 px-4 text-slate-700 max-w-xs">
                           <p className="line-clamp-2">{ses.intercorrencias || 'Sem intercorrências.'}</p>
                         </td>
+                        <td className="py-3 px-3 whitespace-nowrap">
+                          {(() => {
+                            const sesDocs = documents.filter(
+                              (d) =>
+                                d.sessionId === ses.id ||
+                                (d.sessionNumber === ses.sessionNumber && d.registroOHB === patient.registroOHB)
+                            );
+                            if (sesDocs.length > 0) {
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setLightboxZoom(1);
+                                    setLightboxRotate(0);
+                                    setViewingDoc(sesDocs[0]);
+                                  }}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-cyan-50 hover:bg-cyan-100 text-cyan-800 border border-cyan-200 text-[11px] font-bold shadow-2xs cursor-pointer"
+                                  title="Visualizar documento escaneado"
+                                >
+                                  <Camera className="w-3.5 h-3.5 text-cyan-600" />
+                                  <span>{sesDocs.length} {sesDocs.length === 1 ? 'Folha' : 'Folhas'}</span>
+                                </button>
+                              );
+                            }
+                            return (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenScanForSession(ses)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-slate-400 hover:text-cyan-700 hover:bg-slate-100 border border-dashed border-slate-200 text-[11px] transition-colors cursor-pointer"
+                                title="Escanear e anexar prontuário manual desta sessão"
+                              >
+                                <Camera className="w-3 h-3" />
+                                <span>+ Anexar</span>
+                              </button>
+                            );
+                          })()}
+                        </td>
                         <td className="py-3 px-3 text-[11px] text-slate-600 whitespace-nowrap">
                           {ses.medicoResponsavel || 'Dr. Carlos Henrique'}
                         </td>
                         <td className="py-3 px-3 text-right whitespace-nowrap">
-                          <button
-                            onClick={() => onDeleteSession(ses.id)}
-                            className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
-                            title="Excluir Registro da Sessão"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenScanForSession(ses)}
+                              className="p-1 text-slate-400 hover:text-cyan-600 transition-colors"
+                              title="Escanear / Anexar Folha a esta Sessão"
+                            >
+                              <Camera className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => onDeleteSession(ses.id)}
+                              className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                              title="Excluir Registro da Sessão"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -510,13 +647,25 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
               </p>
             </div>
 
-            <button
-              onClick={() => onUploadDocForPatient(patient.registroOHB)}
-              className="px-3.5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-xs flex items-center gap-1.5"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Anexar Prontuário Escaneado / Foto</span>
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleOpenScanForSession(null)}
+                className="px-3.5 py-2 rounded-lg bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 font-bold text-xs shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Camera className="w-4 h-4" />
+                <span>Escanear com Câmera</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => onUploadDocForPatient(patient.registroOHB)}
+                className="px-3.5 py-2 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs shadow-2xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Importar Arquivo / Acervo</span>
+              </button>
+            </div>
           </div>
 
           {documents.length === 0 ? (
@@ -526,22 +675,49 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
               <p className="text-xs text-slate-500 mt-1 mb-4">
                 Anexe fotos de prontuários antigos físicos ou da evolução da ferida.
               </p>
-              <button
-                onClick={() => onUploadDocForPatient(patient.registroOHB)}
-                className="px-4 py-2 rounded-lg bg-cyan-600 text-white font-bold text-xs shadow-sm"
-              >
-                + Fazer Upload de Imagem
-              </button>
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={() => handleOpenScanForSession(null)}
+                  className="px-4 py-2 rounded-lg bg-cyan-600 text-white font-bold text-xs shadow-sm flex items-center gap-1.5"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Escanear com Câmera</span>
+                </button>
+                <button
+                  onClick={() => onUploadDocForPatient(patient.registroOHB)}
+                  className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+                >
+                  + Upload de Arquivo
+                </button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
               {documents.map((doc) => (
-                <div key={doc.id} className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md transition-shadow">
-                  <div className="aspect-4/3 bg-slate-100 relative">
+                <div
+                  key={doc.id}
+                  onClick={() => {
+                    setLightboxZoom(1);
+                    setLightboxRotate(0);
+                    setViewingDoc(doc);
+                  }}
+                  className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md hover:border-cyan-400 transition-all cursor-pointer group"
+                >
+                  <div className="aspect-4/3 bg-slate-900 relative">
                     <img src={doc.imageUrl} alt={doc.titulo} className="w-full h-full object-cover object-top" />
                     <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900/80 text-cyan-300 backdrop-blur-xs">
                       {doc.dataDocumento}
                     </span>
+                    {doc.sessionNumber && (
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500 text-slate-950 shadow-xs">
+                        Sessão #{doc.sessionNumber}
+                      </span>
+                    )}
+                    <div className="absolute inset-0 bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+                      <span className="px-2.5 py-1 rounded-lg bg-slate-900/80 text-xs font-bold flex items-center gap-1">
+                        <Eye className="w-3.5 h-3.5" /> Ampliar
+                      </span>
+                    </div>
                   </div>
                   <div className="p-3 text-xs space-y-1">
                     <h4 className="font-bold text-slate-900 line-clamp-1">{doc.titulo}</h4>
@@ -810,6 +986,118 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CAMERA SCANNER PARA SESSÃO OU PACIENTE */}
+      {isScanModalOpen && (
+        <CameraScannerModal
+          isOpen={isScanModalOpen}
+          onClose={() => {
+            setIsScanModalOpen(false);
+            setScanTargetSession(null);
+          }}
+          onSave={handleSaveScannedPages}
+          title={
+            scanTargetSession
+              ? `Escanear Prontuário - Sessão #${scanTargetSession.sessionNumber}`
+              : 'Escanear Prontuário / Imagem'
+          }
+          subtitle={`${patient.nome} • ${patient.registroOHB}`}
+          defaultDocType={scanTargetSession ? 'ficha_atendimento' : 'prontuario_antigo'}
+          defaultTitle={
+            scanTargetSession
+              ? `Prontuário Sessão #${scanTargetSession.sessionNumber} - ${scanTargetSession.data}`
+              : `Prontuário Escaneado - ${patient.nome}`
+          }
+          patientOHB={patient.registroOHB}
+          patientName={patient.nome}
+        />
+      )}
+
+      {/* MODAL: LIGHTBOX VIEWER PARA DOCUMENTO SELECIONADO */}
+      {viewingDoc && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 animate-in fade-in duration-150">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden shadow-2xl text-white">
+            {/* Header */}
+            <div className="p-3 sm:p-4 border-b border-slate-800 flex items-center justify-between">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-sm sm:text-base truncate">{viewingDoc.titulo}</h3>
+                  {viewingDoc.sessionNumber && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500 text-slate-950">
+                      Sessão #{viewingDoc.sessionNumber}
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  {viewingDoc.dataDocumento} • {viewingDoc.tipo.replace('_', ' ').toUpperCase()} • {viewingDoc.tamanhoKb} KB
+                </p>
+              </div>
+
+              {/* Controls */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  type="button"
+                  onClick={() => setLightboxZoom((z) => Math.max(0.5, z - 0.25))}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                  title="Diminuir Zoom"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightboxZoom((z) => Math.min(3, z + 0.25))}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                  title="Aumentar Zoom"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setLightboxRotate((r) => (r + 90) % 360)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                  title="Girar 90 graus"
+                >
+                  <RotateCw className="w-4 h-4" />
+                </button>
+                <a
+                  href={viewingDoc.imageUrl}
+                  download={`prontuario-${viewingDoc.registroOHB}-${viewingDoc.id}.jpg`}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                  title="Baixar Imagem"
+                >
+                  <Download className="w-4 h-4" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setViewingDoc(null)}
+                  className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
+                >
+                  <XIcon className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* Viewer Stage */}
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-black/60 min-h-[300px]">
+              <img
+                src={viewingDoc.imageUrl}
+                alt={viewingDoc.titulo}
+                style={{
+                  transform: `scale(${lightboxZoom}) rotate(${lightboxRotate}deg)`,
+                  transition: 'transform 0.15s ease-out',
+                }}
+                className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-lg"
+              />
+            </div>
+
+            {viewingDoc.observacoes && (
+              <div className="p-3 bg-slate-950/80 border-t border-slate-800 text-xs text-slate-300">
+                <span className="font-bold text-slate-400">Observações:</span> {viewingDoc.observacoes}
+              </div>
+            )}
           </div>
         </div>
       )}

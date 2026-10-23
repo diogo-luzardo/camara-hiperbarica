@@ -1,12 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { X, HeartPulse, ShieldCheck, Stethoscope, AlertTriangle, CheckCircle, Clock, Lock, CreditCard, Building2, UserCheck } from 'lucide-react';
-import { HyperbaricSession, Patient } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, HeartPulse, ShieldCheck, Stethoscope, AlertTriangle, CheckCircle, Clock, Lock, CreditCard, Building2, UserCheck, Camera, Upload, Trash2, Paperclip } from 'lucide-react';
+import { HyperbaricSession, Patient, DigitalizedDocument } from '../types';
 import { CoverageBadge, isParticular } from './CoverageBadge';
+import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
+import { StorageService } from '../services/storage';
+
+export interface SessionAttachmentItem {
+  id: string;
+  dataUrl: string;
+  sizeKb: number;
+  title: string;
+}
 
 interface SessionFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (session: HyperbaricSession) => void;
+  onSave: (session: HyperbaricSession, attachedDocs?: SessionAttachmentItem[]) => void;
   patient: Patient;
   nextSessionNumber: number;
   initialSession?: HyperbaricSession | null;
@@ -92,6 +101,70 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     }
   }, [initialSession, patient, nextSessionNumber, isOpen]);
 
+  const [attachedPages, setAttachedPages] = useState<SessionAttachmentItem[]>([]);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load existing session documents if editing
+  useEffect(() => {
+    if (initialSession && initialSession.id) {
+      StorageService.getDocsBySessionId(initialSession.id).then((existingDocs) => {
+        if (existingDocs && existingDocs.length > 0) {
+          setAttachedPages(
+            existingDocs.map((d) => ({
+              id: d.id,
+              dataUrl: d.imageUrl,
+              sizeKb: d.tamanhoKb,
+              title: d.titulo,
+            }))
+          );
+        } else {
+          setAttachedPages([]);
+        }
+      });
+    } else {
+      setAttachedPages([]);
+    }
+  }, [initialSession, isOpen]);
+
+  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    Array.from(files).forEach((file: File) => {
+      const reader = new FileReader();
+      reader.onload = (loadEvt) => {
+        const dataUrl = loadEvt.target?.result as string;
+        setAttachedPages((prev) => [
+          ...prev,
+          {
+            id: `attach-${Date.now()}-${prev.length + 1}`,
+            dataUrl,
+            sizeKb: Math.round(file.size / 1024),
+            title: file.name.replace(/\.[^/.]+$/, ''),
+          },
+        ]);
+      };
+      reader.readAsDataURL(file);
+    });
+    e.target.value = '';
+  };
+
+  const handleScannerSave = (pages: ScannedPage[], meta: { titulo: string }) => {
+    const newItems: SessionAttachmentItem[] = pages.map((p, idx) => ({
+      id: `scanned-${Date.now()}-${idx + 1}`,
+      dataUrl: p.dataUrl,
+      sizeKb: p.sizeKb,
+      title: pages.length === 1 ? meta.titulo : `${meta.titulo} (Pág. ${idx + 1})`,
+    }));
+    setAttachedPages((prev) => [...prev, ...newItems]);
+    setIsScannerOpen(false);
+  };
+
+  const removeAttachedPage = (index: number) => {
+    setAttachedPages((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
   if (!isOpen) return null;
 
   const glicemiaNum = Number(formData.glicemia);
@@ -99,12 +172,15 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({
-      ...(formData as HyperbaricSession),
-      duracaoMinutos: 150, // Garante que a duração fica fixada em 150 min
-      modalidade: sessionModalidade,
-      convenio: sessionModalidade === 'particular' ? 'Particular' : (patient.convenio || 'Particular'),
-    });
+    onSave(
+      {
+        ...(formData as HyperbaricSession),
+        duracaoMinutos: 150, // Garante que a duração fica fixada em 150 min
+        modalidade: sessionModalidade,
+        convenio: sessionModalidade === 'particular' ? 'Particular' : (patient.convenio || 'Particular'),
+      },
+      attachedPages
+    );
     onClose();
   };
 
@@ -559,6 +635,82 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
             </div>
           </div>
 
+          {/* Section 6: Prontuário Manual Escaneado / Fotos da Sessão */}
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 sm:p-4 space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+                  <Camera className="w-4 h-4 text-cyan-600" />
+                  6. Prontuário Manual Escaneado / Fotos da Sessão
+                </h3>
+                <p className="text-[11px] text-slate-500">
+                  Escaneie a folha de atendimento física ou fotos da evolução da ferida nesta sessão #{formData.sessionNumber}.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsScannerOpen(true)}
+                  className="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Escanear com Câmera</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Importar Arquivo</span>
+                </button>
+
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,application/pdf"
+                  multiple
+                  onChange={handleFilesSelected}
+                  className="hidden"
+                />
+              </div>
+            </div>
+
+            {/* Attached Pages List */}
+            {attachedPages.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+                {attachedPages.map((page, idx) => (
+                  <div key={page.id} className="relative rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs group">
+                    <div className="aspect-3/4 bg-slate-100 relative">
+                      <img src={page.dataUrl} alt={page.title} className="w-full h-full object-cover" />
+                      <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-900/80 text-white">
+                        Pág. {idx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removeAttachedPage(idx)}
+                        className="absolute top-1 right-1 p-1 rounded-md bg-rose-600/90 text-white hover:bg-rose-700 transition-colors cursor-pointer"
+                        title="Remover anexo"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                    <div className="p-1.5 text-[10px] text-slate-700">
+                      <p className="font-semibold truncate">{page.title}</p>
+                      <p className="text-slate-400 text-[9px]">{page.sizeKb} KB</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="border border-dashed border-slate-300 rounded-lg p-3 text-center text-slate-400 text-xs">
+                Nenhum prontuário manual ou foto anexada a esta sessão ainda.
+              </div>
+            )}
+          </div>
+
           {/* Footer Actions */}
           <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
             <button
@@ -577,6 +729,21 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
             </button>
           </div>
         </form>
+
+        {/* Embedded Camera Scanner Modal */}
+        {isScannerOpen && (
+          <CameraScannerModal
+            isOpen={isScannerOpen}
+            onClose={() => setIsScannerOpen(false)}
+            onSave={handleScannerSave}
+            title="Escanear Prontuário da Sessão"
+            subtitle={`${patient.nome} • Sessão #${formData.sessionNumber}`}
+            defaultDocType="ficha_atendimento"
+            defaultTitle={`Prontuário da Sessão #${formData.sessionNumber} - ${formData.data}`}
+            patientOHB={patient.registroOHB}
+            patientName={patient.nome}
+          />
+        )}
       </div>
     </div>
   );

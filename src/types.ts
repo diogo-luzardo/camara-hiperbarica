@@ -129,6 +129,8 @@ export interface DigitalizedDocument {
   cpf: string;
   patientId?: string;
   patientName?: string;
+  sessionId?: string;
+  sessionNumber?: number;
   titulo: string;
   tipo: 'prontuario_antigo' | 'ficha_atendimento' | 'foto_lesao' | 'exame_laudo' | 'outro';
   dataDocumento: string;

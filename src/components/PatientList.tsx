@@ -17,6 +17,7 @@ import {
   Lock,
   BookOpen,
   Sparkles,
+  Camera,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Patient, HyperbaricSession, Appointment } from '../types';
@@ -38,6 +39,7 @@ interface PatientListProps {
   appointments: Appointment[];
   onSelectPatient: (patientId: string) => void;
   onNewPatient: () => void;
+  onNewPatientWithScanner?: () => void;
   onNewSession: (patient: Patient) => void;
   onOpenCidLookup?: () => void;
 }
@@ -48,6 +50,7 @@ export const PatientList: React.FC<PatientListProps> = ({
   appointments,
   onSelectPatient,
   onNewPatient,
+  onNewPatientWithScanner,
   onNewSession,
   onOpenCidLookup,
 }) => {
@@ -334,6 +337,21 @@ export const PatientList: React.FC<PatientListProps> = ({
               <span>Consultar CID-11</span>
               <span className="text-[9px] bg-cyan-500 text-slate-950 font-black px-1.5 py-0.2 rounded shrink-0">
                 NOVO
+              </span>
+            </button>
+          )}
+
+          {onNewPatientWithScanner && canCreatePatient && (
+            <button
+              type="button"
+              onClick={onNewPatientWithScanner}
+              className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
+              title="Cadastrar paciente antigo digitalizando prontuário ou ficha de papel com a câmera"
+            >
+              <Camera className="w-4 h-4 text-emerald-200 shrink-0" />
+              <span>Importar Ficha Antiga</span>
+              <span className="text-[9px] bg-emerald-950/70 border border-emerald-400/40 text-emerald-200 font-bold px-1.5 py-0.5 rounded shrink-0">
+                Scanner
               </span>
             </button>
           )}

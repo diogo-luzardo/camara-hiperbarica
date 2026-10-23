@@ -20,6 +20,7 @@ import {
   Menu,
   X,
   BookOpen,
+  Camera,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { RoleBadge } from './RoleBadge';
@@ -33,6 +34,7 @@ interface NavbarProps {
   activeView: AppNavView;
   onNavigate: (view: AppNavView) => void;
   onNewPatient: () => void;
+  onNewPatientWithScanner?: () => void;
   onNewAppointment: () => void;
   onOpenBackup?: () => void;
   onOpenPermissions?: () => void;
@@ -49,6 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   activeView,
   onNavigate,
   onNewPatient,
+  onNewPatientWithScanner,
   onNewAppointment,
   onOpenBackup,
   onOpenPermissions,
@@ -489,6 +492,19 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
+            {onNewPatientWithScanner && canCreatePatient && (
+              <button
+                type="button"
+                onClick={onNewPatientWithScanner}
+                className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 2xl:py-2 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-md shadow-emerald-950/40 transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap cursor-pointer"
+                title="Cadastrar paciente antigo digitalizando prontuário ou ficha de papel com a câmera"
+              >
+                <Camera className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
+                <span className="hidden sm:inline">Escanear Ficha</span>
+                <span className="sm:hidden">Scan</span>
+              </button>
+            )}
+
             {canCreatePatient ? (
               <button
                 type="button"
@@ -851,6 +867,25 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Ferramentas e Configurações */}
             <div className="pt-2 border-t border-slate-800 space-y-1.5">
+              {onNewPatientWithScanner && canCreatePatient && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileDrawerOpen(false);
+                    onNewPatientWithScanner();
+                  }}
+                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-emerald-950/80 to-teal-950/80 hover:from-emerald-900 hover:to-teal-900 border border-emerald-600/50 text-emerald-200 text-xs font-bold transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <Camera className="w-4 h-4 text-emerald-400" />
+                    <span>Escanear Ficha Antiga (Papel)</span>
+                  </div>
+                  <span className="text-[9px] bg-emerald-500 text-slate-950 font-black px-1.5 py-0.2 rounded">
+                    SCANNER
+                  </span>
+                </button>
+              )}
+
               {onOpenCidLookup && (
                 <button
                   type="button"
