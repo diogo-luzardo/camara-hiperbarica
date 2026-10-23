@@ -4,6 +4,7 @@ import { HyperbaricSession, Patient, DigitalizedDocument } from '../types';
 import { CoverageBadge, isParticular } from './CoverageBadge';
 import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
 import { StorageService } from '../services/storage';
+import { optimizeImageFile } from '../utils/imageOptimizer';
 
 export interface SessionAttachmentItem {
   id: string;
@@ -127,26 +128,26 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     }
   }, [initialSession, isOpen]);
 
-  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file: File) => {
-      const reader = new FileReader();
-      reader.onload = (loadEvt) => {
-        const dataUrl = loadEvt.target?.result as string;
+    for (const file of Array.from(files) as File[]) {
+      try {
+        const optimized = await optimizeImageFile(file, { preset: 'equilibrado' });
         setAttachedPages((prev) => [
           ...prev,
           {
             id: `attach-${Date.now()}-${prev.length + 1}`,
-            dataUrl,
-            sizeKb: Math.round(file.size / 1024),
+            dataUrl: optimized.dataUrl,
+            sizeKb: optimized.sizeKb,
             title: file.name.replace(/\.[^/.]+$/, ''),
           },
         ]);
-      };
-      reader.readAsDataURL(file);
-    });
+      } catch (err) {
+        console.warn('Erro ao otimizar imagem da sessão:', err);
+      }
+    }
     e.target.value = '';
   };
 

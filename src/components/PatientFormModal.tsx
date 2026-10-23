@@ -36,6 +36,7 @@ import {
 } from '../utils/cepService';
 import { isParticular } from './CoverageBadge';
 import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
+import { optimizeImageFile } from '../utils/imageOptimizer';
 
 interface PatientFormModalProps {
   isOpen: boolean;
@@ -1589,26 +1590,26 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
                       type="file"
                       accept="image/*,application/pdf"
                       multiple
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const files = e.target.files;
                         if (!files || files.length === 0) return;
-                        Array.from(files).forEach((file: File) => {
-                          const reader = new FileReader();
-                          reader.onload = (loadEvt) => {
-                            const dataUrl = loadEvt.target?.result as string;
+                        for (const file of Array.from(files) as File[]) {
+                          try {
+                            const optimized = await optimizeImageFile(file, { preset: 'equilibrado' });
                             setScannedPaperPages((prev) => [
                               ...prev,
                               {
                                 id: `paper-${Date.now()}-${prev.length + 1}`,
-                                dataUrl,
-                                sizeKb: Math.round(file.size / 1024),
+                                dataUrl: optimized.dataUrl,
+                                sizeKb: optimized.sizeKb,
                                 filter: 'bw',
                                 rotation: 0,
                               },
                             ]);
-                          };
-                          reader.readAsDataURL(file);
-                        });
+                          } catch (err) {
+                            console.warn('Erro ao otimizar folha importada:', err);
+                          }
+                        }
                         e.target.value = '';
                       }}
                       className="hidden"

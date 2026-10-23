@@ -18,8 +18,16 @@ import {
   Plus,
   Sparkles,
 } from 'lucide-react';
+import {
+  ResolutionPreset,
+  RESOLUTION_PRESETS,
+  ScannerFilterMode,
+  compressCanvasOrSource,
+  optimizeImageFile,
+  optimizeDataUrl,
+} from '../utils/imageOptimizer';
 
-export type ScannerFilterMode = 'color' | 'bw' | 'grayscale';
+export { type ResolutionPreset, type ScannerFilterMode };
 
 export interface ScannedPage {
   id: string;
@@ -67,6 +75,9 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
   const [docType, setDocType] = useState<'prontuario_antigo' | 'ficha_atendimento' | 'foto_lesao' | 'exame_laudo' | 'outro'>(defaultDocType);
   const [docDate, setDocDate] = useState(new Date().toISOString().split('T')[0]);
   const [observacoes, setObservacoes] = useState('');
+
+  // Resolution & Optimization Preset (Equilibrado ~150KB por padrão)
+  const [preset, setPreset] = useState<ResolutionPreset>('equilibrado');
 
   // Camera State
   const [stream, setStream] = useState<MediaStream | null>(null);
@@ -182,51 +193,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
     setFacingMode(nextFacing);
   };
 
-  // Apply filters to canvas image (Color, Document B&W high contrast, Grayscale)
-  const applyFilterToCanvas = (
-    ctx: CanvasRenderingContext2D,
-    width: number,
-    height: number,
-    filter: ScannerFilterMode
-  ) => {
-    if (filter === 'color') return;
-
-    const imgData = ctx.getImageData(0, 0, width, height);
-    const data = imgData.data;
-
-    for (let i = 0; i < data.length; i += 4) {
-      const r = data[i];
-      const g = data[i + 1];
-      const b = data[i + 2];
-
-      // Perceptual luminance
-      const gray = 0.299 * r + 0.587 * g + 0.114 * b;
-
-      if (filter === 'grayscale') {
-        data[i] = gray;
-        data[i + 1] = gray;
-        data[i + 2] = gray;
-      } else if (filter === 'bw') {
-        // High contrast document filter (CamScanner style):
-        // Enhances ink readability, removes paper shadows and yellowish tinge
-        const contrastFactor = 1.6;
-        let enhanced = (gray - 128) * contrastFactor + 140;
-        if (enhanced > 255) enhanced = 255;
-        if (enhanced < 0) enhanced = 0;
-
-        // Binarize slightly for crisp text
-        const finalVal = enhanced < 115 ? Math.max(0, enhanced * 0.7) : Math.min(255, enhanced * 1.08);
-
-        data[i] = finalVal;
-        data[i + 1] = finalVal;
-        data[i + 2] = finalVal;
-      }
-    }
-
-    ctx.putImageData(imgData, 0, 0);
-  };
-
-  // Snap photo from live video feed
+  // Snap photo from live video feed with balanced resolution and compression
   const handleCapturePhoto = () => {
     if (!videoRef.current) return;
     const video = videoRef.current;
@@ -235,25 +202,16 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
     setIsShutterActive(true);
     setTimeout(() => setIsShutterActive(false), 200);
 
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Draw frame
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-    // Apply document enhancement filter
-    applyFilterToCanvas(ctx, canvas.width, canvas.height, currentFilter);
-
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
-    const sizeKb = Math.round((dataUrl.length * 3) / 4 / 1024);
+    const optimized = compressCanvasOrSource(video, video.videoWidth, video.videoHeight, {
+      preset,
+      filter: currentFilter,
+      rotation: 0,
+    });
 
     const newPage: ScannedPage = {
       id: `page-${Date.now()}-${pages.length + 1}`,
-      dataUrl,
-      sizeKb,
+      dataUrl: optimized.dataUrl,
+      sizeKb: optimized.sizeKb,
       filter: currentFilter,
       rotation: 0,
     };
@@ -263,61 +221,49 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
   };
 
   // Rotate a scanned page by 90deg
-  const handleRotatePage = (index: number) => {
+  const handleRotatePage = async (index: number) => {
     const target = pages[index];
     if (!target) return;
 
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      // Swap width and height for 90deg rotation
-      canvas.width = img.height;
-      canvas.height = img.width;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      ctx.translate(canvas.width / 2, canvas.height / 2);
-      ctx.rotate((90 * Math.PI) / 180);
-      ctx.drawImage(img, -img.width / 2, -img.height / 2);
-
-      const rotatedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
-      const sizeKb = Math.round((rotatedDataUrl.length * 3) / 4 / 1024);
+    try {
+      const optimized = await optimizeDataUrl(target.dataUrl, {
+        preset,
+        filter: target.filter,
+        rotation: 90,
+      });
 
       setPages((prev) =>
         prev.map((p, idx) =>
           idx === index
-            ? { ...p, dataUrl: rotatedDataUrl, sizeKb, rotation: (p.rotation + 90) % 360 }
+            ? { ...p, dataUrl: optimized.dataUrl, sizeKb: optimized.sizeKb, rotation: (p.rotation + 90) % 360 }
             : p
         )
       );
-    };
-    img.src = target.dataUrl;
+    } catch (e) {
+      console.warn('Erro ao girar imagem:', e);
+    }
   };
 
   // Re-apply filter to an existing captured page
-  const handleChangePageFilter = (index: number, newFilter: ScannerFilterMode) => {
+  const handleChangePageFilter = async (index: number, newFilter: ScannerFilterMode) => {
     const target = pages[index];
     if (!target || target.filter === newFilter) return;
 
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-
-      ctx.drawImage(img, 0, 0);
-      applyFilterToCanvas(ctx, canvas.width, canvas.height, newFilter);
-
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
-      const sizeKb = Math.round((dataUrl.length * 3) / 4 / 1024);
+    try {
+      const optimized = await optimizeDataUrl(target.dataUrl, {
+        preset,
+        filter: newFilter,
+        rotation: 0,
+      });
 
       setPages((prev) =>
-        prev.map((p, idx) => (idx === index ? { ...p, dataUrl, sizeKb, filter: newFilter } : p))
+        prev.map((p, idx) =>
+          idx === index ? { ...p, dataUrl: optimized.dataUrl, sizeKb: optimized.sizeKb, filter: newFilter } : p
+        )
       );
-    };
-    img.src = target.dataUrl;
+    } catch (e) {
+      console.warn('Erro ao reprocessar filtro:', e);
+    }
   };
 
   // Delete page
@@ -331,70 +277,43 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
   };
 
   // File import handler (Gallery or Native Camera File Picker)
-  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file: File) => {
-      const reader = new FileReader();
-      reader.onload = (loadEvt) => {
-        const rawDataUrl = loadEvt.target?.result as string;
+    const fileList = Array.from(files) as File[];
+    for (const file of fileList) {
+      try {
+        const optimized = await optimizeImageFile(file, {
+          preset,
+          filter: currentFilter,
+        });
 
-        // Process image to normalize orientation and apply default filter
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-
-          // Limit max dimension to 2400px for optimal speed and memory
-          const maxDim = 2400;
-          if (width > maxDim || height > maxDim) {
-            if (width > height) {
-              height = Math.round((height * maxDim) / width);
-              width = maxDim;
-            } else {
-              width = Math.round((width * maxDim) / height);
-              height = maxDim;
-            }
-          }
-
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) return;
-
-          ctx.drawImage(img, 0, 0, width, height);
-          if (currentFilter !== 'color') {
-            applyFilterToCanvas(ctx, width, height, currentFilter);
-          }
-
-          const processedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
-          const sizeKb = Math.round((processedDataUrl.length * 3) / 4 / 1024);
-
-          setPages((prev) => [
-            ...prev,
-            {
-              id: `page-${Date.now()}-${prev.length + 1}`,
-              dataUrl: processedDataUrl,
-              sizeKb,
-              filter: currentFilter,
-              rotation: 0,
-            },
-          ]);
-        };
-        img.src = rawDataUrl;
+        setPages((prev) => [
+          ...prev,
+          {
+            id: `page-${Date.now()}-${prev.length + 1}`,
+            dataUrl: optimized.dataUrl,
+            sizeKb: optimized.sizeKb,
+            filter: currentFilter,
+            rotation: 0,
+          },
+        ]);
 
         if (!docTitle) {
           setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
         }
-      };
-      reader.readAsDataURL(file);
-    });
+      } catch (err) {
+        console.warn('Erro ao otimizar arquivo importado:', err);
+      }
+    }
 
-    // Reset input
     e.target.value = '';
   };
+
+  // Stats for the current batch
+  const totalSizeKb = pages.reduce((sum, p) => sum + p.sizeKb, 0);
+  const avgSizeKb = pages.length > 0 ? Math.round(totalSizeKb / pages.length) : 0;
 
   const handleFinishSave = () => {
     if (pages.length === 0) {
@@ -489,45 +408,73 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
             </button>
           </div>
 
-          {/* Enhancement filter pills */}
-          <div className="hidden sm:flex items-center gap-1 text-[11px]">
-            <span className="text-slate-400 font-semibold mr-1 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-cyan-400" /> Filtro:
-            </span>
-            <button
-              type="button"
-              onClick={() => setCurrentFilter('bw')}
-              className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                currentFilter === 'bw'
-                  ? 'bg-cyan-500 text-slate-950 shadow-2xs'
-                  : 'text-slate-300 bg-slate-900 hover:bg-slate-700'
-              }`}
-              title="Filtro de Alto Contraste para Documento (Clareia o papel e escurece a tinta)"
-            >
-              Documento P&B
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentFilter('grayscale')}
-              className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                currentFilter === 'grayscale'
-                  ? 'bg-cyan-500 text-slate-950 shadow-2xs'
-                  : 'text-slate-300 bg-slate-900 hover:bg-slate-700'
-              }`}
-            >
-              Cinza
-            </button>
-            <button
-              type="button"
-              onClick={() => setCurrentFilter('color')}
-              className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
-                currentFilter === 'color'
-                  ? 'bg-cyan-500 text-slate-950 shadow-2xs'
-                  : 'text-slate-300 bg-slate-900 hover:bg-slate-700'
-              }`}
-            >
-              Colorido
-            </button>
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Resolution Preset Pill */}
+            <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-700 text-xs">
+              <span className="text-slate-400 text-[11px] font-semibold hidden md:inline px-1">
+                Qualidade:
+              </span>
+              {(['economico', 'equilibrado', 'alta'] as ResolutionPreset[]).map((pKey) => {
+                const cfg = RESOLUTION_PRESETS[pKey];
+                const isSelected = preset === pKey;
+                return (
+                  <button
+                    key={pKey}
+                    type="button"
+                    onClick={() => setPreset(pKey)}
+                    className={`px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-400 text-slate-950 shadow-xs'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                    }`}
+                    title={`${cfg.description} (Tamanho médio ${cfg.badge})`}
+                  >
+                    {cfg.shortLabel} <span className="opacity-75">({cfg.badge})</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Enhancement filter pills */}
+            <div className="hidden sm:flex items-center gap-1 text-[11px] bg-slate-900/90 p-1 rounded-xl border border-slate-700">
+              <span className="text-slate-400 font-semibold px-1 flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-cyan-400" /> Filtro:
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentFilter('bw')}
+                className={`px-2 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  currentFilter === 'bw'
+                    ? 'bg-cyan-500 text-slate-950 shadow-2xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
+                title="Filtro de Alto Contraste para Documento (Clareia o papel e escurece a tinta)"
+              >
+                Documento P&B
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentFilter('grayscale')}
+                className={`px-2 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  currentFilter === 'grayscale'
+                    ? 'bg-cyan-500 text-slate-950 shadow-2xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                Cinza
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentFilter('color')}
+                className={`px-2 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  currentFilter === 'color'
+                    ? 'bg-cyan-500 text-slate-950 shadow-2xs'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-800'
+                }`}
+              >
+                Colorido
+              </button>
+            </div>
           </div>
         </div>
 
@@ -835,21 +782,35 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={handleCloseClean}
-              className="px-4 py-2 rounded-xl border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
-            >
-              Cancelar
-            </button>
+          {/* Action Buttons & Optimization Summary */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCloseClean}
+                className="px-4 py-2 rounded-xl border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+
+              {pages.length > 0 && (
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
+                  <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span>
+                    Total: <strong className="text-slate-900">{totalSizeKb} KB</strong> (~{avgSizeKb} KB/pág)
+                  </span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded shrink-0">
+                    85% Otimizado
+                  </span>
+                </div>
+              )}
+            </div>
 
             <button
               type="button"
               onClick={handleFinishSave}
               disabled={pages.length === 0}
-              className={`px-5 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center gap-2 transition-all cursor-pointer ${
+              className={`px-5 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 pages.length > 0
                   ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 hover:scale-[1.02] active:scale-[0.98]'
                   : 'bg-slate-200 text-slate-400 cursor-not-allowed'

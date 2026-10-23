@@ -3,6 +3,7 @@ import { FolderArchive, Upload, Search, ZoomIn, ZoomOut, RotateCw, Download, Tra
 import { DigitalizedDocument, Patient, HyperbaricSession } from '../types';
 import { StorageService } from '../services/storage';
 import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
+import { optimizeImageFile } from '../utils/imageOptimizer';
 
 interface DigitalVaultProps {
   documents: DigitalizedDocument[];
@@ -94,28 +95,29 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
     setIsCameraScannerOpen(false);
   };
 
-  const handleFilesSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file: File) => {
-      const reader = new FileReader();
-      reader.onload = (loadEvt) => {
-        const dataUrl = loadEvt.target?.result as string;
+    for (const file of Array.from(files) as File[]) {
+      try {
+        const optimized = await optimizeImageFile(file, { preset: 'equilibrado' });
         setPreviewImages((prev) => [
           ...prev,
           {
             name: file.name,
-            dataUrl,
-            sizeKb: Math.round(file.size / 1024),
+            dataUrl: optimized.dataUrl,
+            sizeKb: optimized.sizeKb,
           },
         ]);
         if (!docTitle) {
           setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
         }
-      };
-      reader.readAsDataURL(file);
-    });
+      } catch (err) {
+        console.warn('Erro ao otimizar imagem para o acervo:', err);
+      }
+    }
+    e.target.value = '';
   };
 
   const handleSaveUploads = async (e: React.FormEvent) => {
