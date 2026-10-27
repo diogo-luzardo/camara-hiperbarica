@@ -3,7 +3,7 @@ import { FolderArchive, Upload, Search, ZoomIn, ZoomOut, RotateCw, Download, Tra
 import { DigitalizedDocument, Patient, HyperbaricSession } from '../types';
 import { StorageService } from '../services/storage';
 import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
-import { optimizeImageFile } from '../utils/imageOptimizer';
+import { optimizeImageFile, isPdfDataUrl } from '../utils/imageOptimizer';
 
 interface DigitalVaultProps {
   documents: DigitalizedDocument[];
@@ -48,6 +48,7 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
   const [docDate, setDocDate] = useState(new Date().toISOString().split('T')[0]);
   const [observations, setObservations] = useState('');
   const [previewImages, setPreviewImages] = useState<{ name: string; dataUrl: string; sizeKb: number }[]>([]);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
 
   // Lightbox Modal State
@@ -126,6 +127,7 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setUploadError(null);
     for (const file of Array.from(files) as File[]) {
       try {
         const optimized = await optimizeImageFile(file, { preset: 'equilibrado' });
@@ -140,8 +142,9 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
         if (!docTitle) {
           setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
         }
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Erro ao otimizar imagem para o acervo:', err);
+        setUploadError(err?.message || `Não foi possível importar "${file.name}".`);
       }
     }
     e.target.value = '';
@@ -579,17 +582,33 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept="image/*,.pdf"
+                accept="image/*,application/pdf,.pdf"
                 onChange={handleFilesSelected}
                 className="hidden"
               />
+
+              {uploadError && (
+                <div className="mt-2 p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start justify-between gap-2">
+                  <div className="flex items-start gap-1.5">
+                    <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                    <span className="font-semibold">{uploadError}</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setUploadError(null)}
+                    className="text-rose-500 hover:text-rose-800 shrink-0"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Previews */}
             {previewImages.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between text-[11px] font-bold text-slate-700">
-                  <span>{previewImages.length} imagem(ns) selecionada(s)</span>
+                  <span>{previewImages.length} arquivo(s) selecionado(s)</span>
                   <button
                     type="button"
                     onClick={() => setPreviewImages([])}
@@ -601,7 +620,15 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
                 <div className="grid grid-cols-3 gap-2 max-h-36 overflow-y-auto p-1 bg-slate-100 rounded-lg">
                   {previewImages.map((img, idx) => (
                     <div key={idx} className="relative rounded overflow-hidden border border-slate-200 aspect-3/4 bg-white">
-                      <img src={img.dataUrl} alt={img.name} className="w-full h-full object-cover" />
+                      {isPdfDataUrl(img.dataUrl) ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-rose-50 text-rose-700 p-1 text-center">
+                          <FileText className="w-6 h-6 mb-0.5" />
+                          <span className="text-[9px] font-bold uppercase">PDF</span>
+                          <span className="text-[8px] text-slate-500 truncate w-full px-1">{img.name}</span>
+                        </div>
+                      ) : (
+                        <img src={img.dataUrl} alt={img.name} className="w-full h-full object-cover" />
+                      )}
                       <span className="absolute bottom-0 inset-x-0 bg-slate-900/70 text-[9px] text-white p-0.5 truncate text-center">
                         {img.sizeKb} KB
                       </span>
@@ -690,11 +717,18 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
                     }}
                     className="relative aspect-4/3 bg-slate-100 cursor-pointer overflow-hidden border-b border-slate-100"
                   >
-                    <img
-                      src={doc.imageUrl}
-                      alt={doc.titulo}
-                      className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {isPdfDataUrl(doc.imageUrl) ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-rose-50 text-rose-700 p-4 text-center">
+                        <FileText className="w-12 h-12 mb-1.5" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Documento PDF</span>
+                      </div>
+                    ) : (
+                      <img
+                        src={doc.imageUrl}
+                        alt={doc.titulo}
+                        className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"
+                      />
+                    )}
                     <div className="absolute inset-0 bg-slate-950/0 group-hover:bg-slate-950/30 transition-colors flex items-center justify-center">
                       <span className="opacity-0 group-hover:opacity-100 bg-white/90 backdrop-blur-xs text-slate-900 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1.5 transition-opacity">
                         <Eye className="w-3.5 h-3.5 text-cyan-600" />
@@ -818,9 +852,9 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
               </button>
               <a
                 href={viewingDoc.imageUrl}
-                download={`${viewingDoc.registroOHB}_${viewingDoc.titulo}.png`}
+                download={`${viewingDoc.registroOHB}_${viewingDoc.titulo}.${isPdfDataUrl(viewingDoc.imageUrl) ? 'pdf' : 'png'}`}
                 className="p-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold cursor-pointer"
-                title="Baixar imagem original"
+                title="Baixar arquivo original"
               >
                 <Download className="w-4 h-4" />
               </a>
@@ -842,19 +876,27 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
 
           {/* Canvas View */}
           <div className="flex-1 overflow-auto flex items-center justify-center p-4">
-            <div
-              style={{
-                transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
-                transition: 'transform 0.2s ease-out',
-              }}
-              className="max-w-4xl max-h-[80vh] shadow-2xl rounded-lg overflow-hidden bg-white"
-            >
-              <img
+            {isPdfDataUrl(viewingDoc.imageUrl) ? (
+              <iframe
                 src={viewingDoc.imageUrl}
-                alt={viewingDoc.titulo}
-                className="w-auto h-auto max-h-[75vh] object-contain"
+                title={viewingDoc.titulo}
+                className="w-full max-w-4xl h-[78vh] bg-white rounded-lg shadow-2xl border-0"
               />
-            </div>
+            ) : (
+              <div
+                style={{
+                  transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                  transition: 'transform 0.2s ease-out',
+                }}
+                className="max-w-4xl max-h-[80vh] shadow-2xl rounded-lg overflow-hidden bg-white"
+              >
+                <img
+                  src={viewingDoc.imageUrl}
+                  alt={viewingDoc.titulo}
+                  className="w-auto h-auto max-h-[75vh] object-contain"
+                />
+              </div>
+            )}
           </div>
 
           {/* Lightbox Footer Note */}

@@ -36,7 +36,7 @@ import {
 } from '../utils/cepService';
 import { isParticular } from './CoverageBadge';
 import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
-import { optimizeImageFile } from '../utils/imageOptimizer';
+import { optimizeImageFile, isPdfDataUrl } from '../utils/imageOptimizer';
 
 interface PatientFormModalProps {
   isOpen: boolean;
@@ -438,7 +438,7 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-start sm:items-center justify-center p-1.5 sm:p-4 overflow-x-hidden">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[calc(100vw-12px)] sm:max-w-4xl my-auto overflow-hidden flex flex-col max-h-[96vh] sm:max-h-[92vh] min-w-0">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[calc(100vw-12px)] sm:max-w-4xl my-auto overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[92vh] min-w-0">
         {/* Modal Header */}
         <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5 sm:gap-3">
@@ -1597,11 +1597,12 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
                     <input
                       ref={paperFileInputRef}
                       type="file"
-                      accept="image/*,application/pdf"
+                      accept="image/*,application/pdf,.pdf"
                       multiple
                       onChange={async (e) => {
                         const files = e.target.files;
                         if (!files || files.length === 0) return;
+                        setFormError(null);
                         for (const file of Array.from(files) as File[]) {
                           try {
                             const optimized = await optimizeImageFile(file, { preset: 'equilibrado' });
@@ -1617,6 +1618,11 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
                             ]);
                           } catch (err) {
                             console.warn('Erro ao otimizar folha importada:', err);
+                            setFormError(
+                              err instanceof Error
+                                ? err.message
+                                : `Não foi possível importar o arquivo "${file.name}".`
+                            );
                           }
                         }
                         e.target.value = '';
@@ -1695,12 +1701,19 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
                         key={page.id}
                         className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden shadow-2xs hover:border-cyan-400 transition-all group"
                       >
-                        <div className="aspect-3/4 bg-slate-900 relative">
-                          <img
-                            src={page.dataUrl}
-                            alt={`Folha ${idx + 1}`}
-                            className="w-full h-full object-cover"
-                          />
+                        <div className="aspect-3/4 bg-slate-900 relative flex items-center justify-center">
+                          {isPdfDataUrl(page.dataUrl) ? (
+                            <div className="flex flex-col items-center justify-center gap-1.5 p-3 text-center">
+                              <FileText className="w-10 h-10 text-rose-400" />
+                              <span className="text-[11px] font-bold text-rose-300 uppercase">Documento PDF</span>
+                            </div>
+                          ) : (
+                            <img
+                              src={page.dataUrl}
+                              alt={`Folha ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
                           <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-slate-950/80 text-cyan-300 backdrop-blur-xs">
                             Página {idx + 1}
                           </span>
@@ -1749,8 +1762,8 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
             </div>
           )}
 
-          {/* Modal Footer */}
-          <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          {/* Modal Footer (Sticky on mobile) */}
+          <div className="sticky bottom-0 bg-white border-t border-slate-200 pt-3 pb-1 z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
             <span className="text-xs text-slate-500 order-2 sm:order-1 text-center sm:text-left">
               * Campos obrigatórios para abertura e conformidade de prontuário OHB.
             </span>

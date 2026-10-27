@@ -200,33 +200,111 @@ export function compressCanvasOrSource(
   };
 }
 
+export function isPdfDataUrl(dataUrl?: string): boolean {
+  if (!dataUrl) return false;
+  return dataUrl.startsWith('data:application/pdf');
+}
+
+export function isPdfFile(file: File): boolean {
+  return (
+    file.type === 'application/pdf' ||
+    file.name.toLowerCase().endsWith('.pdf')
+  );
+}
+
 /**
- * Otimiza um arquivo (File do input ou galeria)
+ * Otimiza um arquivo (File do input ou galeria).
+ * Suporta imagens (JPG, PNG, WEBP, HEIC suportado pelo navegador) e arquivos PDF.
  */
 export async function optimizeImageFile(
   file: File,
   options: OptimizeOptions = {}
 ): Promise<OptimizedImageResult> {
-  const originalSizeKb = Math.round(file.size / 1024);
+  if (!file || file.size === 0) {
+    throw new Error(`O arquivo "${file?.name || 'selecionado'}" está vazio ou corrompido.`);
+  }
+
+  const originalSizeKb = Math.max(1, Math.round(file.size / 1024));
+
+  // Suporte direto a arquivos PDF
+  if (isPdfFile(file)) {
+    const maxPdfSizeMb = 15;
+    if (file.size > maxPdfSizeMb * 1024 * 1024) {
+      throw new Error(
+        `O arquivo PDF "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) excede o limite máximo de ${maxPdfSizeMb} MB.`
+      );
+    }
+
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () =>
+        reject(new Error(`Não foi possível ler o arquivo PDF "${file.name}". Verifique as permissões do arquivo.`));
+      reader.onload = () => {
+        let dataUrl = reader.result as string;
+        if (!dataUrl) {
+          reject(new Error(`O arquivo PDF "${file.name}" não pôde ser carregado.`));
+          return;
+        }
+        // Garante que o MIME type seja data:application/pdf caso o SO/navegador envie application/octet-stream
+        if (!dataUrl.startsWith('data:application/pdf') && dataUrl.includes(';base64,')) {
+          dataUrl = `data:application/pdf;base64,${dataUrl.split(';base64,')[1]}`;
+        }
+        resolve({
+          dataUrl,
+          sizeKb: originalSizeKb,
+          width: 600,
+          height: 850,
+          originalSizeKb,
+          savedPercent: 0,
+        });
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Validação de tipo para arquivos que não são PDF nem imagem
+  if (
+    file.type &&
+    !file.type.startsWith('image/') &&
+    ! /\.(jpe?g|png|webp|gif|bmp|heic|heif)$/i.test(file.name)
+  ) {
+    throw new Error(
+      `Formato não suportado para "${file.name}". Selecione uma foto (JPG, PNG, WEBP) ou documento PDF.`
+    );
+  }
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+    reader.onerror = () =>
+      reject(new Error(`Erro ao ler o arquivo "${file.name}".`));
     reader.onload = () => {
       const img = new Image();
-      img.onerror = () => reject(new Error('Formato de imagem inválido'));
+      img.onerror = () =>
+        reject(
+          new Error(
+            `Não foi possível abrir "${file.name}". O arquivo pode estar corrompido ou em um formato não suportado pelo navegador.`
+          )
+        );
       img.onload = () => {
-        const result = compressCanvasOrSource(img, img.naturalWidth, img.naturalHeight, options);
-        const savedPercent =
-          originalSizeKb > 0
-            ? Math.max(0, Math.round(((originalSizeKb - result.sizeKb) / originalSizeKb) * 100))
-            : 0;
+        try {
+          const result = compressCanvasOrSource(img, img.naturalWidth, img.naturalHeight, options);
+          const savedPercent =
+            originalSizeKb > 0
+              ? Math.max(0, Math.round(((originalSizeKb - result.sizeKb) / originalSizeKb) * 100))
+              : 0;
 
-        resolve({
-          ...result,
-          originalSizeKb,
-          savedPercent,
-        });
+          resolve({
+            ...result,
+            originalSizeKb,
+            savedPercent,
+          });
+        } catch (err) {
+          reject(
+            err instanceof Error
+              ? err
+              : new Error(`Erro ao processar a imagem "${file.name}".`)
+          );
+        }
       };
       img.src = reader.result as string;
     };
@@ -241,7 +319,18 @@ export async function optimizeDataUrl(
   dataUrl: string,
   options: OptimizeOptions = {}
 ): Promise<OptimizedImageResult> {
-  const originalSizeKb = Math.round((dataUrl.length * 3) / 4 / 1024);
+  const originalSizeKb = Math.max(1, Math.round((dataUrl.length * 3) / 4 / 1024));
+
+  if (isPdfDataUrl(dataUrl)) {
+    return {
+      dataUrl,
+      sizeKb: originalSizeKb,
+      width: 600,
+      height: 850,
+      originalSizeKb,
+      savedPercent: 0,
+    };
+  }
 
   return new Promise((resolve, reject) => {
     const img = new Image();

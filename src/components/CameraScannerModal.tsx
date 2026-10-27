@@ -25,6 +25,7 @@ import {
   compressCanvasOrSource,
   optimizeImageFile,
   optimizeDataUrl,
+  isPdfDataUrl,
 } from '../utils/imageOptimizer';
 
 export { type ResolutionPreset, type ScannerFilterMode };
@@ -99,6 +100,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
   const [isTorchOn, setIsTorchOn] = useState(false);
   const [currentFilter, setCurrentFilter] = useState<ScannerFilterMode>('bw');
   const [isShutterActive, setIsShutterActive] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -301,6 +303,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setImportError(null);
     const fileList = Array.from(files) as File[];
     for (const file of fileList) {
       try {
@@ -325,6 +328,11 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
         }
       } catch (err) {
         console.warn('Erro ao otimizar arquivo importado:', err);
+        const msg =
+          err instanceof Error
+            ? err.message
+            : `Não foi possível importar o arquivo "${file.name}".`;
+        setImportError(msg);
       }
     }
 
@@ -337,11 +345,11 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
 
   const handleFinishSave = () => {
     if (pages.length === 0) {
-      alert('Nenhuma página foi escaneada ou importada ainda.');
+      setImportError('Nenhuma página ou arquivo foi escaneado/importado ainda.');
       return;
     }
     if ((allowEditPatientIdentity || !patientOHB) && !patientNameInput.trim()) {
-      alert('Informe o Nome do Paciente para identificar o documento arquivado.');
+      setImportError('Informe o Nome Completo do Paciente antes de salvar o documento.');
       return;
     }
 
@@ -362,43 +370,57 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
     stopCamera();
     setPages([]);
     setSelectedPageIndex(null);
+    setImportError(null);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-1 sm:p-4">
-      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[96vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-1 sm:p-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92dvh] sm:max-h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Top Header */}
-        <div className="bg-slate-900 text-white px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between border-b border-slate-800 shrink-0">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold shrink-0">
-              <Camera className="w-5 h-5" />
+        <div className="bg-slate-900 text-white px-3 py-2.5 sm:px-6 sm:py-4 flex items-center justify-between border-b border-slate-800 shrink-0 gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center font-bold shrink-0">
+              <Camera className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm sm:text-base font-bold font-['Outfit']">{title}</h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500 text-slate-950">
-                  {pages.length} {pages.length === 1 ? 'página' : 'páginas'}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h2 className="text-xs sm:text-base font-bold font-['Outfit'] truncate">{title}</h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-cyan-500 text-slate-950 shrink-0">
+                  {pages.length} {pages.length === 1 ? 'pág' : 'págs'}
                 </span>
               </div>
-              <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-1">
+              <p className="text-[10px] sm:text-xs text-slate-300 truncate">
                 {subtitle ||
                   (patientName
                     ? `${patientName} • Registro ${patientOHB || 'OHB'}`
-                    : 'Digitalização de prontuários em papel e fotos')}
+                    : 'Digitalização de prontuários, fotos e PDFs')}
               </p>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCloseClean}
-            className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {pages.length > 0 && (
+              <button
+                type="button"
+                onClick={handleFinishSave}
+                className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 font-bold text-xs shadow-sm flex items-center gap-1 cursor-pointer"
+              >
+                <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Salvar ({pages.length})</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleCloseClean}
+              className="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Mode Selector Tabs (Câmera ao Vivo vs Importar Arquivo) */}
@@ -501,10 +523,29 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
           </div>
         </div>
 
-        {/* Content Body: Viewfinder or Upload Area */}
-        <div className="flex-1 overflow-y-auto min-h-[300px] flex flex-col p-3 sm:p-4 bg-slate-900/95 text-slate-100">
-          {activeMode === 'camera' ? (
-            <div className="flex-1 flex flex-col items-center justify-center min-h-[280px] sm:min-h-[360px] relative">
+        {/* Error Banner for File / PDF Import or Validation */}
+        {importError && (
+          <div className="bg-rose-600 text-white px-4 py-2.5 text-xs font-semibold flex items-center justify-between gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{importError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setImportError(null)}
+              className="text-white/80 hover:text-white font-bold px-1.5 py-0.5 rounded cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Unified Scrollable Area: Viewfinder + Thumbnails + Form Fields */}
+        <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+          {/* Content Body: Viewfinder or Upload Area */}
+          <div className="flex flex-col p-3 sm:p-4 bg-slate-900/95 text-slate-100">
+            {activeMode === 'camera' ? (
+              <div className="flex flex-col items-center justify-center relative">
               {cameraError ? (
                 /* Fallback screen if camera fails */
                 <div className="bg-slate-800/90 rounded-2xl p-6 sm:p-8 text-center max-w-md border border-slate-700 shadow-xl space-y-4">
@@ -537,7 +578,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
                 </div>
               ) : (
                 /* Live Viewfinder */
-                <div className="relative w-full max-w-xl aspect-3/4 sm:aspect-4/3 bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-cyan-500/30 flex items-center justify-center group">
+                <div className="relative w-full max-w-xl max-h-[38vh] sm:max-h-none aspect-3/4 sm:aspect-4/3 bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-cyan-500/30 flex items-center justify-center group">
                   <video
                     ref={videoRef}
                     autoPlay
@@ -618,9 +659,9 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
                 <Upload className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-sm font-bold text-white">Importar Imagens do Dispositivo</h3>
+                <h3 className="text-sm font-bold text-white">Importar Fotos ou PDF do Dispositivo</h3>
                 <p className="text-xs text-slate-400 max-w-sm mt-1">
-                  Selecione fotos de prontuários em papel, laudos ou fotos de feridas já salvas no seu celular ou computador.
+                  Selecione fotos de prontuários em papel, arquivos PDF, laudos ou fotos de feridas salvas no celular ou computador.
                 </p>
               </div>
 
@@ -650,7 +691,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*,application/pdf"
+            accept="image/*,application/pdf,.pdf"
             multiple
             onChange={handleFilesSelected}
             className="hidden"
@@ -689,12 +730,19 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
                         : 'border-slate-700 hover:border-slate-500'
                     }`}
                   >
-                    <div className="aspect-3/4 bg-black relative">
-                      <img
-                        src={p.dataUrl}
-                        alt={`Página ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                    <div className="aspect-3/4 bg-black relative flex items-center justify-center">
+                      {isPdfDataUrl(p.dataUrl) ? (
+                        <div className="flex flex-col items-center justify-center gap-1 p-2 text-center bg-slate-900 w-full h-full">
+                          <FileText className="w-8 h-8 text-rose-400" />
+                          <span className="text-[10px] font-bold text-rose-300 uppercase">PDF</span>
+                        </div>
+                      ) : (
+                        <img
+                          src={p.dataUrl}
+                          alt={`Página ${idx + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
                       <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-950/80 text-white backdrop-blur-xs">
                         Pág. {idx + 1}
                       </span>
@@ -862,47 +910,45 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
               />
             </div>
           </div>
+          </div>
+        </div>
 
-          {/* Action Buttons & Optimization Summary */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2 border-t border-slate-100">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleCloseClean}
-                className="px-4 py-2 rounded-xl border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer"
-              >
-                Cancelar
-              </button>
-
-              {pages.length > 0 && (
-                <div className="flex items-center gap-1.5 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg">
-                  <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  <span>
-                    Total: <strong className="text-slate-900">{totalSizeKb} KB</strong> (~{avgSizeKb} KB/pág)
-                  </span>
-                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.2 rounded shrink-0">
-                    85% Otimizado
-                  </span>
-                </div>
-              )}
-            </div>
-
+        {/* Sticky Bottom Action Bar (Always visible on mobile & desktop) */}
+        <div className="bg-white px-3 py-2.5 sm:px-5 sm:py-3.5 border-t border-slate-200 shrink-0 z-20 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <button
               type="button"
-              onClick={handleFinishSave}
-              disabled={pages.length === 0}
-              className={`px-5 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer ${
-                pages.length > 0
-                  ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 hover:scale-[1.02] active:scale-[0.98]'
-                  : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-              }`}
+              onClick={handleCloseClean}
+              className="px-3.5 py-2.5 rounded-xl border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs transition-colors cursor-pointer shrink-0"
             >
-              <Check className="w-4 h-4 stroke-[2.5]" />
-              <span>
-                Salvar {pages.length > 0 ? `${pages.length} Folha(s)` : 'Documento'}
-              </span>
+              Cancelar
             </button>
+
+            {pages.length > 0 && (
+              <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-600 bg-slate-50 border border-slate-200 px-2.5 py-1.5 rounded-lg truncate">
+                <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>
+                  Total: <strong className="text-slate-900">{totalSizeKb} KB</strong> (~{avgSizeKb} KB/pág)
+                </span>
+              </div>
+            )}
           </div>
+
+          <button
+            type="button"
+            onClick={handleFinishSave}
+            disabled={pages.length === 0}
+            className={`flex-1 sm:flex-none px-5 py-2.5 rounded-xl font-bold text-xs shadow-md flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              pages.length > 0
+                ? 'bg-gradient-to-r from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 text-slate-950 hover:scale-[1.02] active:scale-[0.98]'
+                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+            }`}
+          >
+            <Check className="w-4 h-4 stroke-[2.5]" />
+            <span>
+              Salvar {pages.length > 0 ? `${pages.length} Folha(s)` : 'Documento'}
+            </span>
+          </button>
         </div>
       </div>
     </div>

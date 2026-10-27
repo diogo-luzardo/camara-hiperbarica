@@ -5,6 +5,7 @@ import { downloadIcsAppointment, getGoogleCalendarUrl, getWhatsAppReminderUrl } 
 import { CoverageBadge } from './CoverageBadge';
 import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
 import { StorageService } from '../services/storage';
+import { isPdfDataUrl } from '../utils/imageOptimizer';
 
 interface PatientDetailViewProps {
   patient: Patient;
@@ -700,7 +701,14 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                   className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-md hover:border-cyan-400 transition-all cursor-pointer group"
                 >
                   <div className="aspect-4/3 bg-slate-900 relative">
-                    <img src={doc.imageUrl} alt={doc.titulo} className="w-full h-full object-cover object-top" />
+                    {isPdfDataUrl(doc.imageUrl) ? (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-rose-50 text-rose-700 p-4 text-center">
+                        <FileText className="w-10 h-10 mb-1" />
+                        <span className="text-xs font-bold uppercase tracking-wider">Documento PDF</span>
+                      </div>
+                    ) : (
+                      <img src={doc.imageUrl} alt={doc.titulo} className="w-full h-full object-cover object-top" />
+                    )}
                     <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-900/80 text-cyan-300 backdrop-blur-xs">
                       {doc.dataDocumento}
                     </span>
@@ -1060,9 +1068,9 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
                 </button>
                 <a
                   href={viewingDoc.imageUrl}
-                  download={`prontuario-${viewingDoc.registroOHB}-${viewingDoc.id}.jpg`}
+                  download={`prontuario-${viewingDoc.registroOHB}-${viewingDoc.id}.${isPdfDataUrl(viewingDoc.imageUrl) ? 'pdf' : 'jpg'}`}
                   className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white"
-                  title="Baixar Imagem"
+                  title="Baixar Arquivo"
                 >
                   <Download className="w-4 h-4" />
                 </a>
@@ -1078,15 +1086,23 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
 
             {/* Viewer Stage */}
             <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-black/60 min-h-[300px]">
-              <img
-                src={viewingDoc.imageUrl}
-                alt={viewingDoc.titulo}
-                style={{
-                  transform: `scale(${lightboxZoom}) rotate(${lightboxRotate}deg)`,
-                  transition: 'transform 0.15s ease-out',
-                }}
-                className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-lg"
-              />
+              {isPdfDataUrl(viewingDoc.imageUrl) ? (
+                <iframe
+                  src={viewingDoc.imageUrl}
+                  title={viewingDoc.titulo}
+                  className="w-full h-[70vh] bg-white rounded-lg shadow-2xl border-0"
+                />
+              ) : (
+                <img
+                  src={viewingDoc.imageUrl}
+                  alt={viewingDoc.titulo}
+                  style={{
+                    transform: `scale(${lightboxZoom}) rotate(${lightboxRotate}deg)`,
+                    transition: 'transform 0.15s ease-out',
+                  }}
+                  className="max-w-full max-h-[70vh] object-contain shadow-2xl rounded-lg"
+                />
+              )}
             </div>
 
             {viewingDoc.observacoes && (

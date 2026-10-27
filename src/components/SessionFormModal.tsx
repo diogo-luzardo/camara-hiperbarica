@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, HeartPulse, ShieldCheck, Stethoscope, AlertTriangle, CheckCircle, Clock, Lock, CreditCard, Building2, UserCheck, Camera, Upload, Trash2, Paperclip } from 'lucide-react';
+import { X, HeartPulse, ShieldCheck, Stethoscope, AlertTriangle, CheckCircle, Clock, Lock, CreditCard, Building2, UserCheck, Camera, Upload, Trash2, Paperclip, FileText } from 'lucide-react';
 import { HyperbaricSession, Patient, DigitalizedDocument } from '../types';
 import { CoverageBadge, isParticular } from './CoverageBadge';
 import { CameraScannerModal, ScannedPage } from './CameraScannerModal';
 import { StorageService } from '../services/storage';
-import { optimizeImageFile } from '../utils/imageOptimizer';
+import { optimizeImageFile, isPdfDataUrl } from '../utils/imageOptimizer';
 
 export interface SessionAttachmentItem {
   id: string;
@@ -105,6 +105,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
   }, [initialSession, patient, nextSessionNumber, isOpen]);
 
   const [ataError, setAtaError] = useState<string>('');
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [attachedPages, setAttachedPages] = useState<SessionAttachmentItem[]>([]);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -135,6 +136,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    setUploadError(null);
     for (const file of Array.from(files) as File[]) {
       try {
         const optimized = await optimizeImageFile(file, { preset: 'equilibrado' });
@@ -147,8 +149,9 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
             title: file.name.replace(/\.[^/.]+$/, ''),
           },
         ]);
-      } catch (err) {
+      } catch (err: any) {
         console.warn('Erro ao otimizar imagem da sessão:', err);
+        setUploadError(err?.message || `Não foi possível importar "${file.name}".`);
       }
     }
     e.target.value = '';
@@ -194,7 +197,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-xs flex items-start sm:items-center justify-center p-1.5 sm:p-4 overflow-x-hidden">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[calc(100vw-12px)] sm:max-w-3xl my-auto overflow-hidden flex flex-col max-h-[96vh] sm:max-h-[92vh] min-w-0">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[calc(100vw-12px)] sm:max-w-3xl my-auto overflow-hidden flex flex-col max-h-[92dvh] sm:max-h-[92vh] min-w-0">
         {/* Header */}
         <div className="bg-slate-900 text-white px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-2.5 sm:gap-3">
@@ -695,7 +698,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,application/pdf"
+                  accept="image/*,application/pdf,.pdf"
                   multiple
                   onChange={handleFilesSelected}
                   className="hidden"
@@ -703,13 +706,36 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
               </div>
             </div>
 
+            {uploadError && (
+              <div className="p-2.5 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-start justify-between gap-2">
+                <div className="flex items-start gap-1.5">
+                  <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+                  <span className="font-semibold">{uploadError}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setUploadError(null)}
+                  className="text-rose-500 hover:text-rose-800 shrink-0"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* Attached Pages List */}
             {attachedPages.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                 {attachedPages.map((page, idx) => (
                   <div key={page.id} className="relative rounded-xl border border-slate-200 bg-white overflow-hidden shadow-2xs group">
                     <div className="aspect-3/4 bg-slate-100 relative">
-                      <img src={page.dataUrl} alt={page.title} className="w-full h-full object-cover" />
+                      {isPdfDataUrl(page.dataUrl) ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-rose-50 text-rose-700 p-2 text-center">
+                          <FileText className="w-7 h-7 mb-1" />
+                          <span className="text-[10px] font-bold uppercase">PDF</span>
+                        </div>
+                      ) : (
+                        <img src={page.dataUrl} alt={page.title} className="w-full h-full object-cover" />
+                      )}
                       <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-bold bg-slate-900/80 text-white">
                         Pág. {idx + 1}
                       </span>
@@ -737,7 +763,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="border-t border-slate-200 pt-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
+          <div className="sticky bottom-0 bg-white border-t border-slate-200 pt-3 pb-1 z-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
