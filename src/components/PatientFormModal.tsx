@@ -582,14 +582,23 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
                     Registro OHB <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.registroOHB || ''}
-                    onChange={(e) => setFormData({ ...formData, registroOHB: e.target.value })}
-                    className="w-full text-xs font-mono font-bold text-cyan-900 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-cyan-50/40"
-                    placeholder="OHB-1083"
-                  />
+                  <div className="flex items-stretch rounded-lg border border-slate-300 focus-within:ring-2 focus-within:ring-cyan-500 focus-within:border-cyan-500 bg-cyan-50/40 overflow-hidden">
+                    <span className="px-2.5 py-2 bg-cyan-100/80 text-cyan-950 font-mono font-bold text-xs border-r border-cyan-200 flex items-center select-none">
+                      OHB-
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      required
+                      value={(formData.registroOHB || '').replace(/\D/g, '')}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        setFormData({ ...formData, registroOHB: digits ? `OHB-${digits}` : '' });
+                      }}
+                      className="w-full text-xs font-mono font-bold text-cyan-900 px-2.5 py-2 bg-transparent outline-none"
+                      placeholder="1083"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">
@@ -1618,6 +1627,58 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
                 </div>
               </div>
 
+              {/* Identificação Rápida da Ficha Antiga (Sincronizada com Aba 1) */}
+              <div className="bg-cyan-50/60 border border-cyan-200 rounded-2xl p-3.5 sm:p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                <div>
+                  <label className="block font-bold text-cyan-950 mb-1">
+                    Nº do Prontuário Antigo <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="flex items-stretch rounded-lg border border-cyan-300 focus-within:ring-2 focus-within:ring-cyan-500 focus-within:border-cyan-500 bg-white overflow-hidden">
+                    <span className="px-2.5 py-2 bg-cyan-100 text-cyan-950 font-mono font-bold text-xs border-r border-cyan-200 flex items-center select-none">
+                      OHB-
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={(formData.registroOHB || '').replace(/\D/g, '')}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        setFormData({ ...formData, registroOHB: digits ? `OHB-${digits}` : '' });
+                      }}
+                      className="w-full text-xs font-mono font-bold text-cyan-900 px-2.5 py-2 bg-transparent outline-none"
+                      placeholder="1083"
+                    />
+                  </div>
+                  <p className="text-[10px] text-cyan-800 mt-0.5">Digite apenas os números do prontuário</p>
+                </div>
+
+                <div>
+                  <label className="block font-bold text-cyan-950 mb-1">
+                    Nome do Paciente na Ficha <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nome || ''}
+                    onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                    placeholder="Nome completo"
+                    className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-cyan-300 focus:ring-2 focus:ring-cyan-500 bg-white outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-cyan-950 mb-1">
+                    Nome da Mãe
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nomeMae || ''}
+                    onChange={(e) => setFormData({ ...formData, nomeMae: e.target.value })}
+                    placeholder="Nome da mãe (desempate)"
+                    className="w-full text-xs font-medium px-3 py-2 rounded-lg border border-cyan-300 focus:ring-2 focus:ring-cyan-500 bg-white outline-none"
+                  />
+                </div>
+              </div>
+
               {/* Scanned Pages Grid */}
               {scannedPaperPages.length > 0 ? (
                 <div className="space-y-2">
@@ -1716,8 +1777,18 @@ export const PatientFormModal: React.FC<PatientFormModalProps> = ({
           <CameraScannerModal
             isOpen={isScannerOpen}
             onClose={() => setIsScannerOpen(false)}
-            onSave={(pages) => {
+            onSave={(pages, meta) => {
               setScannedPaperPages((prev) => [...prev, ...pages]);
+              if (meta?.registroOHB) {
+                const digits = meta.registroOHB.replace(/\D/g, '');
+                if (digits) setFormData((prev) => ({ ...prev, registroOHB: `OHB-${digits}` }));
+              }
+              if (meta?.patientName && !formData.nome) {
+                setFormData((prev) => ({ ...prev, nome: meta.patientName }));
+              }
+              if (meta?.nomeMae && !formData.nomeMae) {
+                setFormData((prev) => ({ ...prev, nomeMae: meta.nomeMae }));
+              }
               setIsScannerOpen(false);
             }}
             title="Escanear Fichas Físicas do Paciente"

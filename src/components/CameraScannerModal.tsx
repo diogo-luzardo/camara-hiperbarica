@@ -752,7 +752,29 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
         <div className="bg-white p-3 sm:p-5 border-t border-slate-200 shrink-0 space-y-3">
           {/* Identificação do Paciente para Prontuários em Papel / Novos Cadastros */}
           {(allowEditPatientIdentity || (!patientOHB && !patientName)) && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 text-xs p-3 bg-cyan-50/70 rounded-2xl border border-cyan-200 shadow-2xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 text-xs p-3 bg-cyan-50/70 rounded-2xl border border-cyan-200 shadow-2xs">
+              <div>
+                <label className="block font-bold text-cyan-950 mb-1">
+                  Nº do Prontuário Antigo
+                </label>
+                <div className="flex items-stretch rounded-xl border border-slate-300 focus-within:border-cyan-500 focus-within:ring-2 focus-within:ring-cyan-500/10 bg-white overflow-hidden">
+                  <span className="px-2.5 py-2 bg-cyan-100 text-cyan-950 font-mono font-bold text-xs border-r border-cyan-200 flex items-center select-none">
+                    OHB-
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={registroOHBInput.replace(/\D/g, '')}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, '');
+                      setRegistroOHBInput(digits ? `OHB-${digits}` : '');
+                    }}
+                    placeholder="1083"
+                    className="w-full text-xs font-mono font-bold text-cyan-900 px-2.5 py-2 bg-transparent outline-none"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block font-bold text-cyan-950 mb-1">
                   Nome Completo do Paciente <span className="text-rose-500">*</span>

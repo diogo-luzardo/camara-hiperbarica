@@ -168,9 +168,10 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
       }
       finalPatientName = newPatientName.trim();
       finalNomeMae = newNomeMae.trim();
-      finalRegistroOHB = newRegistroFisico.trim()
-        ? newRegistroFisico.trim().toUpperCase()
-        : `PAPEL-${Date.now().toString().slice(-6)}`;
+      const digits = newRegistroFisico.replace(/\D/g, '');
+      finalRegistroOHB = digits
+        ? `OHB-${digits}`
+        : `OHB-${Date.now().toString().slice(-4)}`;
       finalCPF = newCPF.trim();
       finalPatientId = undefined;
     } else {
@@ -392,14 +393,23 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
                     <label className="block font-semibold text-slate-700 mb-0.5">
                       Nº Prontuário Antigo / Pasta
                     </label>
-                    <input
-                      type="text"
-                      value={newRegistroFisico}
-                      onChange={(e) => setNewRegistroFisico(e.target.value)}
-                      placeholder="Ex: 1042 ou A-12"
-                      className="w-full text-xs font-mono uppercase px-2.5 py-1.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
-                    />
-                    <p className="text-[9px] text-slate-400 mt-0.5">Gera PAPEL-XXXXXX se vazio</p>
+                    <div className="flex items-stretch rounded-lg border border-slate-300 focus-within:ring-2 focus-within:ring-cyan-500 bg-white overflow-hidden">
+                      <span className="px-2 py-1.5 bg-cyan-100 text-cyan-950 font-mono font-bold text-xs border-r border-cyan-200 flex items-center select-none">
+                        OHB-
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={newRegistroFisico.replace(/\D/g, '')}
+                        onChange={(e) => {
+                          const digits = e.target.value.replace(/\D/g, '');
+                          setNewRegistroFisico(digits ? `OHB-${digits}` : '');
+                        }}
+                        placeholder="1042"
+                        className="w-full text-xs font-mono font-bold text-cyan-900 px-2 py-1.5 bg-transparent outline-none"
+                      />
+                    </div>
+                    <p className="text-[9px] text-slate-400 mt-0.5">Digite apenas o número</p>
                   </div>
 
                   <div>
@@ -441,14 +451,23 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
                   <label className="block font-semibold text-slate-700 mb-1">
                     Registro OHB <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={targetOHB}
-                    onChange={(e) => setTargetOHB(e.target.value)}
-                    placeholder="Ex: OHB-1082"
-                    className="w-full text-xs font-mono font-bold text-cyan-900 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-cyan-50/30 uppercase"
-                  />
+                  <div className="flex items-stretch rounded-lg border border-slate-300 focus-within:ring-2 focus-within:ring-cyan-500 bg-cyan-50/30 overflow-hidden">
+                    <span className="px-2.5 py-2 bg-cyan-100/80 text-cyan-950 font-mono font-bold text-xs border-r border-cyan-200 flex items-center select-none">
+                      OHB-
+                    </span>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      required
+                      value={targetOHB.replace(/\D/g, '')}
+                      onChange={(e) => {
+                        const digits = e.target.value.replace(/\D/g, '');
+                        setTargetOHB(digits ? `OHB-${digits}` : '');
+                      }}
+                      placeholder="1082"
+                      className="w-full text-xs font-mono font-bold text-cyan-900 px-2.5 py-2 bg-transparent outline-none"
+                    />
+                  </div>
                 </div>
 
                 {targetPatientSessions.length > 0 && (
