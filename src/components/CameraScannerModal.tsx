@@ -101,6 +101,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
   const [currentFilter, setCurrentFilter] = useState<ScannerFilterMode>('bw');
   const [isShutterActive, setIsShutterActive] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [isCaptureOpen, setIsCaptureOpen] = useState(true);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -178,9 +179,11 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
     setIsTorchOn(false);
   }, [stream]);
 
+  const showCaptureBox = pages.length === 0 || isCaptureOpen;
+
   // Effect to manage camera lifecycle
   useEffect(() => {
-    if (isOpen && activeMode === 'camera') {
+    if (isOpen && activeMode === 'camera' && showCaptureBox) {
       startCamera(facingMode);
     } else {
       stopCamera();
@@ -189,7 +192,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
     return () => {
       stopCamera();
     };
-  }, [isOpen, activeMode, facingMode]);
+  }, [isOpen, activeMode, facingMode, showCaptureBox]);
 
   // Toggle Torch/Flashlight
   const toggleTorch = async () => {
@@ -240,6 +243,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
 
     setPages((prev) => [...prev, newPage]);
     setSelectedPageIndex(pages.length);
+    setIsCaptureOpen(false);
   };
 
   // Rotate a scanned page by 90deg
@@ -326,6 +330,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
         if (!docTitle) {
           setDocTitle(file.name.replace(/\.[^/.]+$/, ''));
         }
+        setIsCaptureOpen(false);
       } catch (err) {
         console.warn('Erro ao otimizar arquivo importado:', err);
         const msg =
@@ -352,6 +357,10 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
       setImportError('Informe o Nome Completo do Paciente antes de salvar o documento.');
       return;
     }
+    if (allowEditPatientIdentity && !nomeMaeInput.trim()) {
+      setImportError('Informe o Nome da Mãe do Paciente antes de salvar o documento.');
+      return;
+    }
 
     onSave(pages, {
       titulo: docTitle.trim(),
@@ -371,14 +380,15 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
     setPages([]);
     setSelectedPageIndex(null);
     setImportError(null);
+    setIsCaptureOpen(true);
     onClose();
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-1 sm:p-4">
-      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[92dvh] sm:max-h-[94vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-1.5 sm:p-4">
+      <div className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[85dvh] sm:max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Top Header */}
         <div className="bg-slate-900 text-white px-3 py-2.5 sm:px-6 sm:py-4 flex items-center justify-between border-b border-slate-800 shrink-0 gap-2">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -428,9 +438,12 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
           <div className="flex items-center gap-1.5 bg-slate-900/90 p-1 rounded-xl border border-slate-700/80">
             <button
               type="button"
-              onClick={() => setActiveMode('camera')}
+              onClick={() => {
+                setActiveMode('camera');
+                setIsCaptureOpen(true);
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeMode === 'camera'
+                activeMode === 'camera' && showCaptureBox
                   ? 'bg-cyan-500 text-slate-950 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800'
               }`}
@@ -441,9 +454,12 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
 
             <button
               type="button"
-              onClick={() => setActiveMode('upload')}
+              onClick={() => {
+                setActiveMode('upload');
+                setIsCaptureOpen(true);
+              }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeMode === 'upload'
+                activeMode === 'upload' && showCaptureBox
                   ? 'bg-cyan-500 text-slate-950 shadow-sm'
                   : 'text-slate-300 hover:text-white hover:bg-slate-800'
               }`}
@@ -540,152 +556,174 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
           </div>
         )}
 
+        {/* Prominent Ready-to-Save Banner when pages are added */}
+        {pages.length > 0 && (
+          <div className="bg-emerald-600 text-white px-3.5 py-2 text-xs font-bold flex items-center justify-between gap-2 shrink-0 shadow-xs">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Check className="w-4 h-4 shrink-0 stroke-[2.5]" />
+              <span className="truncate">
+                {pages.length} {pages.length === 1 ? 'arquivo pronto' : 'arquivos prontos'}! Confira os dados abaixo:
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleFinishSave}
+              className="px-3 py-1.5 rounded-lg bg-white text-emerald-900 hover:bg-emerald-50 font-extrabold text-xs shadow-sm shrink-0 flex items-center gap-1 cursor-pointer"
+            >
+              <span>Continuar / Salvar</span>
+              <span>→</span>
+            </button>
+          </div>
+        )}
+
         {/* Unified Scrollable Area: Viewfinder + Thumbnails + Form Fields */}
-        <div className="flex-1 overflow-y-auto min-h-0 flex flex-col">
+        <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
           {/* Content Body: Viewfinder or Upload Area */}
           <div className="flex flex-col p-3 sm:p-4 bg-slate-900/95 text-slate-100">
-            {activeMode === 'camera' ? (
-              <div className="flex flex-col items-center justify-center relative">
-              {cameraError ? (
-                /* Fallback screen if camera fails */
-                <div className="bg-slate-800/90 rounded-2xl p-6 sm:p-8 text-center max-w-md border border-slate-700 shadow-xl space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto">
-                    <AlertCircle className="w-6 h-6" />
+            {showCaptureBox && (
+              activeMode === 'camera' ? (
+                <div className="flex flex-col items-center justify-center relative">
+                  {cameraError ? (
+                    /* Fallback screen if camera fails */
+                    <div className="bg-slate-800/90 rounded-2xl p-6 sm:p-8 text-center max-w-md border border-slate-700 shadow-xl space-y-4">
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center justify-center mx-auto">
+                        <AlertCircle className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-white">Câmera Não Iniciada</h3>
+                        <p className="text-xs text-slate-300 mt-1">{cameraError}</p>
+                      </div>
+                      <div className="space-y-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => nativeCameraInputRef.current?.click()}
+                          className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 text-slate-950 font-bold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Camera className="w-4 h-4" />
+                          <span>Abrir Câmera Nativa do Celular</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="w-full py-2.5 px-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                          <Upload className="w-4 h-4" />
+                          <span>Escolher Foto da Galeria / Arquivos</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Live Viewfinder */
+                    <div className="relative w-full max-w-xl max-h-[34vh] sm:max-h-none aspect-3/4 sm:aspect-4/3 bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-cyan-500/30 flex items-center justify-center group">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                      />
+
+                      {/* Document Overlay Target Box (CamScanner aesthetic) */}
+                      <div className="absolute inset-4 sm:inset-8 border-2 border-dashed border-cyan-400/60 rounded-xl pointer-events-none flex flex-col justify-between p-3">
+                        <div className="flex justify-between items-start">
+                          <div className="w-5 h-5 border-t-4 border-l-4 border-cyan-400"></div>
+                          <div className="w-5 h-5 border-t-4 border-r-4 border-cyan-400"></div>
+                        </div>
+
+                        <div className="text-center">
+                          <span className="px-3 py-1 rounded-full bg-slate-950/70 text-cyan-300 text-[10px] font-bold backdrop-blur-xs border border-cyan-500/30 shadow-xs">
+                            Enquadre a folha do prontuário
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-end">
+                          <div className="w-5 h-5 border-b-4 border-l-4 border-cyan-400"></div>
+                          <div className="w-5 h-5 border-b-4 border-r-4 border-cyan-400"></div>
+                        </div>
+                      </div>
+
+                      {/* Shutter visual flash animation */}
+                      {isShutterActive && (
+                        <div className="absolute inset-0 bg-white opacity-80 animate-ping pointer-events-none"></div>
+                      )}
+
+                      {/* Viewfinder Top Controls (Torch & Switch Camera) */}
+                      <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                        {hasTorch && (
+                          <button
+                            type="button"
+                            onClick={toggleTorch}
+                            className={`p-2 rounded-xl backdrop-blur-md transition-all cursor-pointer ${
+                              isTorchOn
+                                ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30'
+                                : 'bg-slate-900/70 text-white hover:bg-slate-800'
+                            }`}
+                            title={isTorchOn ? 'Desligar Lanterna' : 'Ligar Lanterna'}
+                          >
+                            {isTorchOn ? <Zap className="w-4 h-4" /> : <ZapOff className="w-4 h-4" />}
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={handleSwitchCamera}
+                          className="p-2 rounded-xl bg-slate-900/70 text-white hover:bg-slate-800 backdrop-blur-md transition-colors cursor-pointer"
+                          title="Alternar Câmera (Traseira / Frontal)"
+                        >
+                          <SwitchCamera className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      {/* Viewfinder Bottom Shutter Button */}
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 z-10">
+                        <button
+                          type="button"
+                          onClick={handleCapturePhoto}
+                          className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-4 border-white bg-gradient-to-tr from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 shadow-xl shadow-cyan-950/60 flex items-center justify-center text-slate-950 active:scale-90 transition-all cursor-pointer group-hover:ring-4 group-hover:ring-cyan-400/40"
+                          title="Capturar Foto do Prontuário"
+                        >
+                          <Camera className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.5]" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Upload File / Gallery Mode */
+                <div className="flex-1 flex flex-col items-center justify-center p-5 border-2 border-dashed border-slate-700 rounded-2xl bg-slate-900/60 min-h-[200px] text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center mx-auto">
+                    <Upload className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-bold text-white">Câmera Não Iniciada</h3>
-                    <p className="text-xs text-slate-300 mt-1">{cameraError}</p>
+                    <h3 className="text-sm font-bold text-white">Importar Fotos ou PDF do Dispositivo</h3>
+                    <p className="text-xs text-slate-400 max-w-sm mt-1">
+                      Selecione fotos de prontuários em papel, arquivos PDF, laudos ou fotos de feridas salvas no celular ou computador.
+                    </p>
                   </div>
-                  <div className="space-y-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => nativeCameraInputRef.current?.click()}
-                      className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-400 to-cyan-500 text-slate-950 font-bold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      <Camera className="w-4 h-4" />
-                      <span>Abrir Câmera Nativa do Celular</span>
-                    </button>
 
+                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="w-full py-2.5 px-4 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
                     >
                       <Upload className="w-4 h-4" />
-                      <span>Escolher Foto da Galeria / Arquivos</span>
+                      <span>Selecionar da Galeria / Arquivos</span>
                     </button>
-                  </div>
-                </div>
-              ) : (
-                /* Live Viewfinder */
-                <div className="relative w-full max-w-xl max-h-[38vh] sm:max-h-none aspect-3/4 sm:aspect-4/3 bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-cyan-500/30 flex items-center justify-center group">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-
-                  {/* Document Overlay Target Box (CamScanner aesthetic) */}
-                  <div className="absolute inset-4 sm:inset-8 border-2 border-dashed border-cyan-400/60 rounded-xl pointer-events-none flex flex-col justify-between p-3">
-                    <div className="flex justify-between items-start">
-                      <div className="w-5 h-5 border-t-4 border-l-4 border-cyan-400"></div>
-                      <div className="w-5 h-5 border-t-4 border-r-4 border-cyan-400"></div>
-                    </div>
-
-                    <div className="text-center">
-                      <span className="px-3 py-1 rounded-full bg-slate-950/70 text-cyan-300 text-[10px] font-bold backdrop-blur-xs border border-cyan-500/30 shadow-xs">
-                        Enquadre a folha do prontuário
-                      </span>
-                    </div>
-
-                    <div className="flex justify-between items-end">
-                      <div className="w-5 h-5 border-b-4 border-l-4 border-cyan-400"></div>
-                      <div className="w-5 h-5 border-b-4 border-r-4 border-cyan-400"></div>
-                    </div>
-                  </div>
-
-                  {/* Shutter visual flash animation */}
-                  {isShutterActive && (
-                    <div className="absolute inset-0 bg-white opacity-80 animate-ping pointer-events-none"></div>
-                  )}
-
-                  {/* Viewfinder Top Controls (Torch & Switch Camera) */}
-                  <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
-                    {hasTorch && (
-                      <button
-                        type="button"
-                        onClick={toggleTorch}
-                        className={`p-2 rounded-xl backdrop-blur-md transition-all cursor-pointer ${
-                          isTorchOn
-                            ? 'bg-amber-400 text-slate-950 shadow-md shadow-amber-400/30'
-                            : 'bg-slate-900/70 text-white hover:bg-slate-800'
-                        }`}
-                        title={isTorchOn ? 'Desligar Lanterna' : 'Ligar Lanterna'}
-                      >
-                        {isTorchOn ? <Zap className="w-4 h-4" /> : <ZapOff className="w-4 h-4" />}
-                      </button>
-                    )}
 
                     <button
                       type="button"
-                      onClick={handleSwitchCamera}
-                      className="p-2 rounded-xl bg-slate-900/70 text-white hover:bg-slate-800 backdrop-blur-md transition-colors cursor-pointer"
-                      title="Alternar Câmera (Traseira / Frontal)"
+                      onClick={() => nativeCameraInputRef.current?.click()}
+                      className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs border border-cyan-500/30 transition-all cursor-pointer flex items-center gap-2 sm:hidden"
                     >
-                      <SwitchCamera className="w-4 h-4" />
-                    </button>
-                  </div>
-
-                  {/* Viewfinder Bottom Shutter Button */}
-                  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-4 z-10">
-                    <button
-                      type="button"
-                      onClick={handleCapturePhoto}
-                      className="w-16 h-16 sm:w-18 sm:h-18 rounded-full border-4 border-white bg-gradient-to-tr from-cyan-400 to-cyan-500 hover:from-cyan-300 hover:to-cyan-400 shadow-xl shadow-cyan-950/60 flex items-center justify-center text-slate-950 active:scale-90 transition-all cursor-pointer group-hover:ring-4 group-hover:ring-cyan-400/40"
-                      title="Capturar Foto do Prontuário"
-                    >
-                      <Camera className="w-7 h-7 sm:w-8 sm:h-8 stroke-[2.5]" />
+                      <Camera className="w-4 h-4" />
+                      <span>Câmera do Celular</span>
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
-          ) : (
-            /* Upload File / Gallery Mode */
-            <div className="flex-1 flex flex-col items-center justify-center p-6 border-2 border-dashed border-slate-700 rounded-2xl bg-slate-900/60 min-h-[260px] text-center space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 flex items-center justify-center mx-auto">
-                <Upload className="w-7 h-7" />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-white">Importar Fotos ou PDF do Dispositivo</h3>
-                <p className="text-xs text-slate-400 max-w-sm mt-1">
-                  Selecione fotos de prontuários em papel, arquivos PDF, laudos ou fotos de feridas salvas no celular ou computador.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>Selecionar da Galeria / Arquivos</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => nativeCameraInputRef.current?.click()}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold text-xs border border-cyan-500/30 transition-all cursor-pointer flex items-center gap-2 sm:hidden"
-                >
-                  <Camera className="w-4 h-4" />
-                  <span>Câmera do Celular</span>
-                </button>
-              </div>
-            </div>
-          )}
+              )
+            )}
 
           {/* Hidden File Inputs */}
           <input
@@ -708,15 +746,33 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
 
           {/* Scanned Pages Carousel / Thumbnail Tray */}
           {pages.length > 0 && (
-            <div className="mt-3 pt-3 border-t border-slate-800 space-y-2">
-              <div className="flex items-center justify-between text-xs">
+            <div className={`${showCaptureBox ? 'mt-3 pt-3 border-t border-slate-800' : ''} space-y-2`}>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
                 <span className="font-bold text-cyan-300 flex items-center gap-1.5">
                   <Layers className="w-4 h-4" />
-                  Páginas Capturadas ({pages.length})
+                  Arquivos / Páginas Adicionadas ({pages.length})
                 </span>
-                <span className="text-[11px] text-slate-400">
-                  Toque para girar ou alterar filtro da folha
-                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveMode('camera');
+                      setIsCaptureOpen(true);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Camera className="w-3 h-3" />
+                    <span>+ Foto</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Upload className="w-3 h-3" />
+                    <span>+ Arquivo/PDF</span>
+                  </button>
+                </div>
               </div>
 
               <div className="flex gap-2.5 overflow-x-auto pb-1 no-scrollbar">
@@ -782,10 +838,7 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
                 {/* Quick Add Page Button in Tray */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveMode('camera');
-                    startCamera(facingMode);
-                  }}
+                  onClick={() => fileInputRef.current?.click()}
                   className="shrink-0 w-24 sm:w-28 aspect-3/4 rounded-xl border-2 border-dashed border-slate-700 hover:border-cyan-400 bg-slate-800/40 hover:bg-slate-800 flex flex-col items-center justify-center text-slate-400 hover:text-cyan-300 gap-1.5 transition-all cursor-pointer"
                 >
                   <Plus className="w-5 h-5" />
@@ -910,6 +963,17 @@ export const CameraScannerModal: React.FC<CameraScannerModalProps> = ({
               />
             </div>
           </div>
+
+          {pages.length > 0 && (
+            <button
+              type="button"
+              onClick={handleFinishSave}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-extrabold text-xs shadow-md flex items-center justify-center gap-2 cursor-pointer sm:hidden"
+            >
+              <Check className="w-4 h-4 stroke-[2.5]" />
+              <span>Concluir e Salvar ({pages.length} {pages.length === 1 ? 'Arquivo' : 'Arquivos'})</span>
+            </button>
+          )}
           </div>
         </div>
 

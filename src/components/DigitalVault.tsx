@@ -91,7 +91,7 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
     }
   };
 
-  const handleScannerSaved = (
+  const handleScannerSaved = async (
     pages: ScannedPage[],
     meta: {
       titulo: string;
@@ -103,6 +103,116 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
       registroOHB?: string;
     }
   ) => {
+    setIsCameraScannerOpen(false);
+
+    const resolvedPatientName = (meta.patientName || newPatientName).trim();
+    const resolvedNomeMae = (meta.nomeMae || newNomeMae).trim();
+    const resolvedRegistro = (meta.registroOHB || newRegistroFisico).trim();
+    const resolvedTitle = (meta.titulo || docTitle).trim();
+    const resolvedType = meta.tipo || docType;
+    const resolvedDate = meta.dataDocumento || docDate;
+    const resolvedObs = meta.observacoes || observations;
+
+    // Se todos os dados necessários já foram informados no Scanner Modal, arquiva direto no Acervo!
+    if (recordMode === 'novo_papel' && resolvedPatientName && resolvedNomeMae && pages.length > 0) {
+      setIsUploading(true);
+      try {
+        const digits = resolvedRegistro.replace(/\D/g, '');
+        const finalRegistroOHB = digits
+          ? `OHB-${digits}`
+          : `OHB-${Date.now().toString().slice(-4)}`;
+
+        for (let i = 0; i < pages.length; i++) {
+          const p = pages[i];
+          const newDoc: DigitalizedDocument = {
+            id: `doc-${Date.now()}-${i}`,
+            registroOHB: finalRegistroOHB,
+            cpf: newCPF.trim(),
+            patientId: undefined,
+            patientName: resolvedPatientName,
+            nomeMae: resolvedNomeMae,
+            titulo:
+              pages.length === 1
+                ? resolvedTitle || `Prontuário Antigo - ${resolvedPatientName}`
+                : `${resolvedTitle || `Prontuário Antigo - ${resolvedPatientName}`} (Pág. ${i + 1})`,
+            tipo: resolvedType,
+            dataDocumento: resolvedDate,
+            dataUpload: new Date().toISOString(),
+            observacoes: resolvedObs,
+            imageUrl: p.dataUrl,
+            tamanhoKb: p.sizeKb,
+          };
+          await StorageService.saveDigitalizedDoc(newDoc);
+        }
+
+        setPreviewImages([]);
+        setDocTitle('');
+        setObservations('');
+        setNewPatientName('');
+        setNewNomeMae('');
+        setNewRegistroFisico('');
+        setNewCPF('');
+        onRefreshDocs();
+        alert(
+          `${pages.length} arquivo(s) arquivado(s) no acervo com sucesso para ${resolvedPatientName}! (Registro: ${finalRegistroOHB})`
+        );
+        return;
+      } catch (err) {
+        console.error('Erro ao arquivar direto do scanner:', err);
+      } finally {
+        setIsUploading(false);
+      }
+    } else if (recordMode === 'cadastrado' && targetOHB.trim() && pages.length > 0) {
+      setIsUploading(true);
+      try {
+        const patient = patients.find(
+          (p) => p.registroOHB.trim().toUpperCase() === targetOHB.trim().toUpperCase()
+        );
+        const finalPatientName = patient?.nome || targetOHB;
+        const finalRegistroOHB = targetOHB.trim().toUpperCase();
+        const selectedSession = targetPatientSessions.find((s) => s.id === targetSessionId);
+
+        for (let i = 0; i < pages.length; i++) {
+          const p = pages[i];
+          const newDoc: DigitalizedDocument = {
+            id: `doc-${Date.now()}-${i}`,
+            registroOHB: finalRegistroOHB,
+            cpf: targetCPF || patient?.cpf || '',
+            patientId: patient?.id,
+            patientName: finalPatientName,
+            nomeMae: patient?.nomeMae,
+            sessionId: selectedSession?.id,
+            sessionNumber: selectedSession?.sessionNumber,
+            titulo:
+              pages.length === 1
+                ? resolvedTitle || `Prontuário Escaneado - ${finalPatientName}`
+                : `${resolvedTitle || `Prontuário Escaneado - ${finalPatientName}`} (Pág. ${i + 1})`,
+            tipo: resolvedType,
+            dataDocumento: resolvedDate,
+            dataUpload: new Date().toISOString(),
+            observacoes: resolvedObs,
+            imageUrl: p.dataUrl,
+            tamanhoKb: p.sizeKb,
+          };
+          await StorageService.saveDigitalizedDoc(newDoc);
+        }
+
+        setPreviewImages([]);
+        setDocTitle('');
+        setObservations('');
+        onRefreshDocs();
+        alert(
+          `${pages.length} arquivo(s) arquivado(s) no acervo com sucesso para ${finalPatientName}! (Registro: ${finalRegistroOHB})`
+        );
+        return;
+      } catch (err) {
+        console.error('Erro ao arquivar direto do scanner:', err);
+      } finally {
+        setIsUploading(false);
+      }
+    }
+
+    // Fallback: preenche no formulário lateral caso falte algum dado obrigatório
     pages.forEach((p, idx) => {
       setPreviewImages((prev) => [
         ...prev,
@@ -120,7 +230,6 @@ export const DigitalVault: React.FC<DigitalVaultProps> = ({
     if (meta.patientName && !newPatientName) setNewPatientName(meta.patientName);
     if (meta.nomeMae && !newNomeMae) setNewNomeMae(meta.nomeMae);
     if (meta.registroOHB && !newRegistroFisico) setNewRegistroFisico(meta.registroOHB);
-    setIsCameraScannerOpen(false);
   };
 
   const handleFilesSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
