@@ -62,6 +62,11 @@ public class AppointmentResource {
         appointment.cpf = patient.cpf;
         appointment.telefonePaciente = patient.celular != null ? patient.celular : patient.telefonesFixos;
 
+        if (appointment.pressaoATA == null || appointment.pressaoATA.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("A pressão em ATA é obrigatória para o agendamento")
+                .build();
+        }
         if (appointment.status == null || appointment.status.isEmpty()) {
             appointment.status = "agendado";
         }
@@ -83,6 +88,11 @@ public class AppointmentResource {
         appointment.horario = updatedData.horario;
         appointment.diaSemana = updatedData.diaSemana;
         appointment.sessaoNumero = updatedData.sessaoNumero;
+        if (updatedData.pressaoATA == null || updatedData.pressaoATA.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("A pressão em ATA é obrigatória para o agendamento")
+                .build();
+        }
         appointment.pressaoATA = updatedData.pressaoATA;
         appointment.status = updatedData.status;
         appointment.observacoes = updatedData.observacoes;

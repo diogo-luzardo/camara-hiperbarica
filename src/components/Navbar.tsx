@@ -330,9 +330,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="font-bold text-sm sm:text-base 2xl:text-lg tracking-tight text-white font-['Outfit'] whitespace-nowrap">
                   CLÍNICA <span className="text-cyan-400">OHB</span>
                 </span>
-                <span className="text-[9px] 2xl:text-[10px] px-1.5 py-0.2 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800/80 font-bold whitespace-nowrap">
-                  2.4 ATA
-                </span>
               </div>
               <p className="text-[10px] 2xl:text-xs text-slate-400 -mt-0.5 hidden 2xl:block whitespace-nowrap">
                 Oxigenoterapia Hiperbárica & Feridas
@@ -391,22 +388,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* 3. Sessões & SAE (Operacional) */}
-            <button
-              type="button"
-              onClick={() => onNavigate('pacientes')}
-              className="flex items-center gap-1.5 px-2.5 2xl:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 hover:text-cyan-300 hover:bg-slate-800 border border-transparent hover:border-slate-700/80 hover:scale-105 active:scale-95 transition-all whitespace-nowrap cursor-pointer"
-              title="Atendimentos clínicos e fichas SAE do paciente"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-              <span className="hidden 2xl:inline">Sessões OHB</span>
-              <span className="2xl:hidden">Sessões</span>
-              <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300 shrink-0">
-                {sessionCount}
-              </span>
-            </button>
-
-            {/* 4. Prontuários Antigos Escaneados (Cofre) */}
+            {/* 3. Prontuários Antigos Escaneados (Cofre) */}
             <button
               type="button"
               onClick={() => onNavigate('acervo')}

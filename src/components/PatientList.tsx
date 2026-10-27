@@ -14,10 +14,6 @@ import {
   Stethoscope,
   AlertCircle,
   X,
-  Lock,
-  BookOpen,
-  Sparkles,
-  Camera,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { Patient, HyperbaricSession, Appointment } from '../types';
@@ -222,7 +218,7 @@ export const PatientList: React.FC<PatientListProps> = ({
           <div className="min-w-0">
             <p className="text-[10px] sm:text-xs font-semibold text-slate-500 truncate">Sessões OHB</p>
             <p className="text-lg sm:text-2xl 2xl:text-3xl font-bold font-mono text-slate-900 mt-0.5 sm:mt-1">{sessions.length}</p>
-            <span className="text-[9px] sm:text-[10px] 2xl:text-xs text-cyan-600 font-medium truncate block">2.4 ATA padrão</span>
+            <span className="text-[9px] sm:text-[10px] 2xl:text-xs text-cyan-600 font-medium truncate block">ATA Obrigatória</span>
           </div>
           <div className="w-7 h-7 sm:w-10 sm:h-10 2xl:w-12 2xl:h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
             <HeartPulse className="w-3.5 h-3.5 sm:w-5 sm:h-5 2xl:w-6 2xl:h-6" />
@@ -325,92 +321,7 @@ export const PatientList: React.FC<PatientListProps> = ({
               Alta ({altaCount})
             </button>
           </div>
-
-          {onOpenCidLookup && (
-            <button
-              type="button"
-              onClick={onOpenCidLookup}
-              className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-950 to-slate-900 hover:from-cyan-900 hover:to-slate-800 border-2 border-cyan-500/50 hover:border-cyan-400 text-cyan-300 hover:text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
-              title="Consultar catálogo de códigos CID-11 e equivalência CID-10"
-            >
-              <BookOpen className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span>Consultar CID-11</span>
-              <span className="text-[9px] bg-cyan-500 text-slate-950 font-black px-1.5 py-0.2 rounded shrink-0">
-                NOVO
-              </span>
-            </button>
-          )}
-
-          {onNewPatientWithScanner && canCreatePatient && (
-            <button
-              type="button"
-              onClick={onNewPatientWithScanner}
-              className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
-              title="Cadastrar paciente antigo digitalizando prontuário ou ficha de papel com a câmera"
-            >
-              <Camera className="w-4 h-4 text-emerald-200 shrink-0" />
-              <span>Importar Ficha Antiga</span>
-              <span className="text-[9px] bg-emerald-950/70 border border-emerald-400/40 text-emerald-200 font-bold px-1.5 py-0.5 rounded shrink-0">
-                Scanner
-              </span>
-            </button>
-          )}
-
-          {canCreatePatient ? (
-            <button
-              onClick={onNewPatient}
-              className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-sm flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Cadastrar Paciente</span>
-            </button>
-          ) : (
-            <button
-              disabled
-              title="Ação restrita pela política de acessos do perfil ativo (Cadastrar Paciente)"
-              className="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-100 border border-slate-200 text-slate-400 font-bold text-xs shadow-none flex items-center justify-center gap-1.5 cursor-not-allowed opacity-80 whitespace-nowrap"
-            >
-              <Lock className="w-3.5 h-3.5 text-slate-400" />
-              <span>Cadastrar Paciente</span>
-            </button>
-          )}
         </div>
-      </div>
-
-      {/* Banner de Destaque Clínico: Consulta Rápida CID-11 / CID-10 */}
-      <div className="bg-gradient-to-r from-slate-900 via-cyan-950 to-slate-900 rounded-2xl p-3.5 sm:p-4 border border-cyan-800/60 shadow-md text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/30 flex items-center justify-center shrink-0 shadow-inner">
-            <BookOpen className="w-5 h-5 text-cyan-300" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-              <span className="text-xs sm:text-sm font-bold text-white font-['Outfit']">
-                Guia Médico: Consulta Rápida CID-11 & CID-10
-              </span>
-              <span className="text-[9px] sm:text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-cyan-400 text-slate-950">
-                Padrão OMS 2026
-              </span>
-              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-700/80 hidden md:inline">
-                Tabela De-Para & Rol ANS / CFM
-              </span>
-            </div>
-            <p className="text-[11px] sm:text-xs text-slate-300 line-clamp-1 mt-0.5">
-              Consulte códigos oficiais da OMS, equivalências para guias TUSS e indicações de cobertura para câmara hiperbárica.
-            </p>
-          </div>
-        </div>
-
-        {onOpenCidLookup && (
-          <button
-            type="button"
-            onClick={onOpenCidLookup}
-            className="w-full sm:w-auto px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs shadow-md transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2 shrink-0 cursor-pointer whitespace-nowrap"
-          >
-            <Search className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Consultar CID-11 / 10</span>
-          </button>
-        )}
       </div>
 
       {/* Patient Cards Grid */}
@@ -419,7 +330,17 @@ export const PatientList: React.FC<PatientListProps> = ({
           <div className="col-span-full bg-white rounded-2xl p-12 text-center border border-slate-200 shadow-xs">
             <FileText className="w-12 h-12 text-slate-300 mx-auto mb-2" />
             <h3 className="font-bold text-slate-800 text-sm">Nenhum paciente encontrado</h3>
-            <p className="text-xs text-slate-500 mt-1">Verifique o termo digitado ou cadastre um novo prontuário.</p>
+            <p className="text-xs text-slate-500 mt-1 mb-4">Verifique o termo digitado ou cadastre um novo paciente.</p>
+            {canCreatePatient && (
+              <button
+                type="button"
+                onClick={onNewPatient}
+                className="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-sm inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Cadastrar Paciente</span>
+              </button>
+            )}
           </div>
         ) : (
           paginatedPatients.map((patient) => {

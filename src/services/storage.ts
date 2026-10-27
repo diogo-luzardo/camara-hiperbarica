@@ -85,7 +85,7 @@ function mapBackendSessionToFrontend(s: any): HyperbaricSession {
     id: String(s.id),
     patientId: s.patient ? String(s.patient.id) : (s.patientId || ''),
     sessionNumber: typeof s.sessionNumber === 'number' ? s.sessionNumber : parseInt(s.sessionNumber || '1'),
-    ata: typeof s.ata === 'number' ? s.ata : parseFloat(s.ata || '2.4'),
+    ata: typeof s.ata === 'number' ? s.ata : parseFloat(s.ata),
     duracaoMinutos: typeof s.duracaoMinutos === 'number' ? s.duracaoMinutos : parseInt(s.duracaoMinutos || '90'),
   };
 }
@@ -96,7 +96,7 @@ function mapBackendAppointmentToFrontend(a: any): Appointment {
     id: String(a.id),
     patientId: a.patient ? String(a.patient.id) : (a.patientId || ''),
     sessaoNumero: typeof a.sessaoNumero === 'number' ? a.sessaoNumero : parseInt(a.sessaoNumero || '1'),
-    pressaoATA: typeof a.pressaoATA === 'number' ? a.pressaoATA : parseFloat(a.pressaoATA || '2.4'),
+    pressaoATA: typeof a.pressaoATA === 'number' ? a.pressaoATA : parseFloat(a.pressaoATA),
   };
 }
 

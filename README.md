@@ -2,11 +2,11 @@
 
 Aplicação web e backend para gestão clínica de medicina e oxigenoterapia hiperbárica, prontuário eletrônico de pacientes, protocolo de segurança da câmara hiperbárica (enfermagem), agendamentos e cofre digital com AWS S3.
 
-## 📄 Documentação Completa
-Para ler a documentação completa com o detalhamento de todas as funcionalidades, arquitetura, endpoints da API e guia passo a passo de como testar, consulte:
+## 📄 Documentação & Manual do Operador
+Para ler o manual passo a passo de como operar o sistema (cadastro, câmara, agendamento, scanner e faturamento) e a arquitetura técnica, consulte:
 👉 **[DOCUMENTACAO.md](DOCUMENTACAO.md)**
 
-## 🚀 Inicio Rápido
+## 🚀 Início Rápido
 
 ### Backend (Quarkus + H2 Local / PostgreSQL)
 ```bash
@@ -26,4 +26,4 @@ cd backend
 npm install
 npm run dev
 ```
-- Interface Web: `http://localhost:5173`
+- Interface Web: `http://localhost:3000`

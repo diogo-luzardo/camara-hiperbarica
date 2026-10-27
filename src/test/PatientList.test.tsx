@@ -180,13 +180,13 @@ describe('PatientList Component', () => {
     expect(onSelectMock).toHaveBeenCalledWith('pat-1');
   });
 
-  it('deve disparar onNewPatient ao clicar em Cadastrar Paciente', () => {
+  it('deve disparar onNewPatient ao clicar em Cadastrar Paciente no estado vazio', () => {
     const onNewPatientMock = vi.fn();
     render(
       <PatientList
-        patients={mockPatients}
-        sessions={mockSessions}
-        appointments={mockAppointments}
+        patients={[]}
+        sessions={[]}
+        appointments={[]}
         onSelectPatient={vi.fn()}
         onNewPatient={onNewPatientMock}
         onNewSession={vi.fn()}

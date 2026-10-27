@@ -81,7 +81,7 @@ export const FinancialDashboard: React.FC<FinancialDashboardProps> = ({
         dataSessao: s.data,
         sessaoNumero: s.sessionNumber,
         codigoTUSS: '20101202',
-        descricaoProcedimento: `Oxigenoterapia Hiperbárica ${s.ata || 2.4} ATA (${s.duracaoMinutos || 90} min)`,
+        descricaoProcedimento: `Oxigenoterapia Hiperbárica ${s.ata} ATA (${s.duracaoMinutos || 90} min)`,
         valorSessao: valorBase,
         statusGuia,
         numeroGuia: `TISS-${s.registroOHB.replace('OHB-', '')}-${String(s.sessionNumber).padStart(2, '0')}`,

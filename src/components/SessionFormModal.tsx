@@ -42,7 +42,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     modalidade: isParticular(patient.convenio) ? 'particular' : 'convenio',
     data: new Date().toISOString().split('T')[0],
     hora: new Date().toTimeString().slice(0, 5),
-    ata: 2.4,
+    ata: undefined,
     pa: '120/80',
     glicemia: '120',
     temperatura: '36.4',
@@ -76,6 +76,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
   });
 
   useEffect(() => {
+    setAtaError('');
     if (initialSession) {
       const mod = initialSession.modalidade || (isParticular(initialSession.convenio || patient.convenio) ? 'particular' : 'convenio');
       setSessionModalidade(mod);
@@ -95,6 +96,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
         convenio: mod === 'particular' ? 'Particular' : patient.convenio,
         modalidade: mod,
         sessionNumber: nextSessionNumber,
+        ata: undefined,
         duracaoMinutos: 150,
         data: new Date().toISOString().split('T')[0],
         hora: new Date().toTimeString().slice(0, 5),
@@ -102,6 +104,7 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
     }
   }, [initialSession, patient, nextSessionNumber, isOpen]);
 
+  const [ataError, setAtaError] = useState<string>('');
   const [attachedPages, setAttachedPages] = useState<SessionAttachmentItem[]>([]);
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -173,6 +176,10 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.ata || isNaN(Number(formData.ata)) || Number(formData.ata) <= 0) {
+      setAtaError('Obrigatório: informe a pressão (ATA) prescrita pelo médico para o prontuário.');
+      return;
+    }
     onSave(
       {
         ...(formData as HyperbaricSession),
@@ -340,18 +347,35 @@ export const SessionFormModal: React.FC<SessionFormModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Pressão (ATA)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Pressão (ATA) <span className="text-rose-600 font-bold">*</span>
+                </label>
                 <select
-                  value={formData.ata || 2.4}
-                  onChange={(e) => setFormData({ ...formData, ata: parseFloat(e.target.value) })}
-                  className="w-full text-xs font-bold text-slate-900 px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                  required
+                  value={formData.ata ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value ? parseFloat(e.target.value) : undefined;
+                    setFormData({ ...formData, ata: val });
+                    if (val) setAtaError('');
+                  }}
+                  className={`w-full text-xs font-bold px-3 py-2 rounded-lg border focus:ring-2 focus:ring-cyan-500 bg-white ${
+                    ataError ? 'border-rose-500 bg-rose-50/30 text-rose-800' : !formData.ata ? 'border-amber-400 text-slate-600 bg-amber-50/20' : 'border-slate-300 text-slate-900'
+                  }`}
                 >
+                  <option value="">Selecione a ATA...</option>
                   <option value={1.8}>1.8 ATA</option>
                   <option value={2.0}>2.0 ATA</option>
-                  <option value={2.4}>2.4 ATA (Padrão Feridas)</option>
+                  <option value={2.2}>2.2 ATA</option>
+                  <option value={2.4}>2.4 ATA</option>
                   <option value={2.5}>2.5 ATA</option>
                   <option value={2.8}>2.8 ATA (Embolia/Gangrena)</option>
                 </select>
+                {ataError && (
+                  <p className="text-[10px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 shrink-0" />
+                    <span>{ataError}</span>
+                  </p>
+                )}
               </div>
             </div>
           </div>

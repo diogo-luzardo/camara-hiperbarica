@@ -283,18 +283,14 @@ export const PatientDetailView: React.FC<PatientDetailViewProps> = ({
       {/* TAB CONTENT 1: SESSÕES (FOLHA DE TRATAMENTO) */}
       {activeTab === 'sessoes' && (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3">
             <h2 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Stethoscope className="w-4 h-4 text-cyan-600" />
               Evolução e Registro das Sessões Hiperbáricas
             </h2>
-            <button
-              onClick={() => onNewSession(patient)}
-              className="px-3.5 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-xs flex items-center gap-1.5"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>Registrar Nova Sessão</span>
-            </button>
+            <span className="text-xs text-slate-500 font-medium">
+              Total: <strong className="font-mono text-slate-800">{sessions.length}</strong> {sessions.length === 1 ? 'sessão realizada' : 'sessões realizadas'}
+            </span>
           </div>
 
           {sessions.length === 0 ? (

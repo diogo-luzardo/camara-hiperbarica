@@ -47,7 +47,7 @@ public class Appointment extends PanacheEntityBase {
     @Column(name = "sessao_numero")
     public Integer sessaoNumero;
 
-    @Column(name = "pressao_ata", precision = 4, scale = 2)
+    @Column(name = "pressao_ata", precision = 4, scale = 2, nullable = false)
     public BigDecimal pressaoATA;
 
     @Column(length = 30)

@@ -71,6 +71,11 @@ public class HyperbaricSessionResource {
             session.sessionNumber = (int) previousCount + 1;
         }
 
+        if (session.ata == null || session.ata.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                .entity("A pressão em ATA é obrigatória para o registro no prontuário")
+                .build();
+        }
         if (session.data == null) {
             session.data = LocalDate.now();
         }
@@ -89,7 +94,14 @@ public class HyperbaricSessionResource {
         }
 
         // Atualização dos parâmetros clínicos e checagens (preenchido no tablet pela enfermeira)
-        session.ata = updatedData.ata;
+        if (updatedData.ata != null) {
+            if (updatedData.ata.compareTo(java.math.BigDecimal.ZERO) <= 0) {
+                return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("A pressão em ATA deve ser um valor válido maior que zero")
+                    .build();
+            }
+            session.ata = updatedData.ata;
+        }
         session.pa = updatedData.pa;
         session.glicemia = updatedData.glicemia;
         session.temperatura = updatedData.temperatura;

@@ -46,7 +46,8 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
   const [data, setData] = useState(new Date().toISOString().split('T')[0]);
   const [horario, setHorario] = useState('08:30');
   const [sessaoNumero, setSessaoNumero] = useState(1);
-  const [pressaoATA, setPressaoATA] = useState(2.4);
+  const [pressaoATA, setPressaoATA] = useState<number | ''>('');
+  const [ataError, setAtaError] = useState('');
   const [observacoes, setObservacoes] = useState('');
 
   // Batch Form State (Pacote de Sessões OHB)
@@ -55,6 +56,8 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
   const [batchStartDate, setBatchStartDate] = useState(new Date().toISOString().split('T')[0]);
   const [batchTime, setBatchTime] = useState('08:30');
   const [batchDays, setBatchDays] = useState<number[]>([1, 2, 3, 4, 5]); // Seg a Sex
+  const [batchPressaoATA, setBatchPressaoATA] = useState<number | ''>('');
+  const [batchAtaError, setBatchAtaError] = useState('');
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId);
   const batchPatient = patients.find((p) => p.id === batchPatientId);
@@ -84,6 +87,10 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
 
   const handleCreateSingle = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!pressaoATA || Number(pressaoATA) <= 0) {
+      setAtaError('Obrigatório: informe a pressão (ATA) prescrita pelo médico.');
+      return;
+    }
     const patient = patients.find((p) => p.id === selectedPatientId);
     if (!patient) return;
 
@@ -115,6 +122,10 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
 
   const handleCreateBatch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!batchPressaoATA || Number(batchPressaoATA) <= 0) {
+      setBatchAtaError('Obrigatório: informe a pressão (ATA) prescrita pelo médico.');
+      return;
+    }
     const patient = patients.find((p) => p.id === batchPatientId);
     if (!patient) return;
 
@@ -146,7 +157,7 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
           horario: batchTime,
           diaSemana: DIAS_SEMANA[dayOfWeek],
           sessaoNumero: currentSessionNum + created,
-          pressaoATA: 2.4,
+          pressaoATA: Number(batchPressaoATA),
           status: 'agendado',
           observacoes: `Pacote de sessões diárias OHB (Sessão ${currentSessionNum + created})`,
           telefonePaciente: patient.celular || patient.telefonesFixos,
@@ -193,7 +204,11 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
 
         <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 w-full md:w-auto">
           <button
-            onClick={() => setIsBatchModalOpen(true)}
+            onClick={() => {
+              setBatchPressaoATA('');
+              setBatchAtaError('');
+              setIsBatchModalOpen(true);
+            }}
             className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-cyan-600" />
@@ -201,7 +216,11 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
           </button>
 
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setPressaoATA('');
+              setAtaError('');
+              setIsModalOpen(true);
+            }}
             className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 text-xs font-bold shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-4 h-4" />
@@ -606,16 +625,35 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Pressão de Trabalho</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Pressão de Trabalho <span className="text-rose-600 font-bold">*</span>
+                  </label>
                   <select
+                    required
                     value={pressaoATA}
-                    onChange={(e) => setPressaoATA(parseFloat(e.target.value))}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-cyan-500 bg-white"
+                    onChange={(e) => {
+                      const val = e.target.value ? parseFloat(e.target.value) : '';
+                      setPressaoATA(val);
+                      if (val) setAtaError('');
+                    }}
+                    className={`w-full text-xs px-3 py-2 rounded-lg border focus:ring-2 focus:ring-cyan-500 bg-white font-semibold ${
+                      ataError ? 'border-rose-500 bg-rose-50/30 text-rose-800' : !pressaoATA ? 'border-amber-400 text-slate-600 bg-amber-50/20' : 'border-slate-300 text-slate-900'
+                    }`}
                   >
+                    <option value="">Selecione a ATA...</option>
+                    <option value={1.8}>1.8 ATA</option>
                     <option value={2.0}>2.0 ATA</option>
-                    <option value={2.4}>2.4 ATA (Padrão)</option>
+                    <option value={2.2}>2.2 ATA</option>
+                    <option value={2.4}>2.4 ATA</option>
+                    <option value={2.5}>2.5 ATA</option>
                     <option value={2.8}>2.8 ATA</option>
                   </select>
+                  {ataError && (
+                    <p className="text-[10px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 shrink-0" />
+                      <span>{ataError}</span>
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -731,6 +769,38 @@ export const AppointmentManager: React.FC<AppointmentManagerProps> = ({
                     className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
+                  Pressão de Trabalho (ATA) <span className="text-rose-600 font-bold">*</span>
+                </label>
+                <select
+                  required
+                  value={batchPressaoATA}
+                  onChange={(e) => {
+                    const val = e.target.value ? parseFloat(e.target.value) : '';
+                    setBatchPressaoATA(val);
+                    if (val) setBatchAtaError('');
+                  }}
+                  className={`w-full text-xs px-3 py-2 rounded-lg border bg-white font-semibold ${
+                    batchAtaError ? 'border-rose-500 bg-rose-50/30 text-rose-800' : !batchPressaoATA ? 'border-amber-400 text-slate-600 bg-amber-50/20' : 'border-slate-300 text-slate-900'
+                  }`}
+                >
+                  <option value="">Selecione a ATA...</option>
+                  <option value={1.8}>1.8 ATA</option>
+                  <option value={2.0}>2.0 ATA</option>
+                  <option value={2.2}>2.2 ATA</option>
+                  <option value={2.4}>2.4 ATA</option>
+                  <option value={2.5}>2.5 ATA</option>
+                  <option value={2.8}>2.8 ATA</option>
+                </select>
+                {batchAtaError && (
+                  <p className="text-[10px] font-bold text-rose-600 mt-1 flex items-center gap-1">
+                    <AlertCircle className="w-3 h-3 shrink-0" />
+                    <span>{batchAtaError}</span>
+                  </p>
+                )}
               </div>
 
               <div>

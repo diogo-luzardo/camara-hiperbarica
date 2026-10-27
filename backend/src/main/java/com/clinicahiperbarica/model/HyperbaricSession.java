@@ -38,8 +38,8 @@ public class HyperbaricSession extends PanacheEntityBase {
     @Column(length = 10)
     public String hora; // Ex: "14:30"
 
-    @Column(precision = 4, scale = 2)
-    public BigDecimal ata; // Ex: 2.00, 2.40
+    @Column(precision = 4, scale = 2, nullable = false)
+    public BigDecimal ata; // Obrigatório (Ex: 2.00, 2.40, 2.50, 2.80)
 
     @Column(length = 20)
     public String pa; // Ex: 120/80 mmHg

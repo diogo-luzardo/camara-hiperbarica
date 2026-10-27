@@ -98,7 +98,7 @@ export const LoginPage: React.FC = () => {
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/90 border border-cyan-800/80 text-cyan-300 text-xs font-semibold shadow-inner">
                 <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
-                <span>Pressurização até 2.4 ATA • Plataforma Clínica Unificada</span>
+                <span>Oxigenoterapia Hiperbárica • Plataforma Clínica Unificada</span>
               </div>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight font-['Outfit'] text-white">
@@ -163,7 +163,7 @@ export const LoginPage: React.FC = () => {
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-bold text-cyan-200">Operacional</span>
-                      <span className="text-[9px] bg-cyan-900/90 text-cyan-300 px-1.5 py-0.2 rounded font-mono">2.4 ATA</span>
+                      <span className="text-[9px] bg-cyan-900/90 text-cyan-300 px-1.5 py-0.2 rounded font-mono">Câmara</span>
                     </div>
                     <p className="text-[11px] text-slate-300 truncate">Enfª. Juliana Ramos</p>
                     <p className="text-[10px] text-cyan-300/80">Enfermagem & Câmara OHB</p>
@@ -214,7 +214,7 @@ export const LoginPage: React.FC = () => {
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs text-slate-400 pt-1">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
-                <span>Protocolos CFM 2.4 ATA</span>
+                <span>Protocolos CFM 1.457/95</span>
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
@@ -239,9 +239,6 @@ export const LoginPage: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-xl tracking-tight text-white font-['Outfit']">
                       CLÍNICA <span className="text-cyan-400">OHB</span>
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800 font-bold">
-                      2.4 ATA
                     </span>
                   </div>
                   <p className="text-xs text-slate-400">Acesso Seguro à Plataforma</p>

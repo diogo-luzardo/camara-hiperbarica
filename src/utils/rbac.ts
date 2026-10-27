@@ -75,7 +75,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       'vault:view',
       'vault:upload',
     ],
-    primaryModules: ['Prontuário Clínico', 'Sessões Hiperbáricas (2.4 ATA)', 'Sistematização Enfermagem (SAE)', 'Acervo Digital'],
+    primaryModules: ['Prontuário Clínico', 'Sessões Hiperbáricas', 'Sistematização Enfermagem (SAE)', 'Acervo Digital'],
   },
   financeiro: {
     role: 'financeiro',
@@ -159,7 +159,7 @@ export const PERMISSION_CATEGORIES: RolePermissionCategory[] = [
     ],
   },
   {
-    category: 'Sessões Hiperbáricas (2.4 ATA) & SAE',
+    category: 'Sessões Hiperbáricas & SAE',
     description: 'Controle de câmara, sinais vitais, intercorrências e enfermagem.',
     permissions: [
       { key: 'sessions:view', label: 'Visualizar Sessões', description: 'Consultar histórico de sessões do paciente' },
